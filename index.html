@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Presença</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <label for="dataSelecionada">Selecionar data:</label>
+    <input type="date" id="dataSelecionada" onchange="trocarData()">
+
+
+    <div class="container">
+        <h1>Attendance List</h1>
+
+        <div id="dashboard" class="dashboard">
+
+            <div class="dashboard">
+
+                <div class="card total">TOTAL UF: <span id="totalUF">0</span></div>
+                <div class="card total">TOTAL ÁREA: <span id="totalAREA">0</span></div>
+                <div class="card total">TOTAL SUP TLP: <span id="totalSUP">0</span></div>
+                <div class="card total">TOTAL STATUS: <span id="totalSTATUS">0</span></div>
+
+            </div>
+
+        </div>
+
+        <div class="analitico">
+            <a href="analitys.html" class="btn-modern">VEEWS</a>
+
+        </div>
+
+
+        <div class="add-box">
+            <!-- SELECT UF -->
+            <select id="uf">
+                <option selected disabled>Selecionar UF</option>
+                <option value="RJ">RJ</option>
+                <option value="ES">ES</option>
+            </select>
+
+
+
+
+            <select id="recurso">
+                <option selected disabled>Selecione o Técnico</option>
+
+                <option>ROGERIO GOMES DA SILVA</option>
+                <option>BRENO OLIVEIRA DA SILVA VILELA</option>
+                <option>MARCELO LUIZ LEITE</option>
+                <option>WALLACE FERREIRA</option>
+                <option>LUCAS DA SILVA NUNES</option>
+                <option>KARTLEY RODRIGUES DA SILVA</option>
+                <option>GABRIEL EMANUEL DOS SANTOS TORRES</option>
+                <option>LEONARDO FERREIRA</option>
+                <option>GABRIEL RODRIGUES DA SILVA</option>
+                <option>THIAGO PINTO EUGENIO</option>
+                <option>FABIANO DE SANTANA ANDRADE</option>
+                <option>GABRIEL DA SILVA COSTA</option>
+                <option>HEMERSON MARCULINO</option>
+                <option>LEANDRO MACEDO DO COUTO</option>
+                <option>EDSON VANDER PAIXAO</option>
+                <option>JONATHAN SANTOS DA SILVA</option>
+                <option>ALEXSSANDRO PEDRO ARAUJO DE FREITAS</option>
+                <option>MAX WILLIANFURTADO DE JESUS</option>
+                <option>MOISES GOMES DA SILVA FILHO</option>
+                <option>RODRIGO BANNY DA SILVA</option>
+                <option>ALAN PETRILHO HONORIO</option>
+                <option>MAX EMILIANO INACIO DA ROCHA</option>
+                <option>IAGO DAVI D AVILA DAMAZIO</option>
+                <option>RODOLPHO JOSE TAVARES</option>
+                <option>VAUSLEY DA SILVA COUTINHO</option>
+            </select>
+
+            <select id="coordVivo">
+                <option disabled selected>Selecione o Coordenador Vivo</option>
+                <option value="Diego Andrade Carvalho">DIEGO ANDRADE CARVALHO</option>
+                <option value="Roberto Denis">ROBERTO DENIS</option>
+            </select>
+
+
+            <select id="supervisorTLP">
+                <option disabled selected>Selecione o Supervisor TLP</option>
+                <option value="LUCIANO INACIO DA SILVA">LUCIANO INACIO DA SILVA</option>
+                <option value="LEANDRO MARTINS ABBUD">LEANDRO MARTINS ABBUD</option>
+            </select>
+
+            <select id="coordTLP">
+                <option disabled selected>Selecione o Coordenador TLP</option>
+                <option value="Marcelo Rocha Batista" selected>MARCELO BATISTA ROCHA</option>
+                <option value="Outro Coordenador">Outro Coordenador</option>
+            </select>
+
+
+
+            <select id="status">
+                <option disabled selected>Status</option>
+                <option value="PRESENTE">PRESENTE</option>
+                <option value="PRESENTE - CONJUNTA">PRESENTE - CONJUNTA</option>
+                <option value="PRESENTE - FORMAÇÃO">PRESENTE - FORMAÇÃO</option>
+                <option value="PRESENTE - PREVENTIVA">PRESENTE - PREVENTIVA</option>
+
+                <option value="INTERJORNADA (10H)">INTERJORNADA (10H)</option>
+                <option value="INTERMEDIÁRIO (13H)">INTERMEDIÁRIO (13H)</option>
+                <option value="INTERJORNADA (13H)">INTERJORNADA (13H)</option>
+                <option value="INTERJORNADA (16H)">INTERJORNADA (16H)</option>
+                <option value="INTERJORNADA (SEM RETORNO)">INTERJORNADA (SEM RETORNO)</option>
+
+                <option value="NOTURNO">NOTURNO</option>
+                <option value="INSS">INSS</option>
+                <option value="ATESTADO">ATESTADO</option>
+
+                <option value="FÉRIAS">FÉRIAS</option>
+                <option value="FALTA">FALTA</option>
+                <option value="FOLGA">FOLGA</option>
+            </select>
+
+            <select id="area">
+                <option disabled selected>Selecione a Area</option>
+                <option value="AZUL">AZUL</option>
+                <option value="VERMELHA">VERMELHA</option>
+                <option value="AMARELA">AMARELA</option>
+                <option value="VERDE">VERDE</option>
+            </select>
+
+            <button onclick="adicionar()">Adicionar</button>
+        </div>
+
+        <button onclick="loginAdmin()" id="btnLogin">Entrar como Admin</button>
+
+
+        <table>
+            <thead>
+                <tr>
+                    <th>UF</th>
+                    <th>Recurso</th>
+                    <th>Coordenador Vivo</th>
+                    <th>Supervisor TLP</th>
+                    <th>Coordenador TLP</th>
+                    <th>Status</th>
+                    <th>Área</th>
+                    <th>Excluir</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+        <button onclick="exportarExcel()">Exportar Excel</button>
+
+    </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+
+
+</body>
+
+</html>

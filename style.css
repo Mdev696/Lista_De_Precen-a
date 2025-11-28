@@ -1,0 +1,207 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    max-width: 1400px;
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.add-box {
+    display: flex;
+    flex-wrap: wrap;
+    /* permite quebrar linha se a tela for pequena */
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.add-box input,
+.add-box select {
+    flex: 1 1 150px;
+    /* largura mínima de 150px, cresce conforme o espaço */
+    padding: 10px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+}
+
+.add-box button {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.add-box button:hover {
+    background: #0056b3;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    font-size: 14px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button.excluir {
+    background-color: #ff4d4d;
+    /* vermelho suave */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    /* tamanho menor e mais compacto */
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+button.excluir:hover {
+    background-color: #cc0000;
+    /* vermelho mais intenso ao passar o mouse */
+}
+
+td button.excluir {
+    display: inline-block;
+    width: 100%;
+    max-width: 50px;
+    /* largura máxima para não esticar a célula */
+}
+
+
+/* AREA POR CORES */
+.area-azul {
+    background-color: #2196F3;
+    color: white;
+}
+
+.area-vermelha {
+    background-color: #F44336;
+    color: white;
+}
+
+.area-amarela {
+    background-color: #FFEB3B;
+    color: #000;
+}
+
+.area-verde {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* select transparente para ver a cor */
+td select {
+    background: transparent;
+    border: none;
+    font-weight: bold;
+}
+
+h1 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    background: #4a90e2;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 0 auto 25px auto;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+}
+
+/*select*/
+.add-box select {
+    flex: 1 1 150px;
+    padding: 10px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+}
+
+/*DASGBOARD=============================*/
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.card {
+    padding: 10px;
+    background: #f7f7f7;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0px 2px 4px #0003;
+    text-align: center;
+}
+
+/*ANALITYCS=====================*/
+
+/* Adicione isso ao seu style.css, se desejar um layout de grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.chart-container {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.btn-modern {
+    display: inline-block;
+    padding: 12px 26px;
+    background: linear-gradient(45deg, #4a90e2, #357ABD);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: 0.3s ease;
+}
+
+.btn-modern:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+.analitico{
+    padding: 40px;
+}
+
