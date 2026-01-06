@@ -269,14 +269,21 @@
             </select>
 
             <select id="status">
-                <option disabled selected>Status</option>
+                <option disabled selected value="">Status</option>
                 <option value="PRESENTE">PRESENTE</option>
-                <option value="FALTA">FALTA</option>
-                <option value="FOLGA">FOLGA</option>
-                <option value="ATESTADO">ATESTADO</option>
+                <option value="PRESENTE - CONJUNTA">PRESENTE - CONJUNTA</option>
+                <option value="PRESENTE - FORMATAÇÃO">PRESENTE - FORMATAÇÃO</option>
+                <option value="PRESENTE - PREVENTIVA">PRESENTE - PREVENTIVA</option>
+                <option value="INTERJORNADA(10h)">INTERJORNADA(10h)</option>
+                <option value="INTERMEDIÁRIO (13h)">INTERMEDIÁRIO (13h)</option>
+                <option value="INTERJORNADA(13h)">INTERJORNADA(13h)</option>
+                <option value="INTERJORNADA(16h)">INTERJORNADA(16h)</option>
+                <option value="INTERJORNADA (SEM RETORNO)">INTERJORNADA (SEM RETORNO)</option>
+                <option value="NOTURNO">NOTURNO</option>
                 <option value="FÉRIAS">FÉRIAS</option>
                 <option value="INSS">INSS</option>
-                <option value="NOTURNO">NOTURNO</option>
+                <option value="ATESTADO">ATESTADO</option>
+                <option value="FOLGA">FOLGA</option>
             </select>
 
             <input type="text" id="taPrimaria" placeholder="TA Primária">
@@ -313,7 +320,6 @@
 
     <script>
         const baseDados = {
-            // RJ - RIO DE JANEIRO
             "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
             "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
             "ANDRE LUIZ SOARES DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
@@ -395,8 +401,6 @@
             "RUAN PEREIRA RIBEIRO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-
-            // ES - ESPÍRITO SANTO
             "AUGUSTO ALMEIDA NETO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
             "PEDRO IVO DA SILVA DIAS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
             "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
