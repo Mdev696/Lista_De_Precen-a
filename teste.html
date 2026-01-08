@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Presença - Operacional</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .db-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-top: 4px solid var(--accent);
+        }
+
+        .db-card h3 {
+            margin: 0;
+            font-size: 11px;
+            color: var(--secondary);
+            text-transform: uppercase;
+        }
+
+        .db-card .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .add-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* Container para listas de Checkbox */
+        .list-container {
+            grid-column: 1 / -1;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .item-check {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .item-check:hover {
+            background: #f0f0f0;
+        }
+
+        .item-check input {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        select,
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .section-title {
+            grid-column: 1 / -1;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-top: 10px;
+        }
+
+        .btn-group {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            padding: 12px 20px;
+            transition: 0.3s;
+        }
+
+        .btn-main {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-admin {
+            background: var(--secondary);
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .btn-excel {
+            background: var(--success);
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-del {
+            background: var(--danger);
+            color: white;
+            padding: 5px 10px;
+        }
+
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+            padding: 5px 10px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Painel de Presença Operacional</h1>
+            <div>
+                <label>📅 Data: </label>
+                <input type="date" id="dataSelecionada" onchange="trocarData()" style="width: auto;">
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="db-card">
+                <h3>UF</h3><span class="value" id="count-uf">0</span>
+            </div>
+            <div class="db-card">
+                <h3>Empresa</h3><span class="value" id="count-empresa">0</span>
+            </div>
+            <div class="db-card">
+                <h3>Micro Área</h3><span class="value" id="count-micro">0</span>
+            </div>
+            <div class="db-card">
+                <h3>Colab.</h3><span class="value" id="count-colab">0</span>
+            </div>
+            <div class="db-card">
+                <h3>Superv.</h3><span class="value" id="count-super">0</span>
+            </div>
+            <div class="db-card">
+                <h3>Coord.</h3><span class="value" id="count-coord">0</span>
+            </div>
+        </div>
+
+        <button onclick="loginAdmin()" id="btnLogin" class="btn-admin">🔓 Acesso Admin</button>
+
+        <div class="add-box">
+            <select id="uf" onchange="filtrarSupervisores()">
+                <option disabled selected value="">1º Selecione a UF</option>
+                <option value="RJ">RJ - Rio de Janeiro</option>
+                <option value="ES">ES - Espirito Santo</option>
+            </select>
+
+            <select id="supervisorTLP" onchange="filtrarColaboradores()">
+                <option disabled selected value="">2º Selecione o Supervisor</option>
+            </select>
+
+            <div class="section-title">3º Selecione os Colaboradores:</div>
+            <div class="list-container" id="colaboradoresCheckboxes">
+            </div>
+
+            <div class="section-title">4º Selecione os Status:</div>
+            <div class="list-container" id="statusCheckboxes">
+            </div>
+
+            <div class="btn-group">
+                <button id="btnCancelar" class="btn-del" style="display:none;"
+                    onclick="cancelarEdicao()">Cancelar</button>
+                <button id="btnAdicionar" class="btn-main" onclick="adicionar()">Adicionar Registros</button>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>Empresa</th>
+                        <th>Micro Área</th>
+                        <th>Colaborador</th>
+                        <th>Supervisor</th>
+                        <th>Coordenador</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista"></tbody>
+            </table>
+        </div>
+        <button onclick="exportarExcel()" class="btn-excel">📥 Exportar para Excel</button>
+    </div>
+
+    <script>
+        const baseDados = {
+            "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "ANDRE LUIZ SOARES DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "ALEXSSANDRO PEDRO ARAUJO DE FREITAS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "ALLAN CESAR SILVA DE SOUZA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
+            "FABIANO OLIVEIRA DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "ATILA VICTORIO MOCO": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "BRENO OLIVEIRA DA SILVA VILELA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "BRUNO DE LIMA SALLES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "CARLOS EDUARDO LACERDA DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
+            "FABIO EUGENIO GONCALVES": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "DAVID DE OLIVEIRA CARDOSO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "EDSON VANDER PAIXAO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "FABIO RODRIGO SAIEGH DUARTE": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "MARCIO DE OLIVEIRA DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "SAMUEL FIRMINO DE OLIVEIRA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "FELIPE MIRANDA DE OLIVEIRA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "WILLIAM CESAR NASCIMENTO SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "GABRIEL DA SILVA COSTA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "GABRIEL EMANUEL DOS SANTOS TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "GABRIEL RODRIGUES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "HIAGO MARQUES RUAS": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "IAGO DAVI D AVILA DAMAZIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "IAN MACIEL ALVES DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
+            "JEAN CARLOS SILVA DO NASCIMENTO": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - SUL" },
+            "JEAN SANTOS DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "JONATHAN SANTOS DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "LEANDERSON MARCOS VIEIRA DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "LEANDRO ALBERTO CORREA BERREDO": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "LUCAS CONTES MOREIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - SUL" },
+            "LUCAS DA SILVA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "LUCAS PEREIRA BONFIM": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "MARCELO LUIZ LEITE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "ALEX SANTOS PEREIRA DA CRUZ": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
+            "MARIO CESAR RODRIGUES DOS SANTOS": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
+            "MATEUS BATISTA DA CUNHA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
+            "MATHEUS DA SILVA TORRES": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "MAX EMILIANO INACIO DA ROCHA": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "MAX WILLIANFURTADO DE JESUS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "MOISES GOMES DA SILVA FILHO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "NILTON VIEIRA DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "PEDRO PAULO CARVALHO SALEMA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "RODOLPHO JOSE TAVARES": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "RODRIGO BANNY DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "ROGERIO GOMES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "ROMEU DO NASCIMENTO VALENTE": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "WAGNER FERNANDES DOS SANTOS": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
+            "STEFANO EDUARDO AGUIAR SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "THALLES EDUARDO MARQUES BORGES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "THALLES ROCHA CASTELIANO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "THIAGO DE OLIVEIRA FONSECA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "THIAGO PINTO EUGENIO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "VAUSLEY DA SILVA COUTINHO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "VICTOR HUGO DE SOUZA KLEN": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
+            "CLEYSON ALVES DOS SANTOS": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "FELIPE SILVA DE LIMA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "WALLACE FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "WALLACE DA CONCEICAO PEREIRA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "WILLIAN CORDEIRO DE MOURA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "BRUNO NOGUEIRA GONTIJO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "DIEGO RODRIGUES DE FREITAS LUCIO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "FABIANO DE SANTANA ANDRADE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "FELIPE DA SILVA FREIRE": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "GUSTAVO DOS SANTOS FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "HELTON GONÇALVES DIAS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "HEMERSON MARCULINO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "IAGO VENÂNCIO DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "JOEL SEBASTIÃO DE LIMA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "KARTLEY RODRIGUES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
+            "LEONARDO FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
+            "MÁRCIO JOSÉ DE OLIVEIRA E SILVA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "MATHEUS FELIPE PONCE DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNOR": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "ROGÉRIO DE CASTRO GONÇALVES": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "RUAN PEREIRA RIBEIRO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "AUGUSTO ALMEIDA NETO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "PEDRO IVO DA SILVA DIAS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "WILLIAN LOPES PACHECO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "RONEY MELO SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "MARCO ANTONIO PETERLE TAVORA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "JONATAS SANTOS DOS ANJOS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "JOEL FERREIRA PERREIRA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "PATRICK HENRIQUE ALVES DE OLIV": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "ABRAÃO SANTOS DOS ANJOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "JOAIS SANTOS DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "DAVID COSTA MIRANDA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "GUSTAVO LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "GUILHERME SOBREIRA MACHADO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "RAFAEL GUASTI MARTINS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "GABRIEL RODRIGUES E SOUZA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "BRENO NICOLAU VALASCO DA SILVA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "LUCAS LUIZ ALMEIDA DA VITORIA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "IGOR MAGNO MARTINS LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "JOSÉ THIAGO BRITO": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "WARLEY CARVALHO BERNADES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "ARTHUR SCHULTZ DOS SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "DOUGLAS NUNES DA COSTA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "JEFERSON FELIX DE JESUS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "EDER CELIO PEREIRA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "DEILSON DOS SANTOS SOUZA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "JEAN CAMPOS DA SILVA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "FABIO DUARTE": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "WDSON NASCIMENTO DO CARMO": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "VALDINERES DOS SANTOS": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
+            "CAIO JORGE PERREIRA HONORIO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
+            "UALAS FERNANDES FERREIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "EMANUEL MARTINS DE MORAES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "VINICIUS BARCELOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "FRANCISCO FAGNER ALENCAR COSTA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "MICAIAS GARCIA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "PEDRO HENRIQUE": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" }
+        };
+
+        const listaStatus = ["PRESENTE", "PRESENTE - CONJUNTA", "PRESENTE - FORMATAÇÃO", "PRESENTE - PREVENTIVA", "INTERJORNADA(10h)", "INTERMEDIÁRIO (13h)", "INTERJORNADA(13h)", "INTERJORNADA(16h)", "INTERJORNADA (SEM RETORNO)", "NOTURNO", "FÉRIAS", "INSS", "ATESTADO", "FOLGA"];
+
+        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+        let editIndex = null;
+
+        window.onload = () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataSelecionada').value = hoje;
+            gerarCheckboxesStatus();
+            atualizarTabela();
+        };
+
+        function gerarCheckboxesStatus() {
+            const container = document.getElementById('statusCheckboxes');
+            container.innerHTML = "";
+            listaStatus.forEach(status => {
+                const label = document.createElement('label');
+                label.className = 'item-check';
+                label.innerHTML = `<input type="checkbox" name="status" value="${status}"> ${status}`;
+                container.appendChild(label);
+            });
+        }
+
+        function filtrarSupervisores() {
+            const ufSel = document.getElementById('uf').value;
+            const superSelect = document.getElementById('supervisorTLP');
+            superSelect.innerHTML = '<option disabled selected value="">2º Selecione o Supervisor</option>';
+            document.getElementById('colaboradoresCheckboxes').innerHTML = "";
+
+            const supervisores = [...new Set(Object.values(baseDados)
+                .filter(item => item.uf === ufSel)
+                .map(item => item.super))].sort();
+
+            supervisores.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s; opt.text = s;
+                superSelect.appendChild(opt);
+            });
+        }
+
+        function filtrarColaboradores() {
+            const superSel = document.getElementById('supervisorTLP').value;
+            const container = document.getElementById('colaboradoresCheckboxes');
+            container.innerHTML = "";
+
+            const nomes = Object.keys(baseDados)
+                .filter(n => baseDados[n].super === superSel)
+                .sort();
+
+            nomes.forEach(nome => {
+                const label = document.createElement('label');
+                label.className = 'item-check';
+                label.innerHTML = `<input type="checkbox" name="colab" value="${nome}"> ${nome}`;
+                container.appendChild(label);
+            });
+        }
+
+        function adicionar() {
+            const uf = document.getElementById('uf').value;
+            const supervisor = document.getElementById('supervisorTLP').value;
+            const data = document.getElementById('dataSelecionada').value;
+
+            const colabsMarcados = Array.from(document.querySelectorAll('input[name="colab"]:checked')).map(i => i.value);
+            const statusMarcados = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(i => i.value);
+
+            if (!uf || !supervisor || colabsMarcados.length === 0 || statusMarcados.length === 0) {
+                alert("Selecione UF, Supervisor, pelo menos um Colaborador e um Status!");
+                return;
+            }
+
+            const statusTexto = statusMarcados.join(" / ");
+
+            // Se estiver editando (apenas um por vez na edição)
+            if (editIndex !== null) {
+                const nome = colabsMarcados[0];
+                const info = baseDados[nome];
+                registros[editIndex] = {
+                    uf, super: supervisor, colab: nome, status: statusTexto, data,
+                    empresa: info.empresa, micro: info.micro, coord: info.coord
+                };
+                editIndex = null;
+                document.getElementById('btnAdicionar').innerText = "Adicionar Registros";
+                document.getElementById('btnCancelar').style.display = "none";
+            } else {
+                // Adicionando múltiplos
+                colabsMarcados.forEach(nome => {
+                    const info = baseDados[nome];
+                    // Evitar duplicata no mesmo dia
+                    const existe = registros.find(r => r.colab === nome && r.data === data);
+                    if (!existe) {
+                        registros.push({
+                            uf, super: supervisor, colab: nome, status: statusTexto, data,
+                            empresa: info.empresa, micro: info.micro, coord: info.coord
+                        });
+                    }
+                });
+            }
+
+            localStorage.setItem('registros_presenca', JSON.stringify(registros));
+            resetForm();
+            atualizarTabela();
+        }
+
+        function resetForm() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+            // Mantém UF e Supervisor para facilitar lançamentos em massa se desejar, 
+            // ou resete tudo conforme abaixo:
+            // document.getElementById('uf').value = "";
+            // document.getElementById('supervisorTLP').innerHTML = '<option...>';
+            // document.getElementById('colaboradoresCheckboxes').innerHTML = "";
+        }
+
+        function atualizarTabela() {
+            const lista = document.getElementById('lista');
+            const dataSel = document.getElementById('dataSelecionada').value;
+            lista.innerHTML = "";
+
+            const filtrados = registros.filter(r => r.data === dataSel);
+            filtrados.forEach((r, idx) => {
+                const globalIdx = registros.indexOf(r);
+                lista.innerHTML += `<tr>
+                    <td>${r.uf}</td><td>${r.empresa}</td><td>${r.micro}</td><td>${r.colab}</td>
+                    <td>${r.super}</td><td>${r.coord}</td><td>${r.status}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editar(${globalIdx})">✏️</button>
+                        <button class="btn-del" onclick="remover(${globalIdx})">🗑️</button>
+                    </td>
+                </tr>`;
+            });
+            atualizarCards();
+        }
+
+        function editar(index) {
+            const r = registros[index];
+            editIndex = index;
+            document.getElementById('uf').value = r.uf;
+            filtrarSupervisores();
+            document.getElementById('supervisorTLP').value = r.super;
+            filtrarColaboradores();
+
+            // Marcar o colaborador específico
+            setTimeout(() => {
+                document.querySelectorAll('input[name="colab"]').forEach(i => i.checked = (i.value === r.colab));
+                const sts = r.status.split(" / ");
+                document.querySelectorAll('input[name="status"]').forEach(i => i.checked = sts.includes(i.value));
+            }, 10);
+
+            document.getElementById('btnAdicionar').innerText = "Salvar Alteração";
+            document.getElementById('btnCancelar').style.display = "inline-block";
+            window.scrollTo(0, 0);
+        }
+
+        function remover(index) {
+            if (confirm("Excluir registro?")) {
+                registros.splice(index, 1);
+                localStorage.setItem('registros_presenca', JSON.stringify(registros));
+                atualizarTabela();
+            }
+        }
+
+        function cancelarEdicao() {
+            editIndex = null;
+            resetForm();
+            document.getElementById('btnAdicionar').innerText = "Adicionar Registros";
+            document.getElementById('btnCancelar').style.display = "none";
+        }
+
+        function trocarData() { atualizarTabela(); }
+
+        function atualizarCards() {
+            const dataSel = document.getElementById('dataSelecionada').value;
+            const f = registros.filter(r => r.data === dataSel);
+            document.getElementById('count-uf').innerText = new Set(f.map(r => r.uf)).size;
+            document.getElementById('count-empresa').innerText = new Set(f.map(r => r.empresa)).size;
+            document.getElementById('count-micro').innerText = new Set(f.map(r => r.micro)).size;
+            document.getElementById('count-colab').innerText = f.length;
+            document.getElementById('count-super').innerText = new Set(f.map(r => r.super)).size;
+            document.getElementById('count-coord').innerText = new Set(f.map(r => r.coord)).size;
+        }
+
+        function exportarExcel() {
+            let csv = "\uFEFFData;UF;Empresa;Micro Area;Colaborador;Supervisor;Coordenador;Status\n";
+            registros.forEach(r => {
+                csv += `${r.data};${r.uf};${r.empresa};${r.micro};${r.colab};${r.super};${r.coord};${r.status}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `presenca_${document.getElementById('dataSelecionada').value}.csv`;
+            link.click();
+        }
+
+        function loginAdmin() {
+            const senha = prompt("Senha:");
+            if (senha === "admin123") alert("Liberado!");
+        }
+    </script>
+</body>
+
+</html>
