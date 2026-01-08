@@ -78,6 +78,31 @@
             margin-bottom: 20px;
         }
 
+        /* Estilo para a área de Checkboxes de Status */
+        .status-checkbox-container {
+            grid-column: 1 / -1;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .status-item input {
+            width: auto;
+            margin-right: 8px;
+        }
+
         select,
         input {
             padding: 10px;
@@ -189,36 +214,34 @@
             <div class="db-card">
                 <h3>Coord.</h3><span class="value" id="count-coord">0</span>
             </div>
-            <div class="db-card">
-                <h3>TA Prim.</h3><span class="value" id="count-ta1">0</span>
-            </div>
-            <div class="db-card">
-                <h3>TA Sec.</h3><span class="value" id="count-ta2">0</span>
-            </div>
         </div>
 
         <button onclick="loginAdmin()" id="btnLogin" class="btn-admin">🔓 Acesso Admin</button>
 
         <div class="add-box">
-            <select id="uf" onchange="filtrarColaboradores()">
+            <select id="uf" onchange="filtrarSupervisores()">
                 <option disabled selected value="">1º Selecione a UF</option>
                 <option value="RJ">RJ - Rio de Janeiro</option>
                 <option value="ES">ES - Espirito Santo</option>
             </select>
 
-            <select id="colaborador" onchange="correlacionarDados()">
-                <option disabled selected value="">2º Selecione o Colaborador</option>
+            <select id="supervisorTLP" onchange="filtrarPorSupervisor()">
+                <option disabled selected value="">2º Selecione o Supervisor</option>
+            </select>
+
+            <select id="colaborador" onchange="preencherDadosColaborador()">
+                <option disabled selected value="">3º Selecione o Colaborador</option>
             </select>
 
             <select id="empresa">
-                <option disabled selected>Empresa</option>
+                <option disabled selected value="">Empresa</option>
                 <option value="TLP SERVIÇOS">TLP SERVIÇOS</option>
                 <option value="SUB - LUZ TELECOM">SUB - LUZ TELECOM</option>
                 <option value="SUB - BRZ SYS">SUB - BRZ SYS</option>
             </select>
 
             <select id="microArea">
-                <option disabled selected>Micro Área</option>
+                <option disabled selected value="">Micro Área</option>
                 <option value="AZUL - OESTE">AZUL - OESTE</option>
                 <option value="AZUL - NORTE">AZUL - NORTE</option>
                 <option value="AZUL - BARRA/JPA">AZUL - BARRA/JPA</option>
@@ -244,25 +267,8 @@
                 <option value="VIANA">VIANA</option>
             </select>
 
-            <select id="supervisorTLP">
-                <option disabled selected>Supervisor</option>
-                <option value="LEANDRO MARTINS ABBUD">LEANDRO MARTINS ABBUD</option>
-                <option value="RODRIGO CUNHA DE LIMA">RODRIGO CUNHA DE LIMA</option>
-                <option value="WELLINGTON MORENO">WELLINGTON MORENO</option>
-                <option value="LUCIANO INACIO DA SILVA">LUCIANO INACIO DA SILVA</option>
-                <option value="DIEGO CARDOSO">DIEGO CARDOSO</option>
-                <option value="RICARDO LUIZ SANTA ROSA">RICARDO LUIZ SANTA ROSA</option>
-                <option value="CLOVIS BATISTA TORRES JUNIOR">CLOVIS BATISTA TORRES JUNIOR</option>
-                <option value="RAFAEL FAGNER SANTOS DA SILVA">RAFAEL FAGNER SANTOS DA SILVA</option>
-                <option value="RENAN ALVARINTO">RENAN ALVARINTO</option>
-                <option value="LIVIO MOREIRA">LIVIO MOREIRA</option>
-                <option value="PABLO BATISTA">PABLO BATISTA</option>
-                <option value="ITALO COELHO">ITALO COELHO</option>
-                <option value="BRUNO ALCANTARA">BRUNO ALCANTARA</option>
-            </select>
-
             <select id="coordTLP">
-                <option disabled selected>Coordenador</option>
+                <option disabled selected value="">Coordenador</option>
                 <option value="MARCELO ROCHA BATISTA">MARCELO ROCHA BATISTA</option>
                 <option value="LUCAS PERES">LUCAS PERES</option>
                 <option value="THIAGO JACOB">THIAGO JACOB</option>
@@ -286,8 +292,8 @@
                 <option value="FOLGA">FOLGA</option>
             </select>
 
-            <input type="text" id="taPrimaria" placeholder="TA Primária">
-            <input type="text" id="taSecundaria" placeholder="TA Secundária">
+            <div class="status-checkbox-container" id="statusCheckboxes">
+            </div>
 
             <div class="btn-group">
                 <button id="btnCancelar" class="btn-del" style="display:none;"
@@ -307,8 +313,6 @@
                         <th>Supervisor</th>
                         <th>Coordenador</th>
                         <th>Status</th>
-                        <th>TA 1</th>
-                        <th>TA 2</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -445,132 +449,261 @@
             "FRANCISCO FAGNER ALENCAR COSTA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "MICAIAS GARCIA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "PEDRO HENRIQUE": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "CARLOS EDUARDO MENDONÇA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
-            "IGOR ALVES DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
-            "THAYRAN DE OLIVEIRA DIAS DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "VIANA" },
-            "EMANUEL FREITAS OTT": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "VIANA" },
-            "LORRAN PEREIRA DA SILVA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" }
+            "PEDRO HENRIQUE": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" }
         };
 
-        let isAdmin = false;
-        let indexEditando = null;
-        let dataAtual = new Date().toISOString().split("T")[0];
-        document.getElementById("dataSelecionada").value = dataAtual;
-        let lista = JSON.parse(localStorage.getItem("presenca_" + dataAtual)) || [];
+        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+        let editIndex = null;
 
-        function filtrarColaboradores() {
-            const uf = document.getElementById("uf").value;
-            const selectColab = document.getElementById("colaborador");
-            selectColab.innerHTML = '<option disabled selected value="">Selecione o Colaborador</option>';
+        window.onload = () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataSelecionada').value = hoje;
+            gerarCheckboxesStatus(); // Inicia os checkboxes
+            atualizarTabela();
+        };
 
-            Object.keys(baseDados).sort().forEach(nome => {
-                if (baseDados[nome].uf === uf) {
-                    let opt = document.createElement("option");
-                    opt.value = nome; opt.text = nome;
-                    selectColab.appendChild(opt);
-                }
+        // --- NOVA FUNÇÃO: GERAR CHECKBOXES ---
+        function gerarCheckboxesStatus() {
+            const container = document.getElementById('statusCheckboxes');
+            const selectOriginal = document.getElementById('status');
+            const options = Array.from(selectOriginal.options).filter(opt => opt.value !== "");
+
+            container.innerHTML = "";
+            options.forEach(opt => {
+                const label = document.createElement('label');
+                label.className = 'status-item';
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.name = 'statusCheck';
+                cb.value = opt.value;
+                cb.onchange = (e) => vincularCheckboxComSelect(e.target);
+
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(opt.text));
+                container.appendChild(label);
             });
         }
 
-        function correlacionarDados() {
-            const nome = document.getElementById("colaborador").value;
-            const info = baseDados[nome];
-            if (info) {
-                document.getElementById("empresa").value = info.empresa || "TLP SERVIÇOS";
-                document.getElementById("microArea").value = info.micro;
-                document.getElementById("supervisorTLP").value = info.super;
-                document.getElementById("coordTLP").value = info.coord;
-                document.getElementById("status").focus();
+        // --- NOVA FUNÇÃO: VINCULAR CHECKBOX COM SELECT ---
+        function vincularCheckboxComSelect(checkboxClicado) {
+            const checkboxes = document.getElementsByName('statusCheck');
+            const selectOriginal = document.getElementById('status');
+
+            if (checkboxClicado.checked) {
+                // Desmarca todos os outros para agir como Radio
+                checkboxes.forEach(cb => { if (cb !== checkboxClicado) cb.checked = false; });
+                selectOriginal.value = checkboxClicado.value;
+            } else {
+                selectOriginal.value = "";
             }
         }
 
-        function salvar() { localStorage.setItem("presenca_" + dataAtual, JSON.stringify(lista)); atualizarDashboard(); }
+        function trocarData() {
+            atualizarTabela();
+        }
 
-        function render() {
-            const tbody = document.getElementById("lista");
-            tbody.innerHTML = "";
-            lista.forEach((p, i) => {
-                tbody.innerHTML += `<tr>
-                <td>${p.uf}</td><td>${p.empresa}</td><td>${p.microArea}</td><td><strong>${p.recurso}</strong></td>
-                <td>${p.supervisor}</td><td>${p.coord}</td><td>${p.status}</td><td>${p.ta1 || "—"}</td><td>${p.ta2 || "—"}</td>
-                <td>${isAdmin ? `<button class="btn-edit" onclick="prepararEdicao(${i})">✎</button> <button class="btn-del" onclick="excluir(${i})">✖</button>` : "—"}</td>
-            </tr>`;
+        function filtrarSupervisores() {
+            const ufSel = document.getElementById('uf').value;
+            const selectSuper = document.getElementById('supervisorTLP');
+            const selectColab = document.getElementById('colaborador');
+
+            selectSuper.innerHTML = '<option disabled selected value="">2º Selecione o Supervisor</option>';
+            selectColab.innerHTML = '<option disabled selected value="">3º Selecione o Colaborador</option>';
+
+            const supervisores = [...new Set(Object.values(baseDados)
+                .filter(d => d.uf === ufSel)
+                .map(d => d.super))].sort();
+
+            supervisores.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                selectSuper.appendChild(opt);
             });
-            atualizarDashboard();
+        }
+
+        function filtrarPorSupervisor() {
+            const superSel = document.getElementById('supervisorTLP').value;
+            const selectColab = document.getElementById('colaborador');
+            selectColab.innerHTML = '<option disabled selected value="">3º Selecione o Colaborador</option>';
+
+            const colaboradores = Object.keys(baseDados).filter(nome => baseDados[nome].super === superSel).sort();
+
+            colaboradores.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                selectColab.appendChild(opt);
+            });
+        }
+
+        function preencherDadosColaborador() {
+            const nome = document.getElementById('colaborador').value;
+            const dados = baseDados[nome];
+
+            if (dados) {
+                document.getElementById('empresa').value = dados.empresa;
+                document.getElementById('microArea').value = dados.micro;
+                document.getElementById('coordTLP').value = dados.coord;
+
+                // Correlacionar status se já existir registro para este colaborador hoje
+                const dataAtual = document.getElementById('dataSelecionada').value;
+                const regExistente = registros.find(r => r.colaborador === nome && r.data === dataAtual);
+
+                // Limpar checkboxes antes de marcar o novo
+                const checkboxes = document.getElementsByName('statusCheck');
+                checkboxes.forEach(cb => cb.checked = false);
+
+                if (regExistente) {
+                    document.getElementById('status').value = regExistente.status;
+                    // Marcar o checkbox correspondente
+                    const cbParaMarcar = Array.from(checkboxes).find(cb => cb.value === regExistente.status);
+                    if (cbParaMarcar) cbParaMarcar.checked = true;
+                } else {
+                    document.getElementById('status').value = "";
+                }
+            }
         }
 
         function adicionar() {
-            const item = {
-                uf: document.getElementById("uf").value,
-                empresa: document.getElementById("empresa").value,
-                microArea: document.getElementById("microArea").value,
-                recurso: document.getElementById("colaborador").value,
-                supervisor: document.getElementById("supervisorTLP").value,
-                coord: document.getElementById("coordTLP").value,
-                status: document.getElementById("status").value,
-                ta1: document.getElementById("taPrimaria").value,
-                ta2: document.getElementById("taSecundaria").value
-            };
-            if (!item.recurso || !item.uf) return alert("Selecione UF e Colaborador!");
-            if (indexEditando !== null) lista[indexEditando] = item;
-            else lista.push(item);
-            salvar(); cancelarEdicao(); render();
+            const data = document.getElementById('dataSelecionada').value;
+            const uf = document.getElementById('uf').value;
+            const empresa = document.getElementById('empresa').value;
+            const micro = document.getElementById('microArea').value;
+            const colaborador = document.getElementById('colaborador').value;
+            const supervisor = document.getElementById('supervisorTLP').value;
+            const coord = document.getElementById('coordTLP').value;
+            const status = document.getElementById('status').value;
+
+            if (!uf || !colaborador || !status) {
+                alert("Preencha UF, Colaborador e Status!");
+                return;
+            }
+
+            const novoRegistro = { data, uf, empresa, micro, colaborador, supervisor, coord, status };
+
+            if (editIndex !== null) {
+                registros[editIndex] = novoRegistro;
+                editIndex = null;
+                document.getElementById('btnAdicionar').textContent = "Adicionar Registro";
+                document.getElementById('btnCancelar').style.display = "none";
+            } else {
+                // Se já existe no dia, remove o antigo (sobrescreve)
+                registros = registros.filter(r => !(r.colaborador === colaborador && r.data === data));
+                registros.push(novoRegistro);
+            }
+
+            localStorage.setItem('registros_presenca', JSON.stringify(registros));
+            atualizarTabela();
+            limparForm();
         }
 
-        function prepararEdicao(i) {
-            indexEditando = i; const p = lista[i];
-            document.getElementById("uf").value = p.uf; filtrarColaboradores();
-            document.getElementById("colaborador").value = p.recurso;
-            document.getElementById("empresa").value = p.empresa;
-            document.getElementById("microArea").value = p.microArea;
-            document.getElementById("supervisorTLP").value = p.supervisor;
-            document.getElementById("coordTLP").value = p.coord;
-            document.getElementById("status").value = p.status;
-            document.getElementById("taPrimaria").value = p.ta1;
-            document.getElementById("taSecundaria").value = p.ta2;
-            document.getElementById("btnAdicionar").innerText = "Atualizar Registro";
-            document.getElementById("btnCancelar").style.display = "inline-block";
+        function limparForm() {
+            document.getElementById('colaborador').value = "";
+            document.getElementById('status').value = "";
+            const checkboxes = document.getElementsByName('statusCheck');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        function atualizarTabela() {
+            const dataFiltro = document.getElementById('dataSelecionada').value;
+            const lista = document.getElementById('lista');
+            lista.innerHTML = "";
+
+            const filtrados = registros.filter(r => r.data === dataFiltro);
+
+            filtrados.forEach((reg, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${reg.uf}</td>
+                    <td>${reg.empresa}</td>
+                    <td>${reg.micro}</td>
+                    <td>${reg.colaborador}</td>
+                    <td>${reg.supervisor}</td>
+                    <td>${reg.coord}</td>
+                    <td><strong>${reg.status}</strong></td>
+                    <td>
+                        <button class="btn-edit" onclick="editar(${registros.indexOf(reg)})">✏️</button>
+                        <button class="btn-del" onclick="remover(${registros.indexOf(reg)})">🗑️</button>
+                    </td>
+                `;
+                lista.appendChild(tr);
+            });
+
+            atualizarCards(filtrados);
+        }
+
+        function atualizarCards(filtrados) {
+            document.getElementById('count-uf').textContent = [...new Set(filtrados.map(r => r.uf))].length;
+            document.getElementById('count-empresa').textContent = [...new Set(filtrados.map(r => r.empresa))].length;
+            document.getElementById('count-micro').textContent = [...new Set(filtrados.map(r => r.micro))].length;
+            document.getElementById('count-colab').textContent = filtrados.length;
+            document.getElementById('count-super').textContent = [...new Set(filtrados.map(r => r.supervisor))].length;
+            document.getElementById('count-coord').textContent = [...new Set(filtrados.map(r => r.coord))].length;
+        }
+
+        function remover(index) {
+            if (confirm("Deseja excluir este registro?")) {
+                registros.splice(index, 1);
+                localStorage.setItem('registros_presenca', JSON.stringify(registros));
+                atualizarTabela();
+            }
+        }
+
+        function editar(index) {
+            const reg = registros[index];
+            editIndex = index;
+
+            document.getElementById('uf').value = reg.uf;
+            filtrarSupervisores();
+            document.getElementById('supervisorTLP').value = reg.supervisor;
+            filtrarPorSupervisor();
+            document.getElementById('colaborador').value = reg.colaborador;
+            document.getElementById('empresa').value = reg.empresa;
+            document.getElementById('microArea').value = reg.micro;
+            document.getElementById('coordTLP').value = reg.coord;
+            document.getElementById('status').value = reg.status;
+
+            // Atualizar Checkboxes
+            const checkboxes = document.getElementsByName('statusCheck');
+            checkboxes.forEach(cb => {
+                cb.checked = (cb.value === reg.status);
+            });
+
+            document.getElementById('btnAdicionar').textContent = "Salvar Alteração";
+            document.getElementById('btnCancelar').style.display = "inline-block";
         }
 
         function cancelarEdicao() {
-            indexEditando = null;
-            document.getElementById("btnAdicionar").innerText = "Adicionar Registro";
-            document.getElementById("btnCancelar").style.display = "none";
-            document.querySelectorAll(".add-box select, .add-box input").forEach(i => i.selectedIndex = 0);
-            document.querySelectorAll(".add-box input").forEach(i => i.value = "");
+            editIndex = null;
+            document.getElementById('btnAdicionar').textContent = "Adicionar Registro";
+            document.getElementById('btnCancelar').style.display = "none";
+            limparForm();
         }
 
-        function excluir(i) { if (confirm("Excluir?")) { lista.splice(i, 1); salvar(); render(); } }
-        function trocarData() { dataAtual = document.getElementById("dataSelecionada").value; lista = JSON.parse(localStorage.getItem("presenca_" + dataAtual)) || []; render(); }
-        function loginAdmin() { if (prompt("Senha:") === "1234") { isAdmin = true; document.getElementById("btnLogin").innerText = "✅ Admin Ativo"; render(); } }
-
-        function atualizarDashboard() {
-            const total = lista.length;
-            document.getElementById("count-uf").innerText = total;
-            document.getElementById("count-colab").innerText = total;
-            document.getElementById("count-empresa").innerText = [...new Set(lista.map(p => p.empresa))].length;
-            document.getElementById("count-micro").innerText = [...new Set(lista.map(p => p.microArea))].length;
-            document.getElementById("count-super").innerText = [...new Set(lista.map(p => p.supervisor))].length;
-            document.getElementById("count-coord").innerText = [...new Set(lista.map(p => p.coord))].length;
-            document.getElementById("count-ta1").innerText = lista.filter(p => p.ta1.trim() !== "").length;
-            document.getElementById("count-ta2").innerText = lista.filter(p => p.ta2.trim() !== "").length;
+        function loginAdmin() {
+            const pass = prompt("Digite a senha de administrador:");
+            if (pass === "admin123") {
+                alert("Acesso liberado.");
+            } else {
+                alert("Senha incorreta.");
+            }
         }
 
         function exportarExcel() {
-            let csv = "\uFEFFUF;Empresa;Micro Area;Colaborador;Supervisor;Coordenador;Status;TA1;TA2\n";
-            lista.forEach(p => {
-                csv += `${p.uf};${p.empresa};${p.microArea};${p.recurso};${p.supervisor};${p.coord};${p.status};${p.ta1};${p.ta2}\n`;
+            let csv = "Data;UF;Empresa;Micro Area;Colaborador;Supervisor;Coordenador;Status\n";
+            registros.forEach(r => {
+                csv += `${r.data};${r.uf};${r.empresa};${r.micro};${r.colaborador};${r.supervisor};${r.coord};${r.status}\n`;
             });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `presenca_${dataAtual}.csv`;
+            link.download = `presenca_${document.getElementById('dataSelecionada').value}.csv`;
             link.click();
         }
-        render();
     </script>
-
 </body>
 
 </html>
