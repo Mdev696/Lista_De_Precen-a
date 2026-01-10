@@ -9,7 +9,7 @@
         :root {
             --primary: #2c3e50;
             --secondary: #34495e;
-            --accent: #3498db;
+            --accent: #348ddb;
             --success: #27ae60;
             --danger: #e74c3c;
             --light: #ecf0f1;
@@ -23,7 +23,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: auto;
             background: white;
             padding: 20px;
@@ -78,18 +78,45 @@
             margin-bottom: 20px;
         }
 
-        /* Container para listas de Checkbox */
+        .section-header {
+            grid-column: 1 / -1;
+            background: #eee;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 5px;
+        }
+
+        .arrow {
+            transition: transform 0.3s;
+        }
+
+        .collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+
         .list-container {
             grid-column: 1 / -1;
             background: #fff;
             padding: 15px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 8px;
             max-height: 200px;
             overflow-y: auto;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .item-check {
@@ -120,21 +147,6 @@
             box-sizing: border-box;
         }
 
-        .section-title {
-            grid-column: 1 / -1;
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--secondary);
-            margin-top: 10px;
-        }
-
-        .btn-group {
-            grid-column: 1 / -1;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
         button {
             cursor: pointer;
             border: none;
@@ -144,45 +156,26 @@
             transition: 0.3s;
         }
 
-        .btn-main {
+        .btn-lancar {
             background: var(--accent);
-            color: white;
-        }
-
-        .btn-admin {
-            background: var(--secondary);
-            color: white;
-            margin-bottom: 10px;
-        }
-
-        .btn-excel {
-            background: var(--success);
             color: white;
             width: 100%;
             margin-top: 10px;
+            font-size: 16px;
         }
 
         .btn-del {
             background: var(--danger);
             color: white;
             padding: 5px 10px;
-        }
-
-        .btn-edit {
-            background: #f39c12;
-            color: white;
-            padding: 5px 10px;
-        }
-
-        .table-wrap {
-            overflow-x: auto;
-            margin-top: 20px;
+            font-size: 10px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 11px;
+            margin-top: 20px;
         }
 
         th {
@@ -196,6 +189,14 @@
             padding: 10px;
             border-bottom: 1px solid #eee;
         }
+
+        .status-radio-group {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 5px;
+            
+        }
     </style>
 </head>
 
@@ -206,7 +207,7 @@
             <h1>Painel de Presença Operacional</h1>
             <div>
                 <label>📅 Data: </label>
-                <input type="date" id="dataSelecionada" onchange="trocarData()" style="width: auto;">
+                <input type="date" id="dataSelecionada" onchange="atualizarTabela()" style="width: auto;">
             </div>
         </header>
 
@@ -218,20 +219,15 @@
                 <h3>Empresa</h3><span class="value" id="count-empresa">0</span>
             </div>
             <div class="db-card">
-                <h3>Micro Área</h3><span class="value" id="count-micro">0</span>
-            </div>
-            <div class="db-card">
                 <h3>Colab.</h3><span class="value" id="count-colab">0</span>
             </div>
             <div class="db-card">
                 <h3>Superv.</h3><span class="value" id="count-super">0</span>
             </div>
             <div class="db-card">
-                <h3>Coord.</h3><span class="value" id="count-coord">0</span>
+                <h3>Gerente TLP</h3><span class="value" id="count-gerente">0</span>
             </div>
         </div>
-
-        <button onclick="loginAdmin()" id="btnLogin" class="btn-admin">🔓 Acesso Admin</button>
 
         <div class="add-box">
             <select id="uf" onchange="filtrarSupervisores()">
@@ -244,22 +240,24 @@
                 <option disabled selected value="">2º Selecione o Supervisor</option>
             </select>
 
-            <div class="section-title">3º Selecione os Colaboradores:</div>
-            <div class="list-container" id="colaboradoresCheckboxes">
+            <div class="section-header" onclick="toggleSection('colabSection', this)">
+                <span>3º Selecione os Colaboradores</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div id="colabSection" class="list-container">
+                <div id="colaboradoresCheckboxes" style="display: contents;"></div>
             </div>
 
-            <div class="section-title">4º Selecione os Status:</div>
-            <div class="list-container" id="statusCheckboxes">
+            <div class="section-header" onclick="toggleSection('statusSection', this)">
+                <span>4º Selecione o Status (Gera o Registro)</span>
+                <span class="arrow">▼</span>
             </div>
-
-            <div class="btn-group">
-                <button id="btnCancelar" class="btn-del" style="display:none;"
-                    onclick="cancelarEdicao()">Cancelar</button>
-                <button id="btnAdicionar" class="btn-main" onclick="adicionar()">Adicionar Registros</button>
+            <div id="statusSection" class="list-container">
+                <div id="statusRadios" class="status-radio-group"></div>
             </div>
         </div>
 
-        <div class="table-wrap">
+        <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
@@ -269,6 +267,7 @@
                         <th>Colaborador</th>
                         <th>Supervisor</th>
                         <th>Coordenador</th>
+                        <th>Gerente TLP</th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -276,10 +275,12 @@
                 <tbody id="lista"></tbody>
             </table>
         </div>
-        <button onclick="exportarExcel()" class="btn-excel">📥 Exportar para Excel</button>
+        <button onclick="lancarParaMain()" class="btn-lancar">🚀 Lançar para Main.html</button>
     </div>
 
     <script>
+        const getGerente = (uf) => uf === "RJ" ? "FABRICIO LEAL" : "PAULO RADAELLI";
+
         const baseDados = {
             "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
             "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
@@ -355,7 +356,7 @@
             "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
             "LEONARDO FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
             "MÁRCIO JOSÉ DE OLIVEIRA E SILVA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "MATHEUS FELIPE PONCE DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "MATHEUS FELIPE PONCE DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNOR": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "ROGÉRIO DE CASTRO GONÇALVES": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
@@ -412,22 +413,27 @@
         const listaStatus = ["PRESENTE", "PRESENTE - CONJUNTA", "PRESENTE - FORMATAÇÃO", "PRESENTE - PREVENTIVA", "INTERJORNADA(10h)", "INTERMEDIÁRIO (13h)", "INTERJORNADA(13h)", "INTERJORNADA(16h)", "INTERJORNADA (SEM RETORNO)", "NOTURNO", "FÉRIAS", "INSS", "ATESTADO", "FOLGA"];
 
         let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
-        let editIndex = null;
 
         window.onload = () => {
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dataSelecionada').value = hoje;
-            gerarCheckboxesStatus();
+            gerarRadiosStatus();
             atualizarTabela();
         };
 
-        function gerarCheckboxesStatus() {
-            const container = document.getElementById('statusCheckboxes');
+        function toggleSection(sectionId, headerEl) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('hidden');
+            headerEl.classList.toggle('collapsed');
+        }
+
+        function gerarRadiosStatus() {
+            const container = document.getElementById('statusRadios');
             container.innerHTML = "";
             listaStatus.forEach(status => {
                 const label = document.createElement('label');
                 label.className = 'item-check';
-                label.innerHTML = `<input type="checkbox" name="status" value="${status}"> ${status}`;
+                label.innerHTML = `<input type="radio" name="status" value="${status}" onclick="processarSelecaoAutomatica()"> ${status}`;
                 container.appendChild(label);
             });
         }
@@ -454,156 +460,117 @@
             const container = document.getElementById('colaboradoresCheckboxes');
             container.innerHTML = "";
 
-            const nomes = Object.keys(baseDados)
-                .filter(n => baseDados[n].super === superSel)
-                .sort();
+            const nomes = Object.keys(baseDados).filter(n => baseDados[n].super === superSel).sort();
 
             nomes.forEach(nome => {
                 const label = document.createElement('label');
                 label.className = 'item-check';
-                label.innerHTML = `<input type="checkbox" name="colab" value="${nome}"> ${nome}`;
+                label.innerHTML = `<input type="checkbox" name="colab" value="${nome}" onclick="limparStatus()"> ${nome}`;
                 container.appendChild(label);
             });
         }
 
-        function adicionar() {
-            const uf = document.getElementById('uf').value;
-            const supervisor = document.getElementById('supervisorTLP').value;
-            const data = document.getElementById('dataSelecionada').value;
+        function limparStatus() {
+            document.querySelectorAll('input[name="status"]').forEach(r => r.checked = false);
+        }
 
-            const colabsMarcados = Array.from(document.querySelectorAll('input[name="colab"]:checked')).map(i => i.value);
-            const statusMarcados = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(i => i.value);
+        function processarSelecaoAutomatica() {
+            const statusRadio = document.querySelector('input[name="status"]:checked');
+            if (!statusRadio) return;
 
-            if (!uf || !supervisor || colabsMarcados.length === 0 || statusMarcados.length === 0) {
-                alert("Selecione UF, Supervisor, pelo menos um Colaborador e um Status!");
+            const status = statusRadio.value;
+            const dataFiltro = document.getElementById('dataSelecionada').value;
+            const colabsMarcados = document.querySelectorAll('input[name="colab"]:checked');
+
+            if (colabsMarcados.length === 0) {
+                alert("Selecione ao menos um colaborador.");
+                limparStatus();
                 return;
             }
 
-            const statusTexto = statusMarcados.join(" / ");
-
-            // Se estiver editando (apenas um por vez na edição)
-            if (editIndex !== null) {
-                const nome = colabsMarcados[0];
+            colabsMarcados.forEach(cb => {
+                const nome = cb.value;
                 const info = baseDados[nome];
-                registros[editIndex] = {
-                    uf, super: supervisor, colab: nome, status: statusTexto, data,
-                    empresa: info.empresa, micro: info.micro, coord: info.coord
-                };
-                editIndex = null;
-                document.getElementById('btnAdicionar').innerText = "Adicionar Registros";
-                document.getElementById('btnCancelar').style.display = "none";
-            } else {
-                // Adicionando múltiplos
-                colabsMarcados.forEach(nome => {
-                    const info = baseDados[nome];
-                    // Evitar duplicata no mesmo dia
-                    const existe = registros.find(r => r.colab === nome && r.data === data);
-                    if (!existe) {
-                        registros.push({
-                            uf, super: supervisor, colab: nome, status: statusTexto, data,
-                            empresa: info.empresa, micro: info.micro, coord: info.coord
-                        });
-                    }
-                });
-            }
+
+                // Evitar duplicidade na mesma data
+                const existe = registros.some(r => r.colab === nome && r.data === dataFiltro);
+                if (!existe) {
+                    registros.push({
+                        data: dataFiltro,
+                        uf: info.uf,
+                        empresa: info.empresa,
+                        micro: info.micro,
+                        colab: nome,
+                        super: info.super,
+                        coord: info.coord,
+                        gerente: getGerente(info.uf),
+                        status: status
+                    });
+                }
+            });
 
             localStorage.setItem('registros_presenca', JSON.stringify(registros));
-            resetForm();
             atualizarTabela();
+            limparStatus();
+
+            // Desmarcar colabs após lançar para facilitar o próximo
+            colabsMarcados.forEach(cb => cb.checked = false);
         }
 
-        function resetForm() {
-            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-            // Mantém UF e Supervisor para facilitar lançamentos em massa se desejar, 
-            // ou resete tudo conforme abaixo:
-            // document.getElementById('uf').value = "";
-            // document.getElementById('supervisorTLP').innerHTML = '<option...>';
-            // document.getElementById('colaboradoresCheckboxes').innerHTML = "";
+        function excluirRegistro(index) {
+            if (confirm("Deseja realmente excluir este registro?")) {
+                // Pegamos o registro da lista visual para encontrar o índice real no array registros
+                const dataFiltro = document.getElementById('dataSelecionada').value;
+                const registrosDaData = registros.filter(r => r.data === dataFiltro);
+                const itemParaRemover = registrosDaData[index];
+
+                // Encontra o índice real no array principal e remove
+                const realIndex = registros.indexOf(itemParaRemover);
+                if (realIndex > -1) {
+                    registros.splice(realIndex, 1);
+                    localStorage.setItem('registros_presenca', JSON.stringify(registros));
+                    atualizarTabela();
+                }
+            }
         }
 
         function atualizarTabela() {
-            const lista = document.getElementById('lista');
-            const dataSel = document.getElementById('dataSelecionada').value;
-            lista.innerHTML = "";
+            const dataFiltro = document.getElementById('dataSelecionada').value;
+            const listaBody = document.getElementById('lista');
+            listaBody.innerHTML = "";
 
-            const filtrados = registros.filter(r => r.data === dataSel);
-            filtrados.forEach((r, idx) => {
-                const globalIdx = registros.indexOf(r);
-                lista.innerHTML += `<tr>
-                    <td>${r.uf}</td><td>${r.empresa}</td><td>${r.micro}</td><td>${r.colab}</td>
-                    <td>${r.super}</td><td>${r.coord}</td><td>${r.status}</td>
-                    <td>
-                        <button class="btn-edit" onclick="editar(${globalIdx})">✏️</button>
-                        <button class="btn-del" onclick="remover(${globalIdx})">🗑️</button>
-                    </td>
-                </tr>`;
+            const filtrados = registros.filter(r => r.data === dataFiltro);
+
+            filtrados.forEach((r, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.uf}</td>
+                    <td>${r.empresa}</td>
+                    <td>${r.micro}</td>
+                    <td><b>${r.colab}</b></td>
+                    <td>${r.super}</td>
+                    <td>${r.coord}</td>
+                    <td>${r.gerente}</td>
+                    <td><span style="color: #27ae60; font-weight: bold">${r.status}</span></td>
+                    <td><button class="btn-del" onclick="excluirRegistro(${i})">Excluir</button></td>
+                `;
+                listaBody.appendChild(tr);
             });
-            atualizarCards();
+
+            atualizarDashboard(filtrados);
         }
 
-        function editar(index) {
-            const r = registros[index];
-            editIndex = index;
-            document.getElementById('uf').value = r.uf;
-            filtrarSupervisores();
-            document.getElementById('supervisorTLP').value = r.super;
-            filtrarColaboradores();
-
-            // Marcar o colaborador específico
-            setTimeout(() => {
-                document.querySelectorAll('input[name="colab"]').forEach(i => i.checked = (i.value === r.colab));
-                const sts = r.status.split(" / ");
-                document.querySelectorAll('input[name="status"]').forEach(i => i.checked = sts.includes(i.value));
-            }, 10);
-
-            document.getElementById('btnAdicionar').innerText = "Salvar Alteração";
-            document.getElementById('btnCancelar').style.display = "inline-block";
-            window.scrollTo(0, 0);
+        function atualizarDashboard(lista) {
+            document.getElementById('count-uf').innerText = [...new Set(lista.map(r => r.uf))].length;
+            document.getElementById('count-empresa').innerText = [...new Set(lista.map(r => r.empresa))].length;
+            document.getElementById('count-colab').innerText = lista.length;
+            document.getElementById('count-super').innerText = [...new Set(lista.map(r => r.super))].length;
+            document.getElementById('count-gerente').innerText = [...new Set(lista.map(r => r.gerente))].length;
         }
 
-        function remover(index) {
-            if (confirm("Excluir registro?")) {
-                registros.splice(index, 1);
-                localStorage.setItem('registros_presenca', JSON.stringify(registros));
-                atualizarTabela();
-            }
-        }
-
-        function cancelarEdicao() {
-            editIndex = null;
-            resetForm();
-            document.getElementById('btnAdicionar').innerText = "Adicionar Registros";
-            document.getElementById('btnCancelar').style.display = "none";
-        }
-
-        function trocarData() { atualizarTabela(); }
-
-        function atualizarCards() {
-            const dataSel = document.getElementById('dataSelecionada').value;
-            const f = registros.filter(r => r.data === dataSel);
-            document.getElementById('count-uf').innerText = new Set(f.map(r => r.uf)).size;
-            document.getElementById('count-empresa').innerText = new Set(f.map(r => r.empresa)).size;
-            document.getElementById('count-micro').innerText = new Set(f.map(r => r.micro)).size;
-            document.getElementById('count-colab').innerText = f.length;
-            document.getElementById('count-super').innerText = new Set(f.map(r => r.super)).size;
-            document.getElementById('count-coord').innerText = new Set(f.map(r => r.coord)).size;
-        }
-
-        function exportarExcel() {
-            let csv = "\uFEFFData;UF;Empresa;Micro Area;Colaborador;Supervisor;Coordenador;Status\n";
-            registros.forEach(r => {
-                csv += `${r.data};${r.uf};${r.empresa};${r.micro};${r.colab};${r.super};${r.coord};${r.status}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `presenca_${document.getElementById('dataSelecionada').value}.csv`;
-            link.click();
-        }
-
-        function loginAdmin() {
-            const senha = prompt("Senha:");
-            if (senha === "admin123") alert("Liberado!");
+        function lancarParaMain() {
+            alert("Dados sincronizados com o banco local. Abra o arquivo 'main.html' para visualizar o relatório consolidado.");
+            window.location.href = "main.html";
         }
     </script>
 </body>
