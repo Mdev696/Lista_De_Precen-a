@@ -174,24 +174,24 @@
     </div>
 
     <script>
-        // Dados brutos conforme correlação enviada (Normalizados)
+        // DADOS ÚNICOS: Cada Supervisor aparece apenas uma vez correlacionado aos seus gestores
         const dadosCorrelacionados = [
-            // RJ (81 linhas totais baseadas na lista enviada)
-            ...Array(6).fill({ uf: "RJ", sup: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            ...Array(14).fill({ uf: "RJ", sup: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            ...Array(11).fill({ uf: "RJ", sup: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            ...Array(24).fill({ uf: "RJ", sup: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            ...Array(6).fill({ uf: "RJ", sup: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            ...Array(1).fill({ uf: "RJ", sup: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            ...Array(7).fill({ uf: "RJ", sup: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            ...Array(12).fill({ uf: "RJ", sup: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
+            // RJ
+            { uf: "RJ", sup: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "RJ", sup: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "RJ", sup: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "RJ", sup: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "RJ", sup: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "RJ", sup: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "RJ", sup: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "RJ", sup: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
 
-            // ES (50 linhas totais baseadas na lista enviada)
-            ...Array(2).fill({ uf: "ES", sup: "RENAN ALVARINTO", coord: "LUCAS PERES", ger: "PAULO RADAELLI" }),
-            ...Array(13).fill({ uf: "ES", sup: "LIVIO MOREIRA", coord: "LUCAS PERES", ger: "PAULO RADAELLI" }),
-            ...Array(11).fill({ uf: "ES", sup: "PABLO BATISTA", coord: "LUCAS PERES", ger: "PAULO RADAELLI" }),
-            ...Array(12).fill({ uf: "ES", sup: "ITALO COELHO", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" }),
-            ...Array(12).fill({ uf: "ES", sup: "BRUNO ALCANTARA", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" })
+            // ES
+            { uf: "ES", sup: "RENAN ALVARINTO", coord: "LUCAS PERES", ger: "PAULO RADAELLI" },
+            { uf: "ES", sup: "LIVIO MOREIRA", coord: "LUCAS PERES", ger: "PAULO RADAELLI" },
+            { uf: "ES", sup: "PABLO BATISTA", coord: "LUCAS PERES", ger: "PAULO RADAELLI" },
+            { uf: "ES", sup: "ITALO COELHO", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" },
+            { uf: "ES", sup: "BRUNO ALCANTARA", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" }
         ];
 
         const tbody = document.getElementById('lista');
