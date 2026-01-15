@@ -169,13 +169,11 @@
     </div>
 
     <script>
-        // Dados mantidos e correlacionados (Coluna Supervisor removida da visualização)
-        const dadosCorrelacionados = [
-            // RJ 
-            ...Array(81).fill({ uf: "RJ", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
-            // ES
-            ...Array(26).fill({ uf: "ES", coord: "LUCAS PERES", ger: "PAULO RADAELLI" }),
-            ...Array(24).fill({ uf: "ES", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" })
+        // DADOS SEM DUPLICIDADE: Apenas as combinações únicas de cargos
+        const dadosUnicos = [
+            { uf: "RJ", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+            { uf: "ES", coord: "LUCAS PERES", ger: "PAULO RADAELLI" },
+            { uf: "ES", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" }
         ];
 
         const tbody = document.getElementById('lista');
@@ -192,7 +190,7 @@
 
         function popularTabela() {
             tbody.innerHTML = "";
-            dadosCorrelacionados.forEach(d => {
+            dadosUnicos.forEach(d => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><span class="badge ${d.uf.toLowerCase()}">${d.uf}</span></td>
@@ -209,7 +207,7 @@
             const fGER = selects.ger.value;
             const fCOORD = selects.coord.value;
 
-            const dadosFiltrados = dadosCorrelacionados.filter(d =>
+            const dadosFiltrados = dadosUnicos.filter(d =>
                 (fUF === "" || d.uf === fUF) &&
                 (fGER === "" || d.ger === fGER) &&
                 (fCOORD === "" || d.coord === fCOORD)
