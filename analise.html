@@ -17,7 +17,36 @@
             background-color: var(--bg);
             padding: 20px;
             margin: 0;
+            position: relative;
+            /* Necessário para o posicionamento das abas */
         }
+
+        /* --- Estilo das Novas Abas --- */
+        .nav-tabs {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tabs a {
+            text-decoration: none;
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            transition: background 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-tabs a:hover {
+            background-color: var(--secondary);
+        }
+
+        /* --------------------------- */
 
         h2 {
             color: var(--primary);
@@ -97,6 +126,12 @@
 
 <body>
 
+    <div class="nav-tabs">
+        <a href="analise.html" target="_blank">Tec</a>
+        <a href="coord.html" target="_blank">Ger-Coord-Sup</a>
+        <a href="ger.html" target="_blank">Ger-Coord</a>
+    </div>
+
     <h2>Relatório Analítico Consolidado - TLP</h2>
 
     <div class="table-container">
@@ -154,7 +189,6 @@
         const tbody = document.getElementById('lista');
 
         function popularTabela() {
-            // Renderizar ES
             for (const [sup, colaboradores] of Object.entries(mapeamentoES)) {
                 colaboradores.forEach(nome => {
                     const coord = (sup === "ITALO COELHO" || sup === "BRUNO ALCANTARA") ? "THIAGO JACOB" : "LUCAS PERES";
@@ -170,7 +204,6 @@
                 });
             }
 
-            // Renderizar RJ
             for (const [sup, colaboradores] of Object.entries(mapeamentoRJ)) {
                 colaboradores.forEach(nome => {
                     const tr = document.createElement('tr');
@@ -207,7 +240,6 @@
             }
         }
 
-        // Inicializar tabela
         popularTabela();
     </script>
 </body>

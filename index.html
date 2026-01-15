@@ -197,6 +197,30 @@
             gap: 5px;
 
         }
+
+        /*BUTON*/
+        .botao-analise {
+            background-color: #007bff;
+            /* Cor de fundo (Azul) */
+            color: white;
+            /* Cor do texto */
+            padding: 10px 20px;
+            /* Espaçamento interno */
+            text-decoration: none;
+            /* Remove o sublinhado */
+            border-radius: 5px;
+            /* Arredonda os cantos */
+            display: inline-block;
+            /* Permite ajustar o tamanho */
+            font-family: Arial, sans-serif;
+            transition: 0.3s;
+            /* Suaviza a mudança de cor */
+        }
+
+        .botao-analise:hover {
+            background-color: #0056b3;
+            /* Cor quando passa o rato */
+        }
     </style>
 </head>
 
@@ -209,7 +233,10 @@
                 <label>📅 Data: </label>
                 <input type="date" id="dataSelecionada" onchange="atualizarTabela()" style="width: auto;">
             </div>
+
+            <a href="analise.html" class="botao-analise">Analise</a>
         </header>
+
 
         <div class="dashboard-grid">
             <div class="db-card">

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Dados TLP - Correlação Consolidada</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --bg: #f4f7f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            padding: 20px;
+            margin: 0;
+            position: relative;
+        }
+
+        .nav-tabs {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tabs a {
+            text-decoration: none;
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            transition: background 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-tabs a:hover {
+            background-color: var(--secondary);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-left: 5px solid var(--secondary);
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+            max-height: 85vh;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            min-width: 1400px;
+        }
+
+        thead th {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-align: left;
+        }
+
+        .filter-select {
+            width: 95%;
+            margin-top: 5px;
+            padding: 4px;
+            font-size: 10px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            outline: none;
+            color: #333;
+            background: white;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f7ff;
+        }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .rj {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .es {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav-tabs">
+        <a href="analise.html" target="_blank">Tec</a>
+        <a href="coord.html" target="_blank">Ger-Coord-Sup</a>
+        <a href="ger.html" target="_blank">Ger-Coord</a>
+    </div>
+
+    <h2>Relatório Analítico Consolidado - TLP</h2>
+
+    <div class="table-container">
+        <table id="tableTLP">
+            <thead>
+                <tr>
+                    <th>UF<br>
+                        <select id="sel_uf" class="filter-select" onchange="filtrar()">
+                            <option value="">Todos</option>
+                            <option value="ES">ES</option>
+                            <option value="RJ">RJ</option>
+                        </select>
+                    </th>
+                    <th>GER_TLP<br>
+                        <select id="sel_ger" class="filter-select" onchange="filtrar()">
+                            <option value="">Todos</option>
+                        </select>
+                    </th>
+                    <th>COORD_TLP<br>
+                        <select id="sel_coord" class="filter-select" onchange="filtrar()">
+                            <option value="">Todos</option>
+                        </select>
+                    </th>
+                    <th>EFETIVO</th>
+                    <th>PR Σx M-1</th>
+                    <th>PR Σx W-1</th>
+                    <th>PR D-1</th>
+                    <th>PR</th>
+                    <th>F</th>
+                    <th>FO</th>
+                    <th>FE</th>
+                    <th>INTJ</th>
+                    <th>ABS</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Dados mantidos e correlacionados (Coluna Supervisor removida da visualização)
+        const dadosCorrelacionados = [
+            // RJ 
+            ...Array(81).fill({ uf: "RJ", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" }),
+            // ES
+            ...Array(26).fill({ uf: "ES", coord: "LUCAS PERES", ger: "PAULO RADAELLI" }),
+            ...Array(24).fill({ uf: "ES", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" })
+        ];
+
+        const tbody = document.getElementById('lista');
+        const selects = {
+            uf: document.getElementById('sel_uf'),
+            ger: document.getElementById('sel_ger'),
+            coord: document.getElementById('sel_coord')
+        };
+
+        function inicializar() {
+            popularTabela();
+            atualizarOpcoes();
+        }
+
+        function popularTabela() {
+            tbody.innerHTML = "";
+            dadosCorrelacionados.forEach(d => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge ${d.uf.toLowerCase()}">${d.uf}</span></td>
+                    <td>${d.ger}</td>
+                    <td>${d.coord}</td>
+                    <td>-</td>
+                    <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function atualizarOpcoes() {
+            const fUF = selects.uf.value;
+            const fGER = selects.ger.value;
+            const fCOORD = selects.coord.value;
+
+            const dadosFiltrados = dadosCorrelacionados.filter(d =>
+                (fUF === "" || d.uf === fUF) &&
+                (fGER === "" || d.ger === fGER) &&
+                (fCOORD === "" || d.coord === fCOORD)
+            );
+
+            const sets = {
+                ger: [...new Set(dadosFiltrados.map(d => d.ger))].sort(),
+                coord: [...new Set(dadosFiltrados.map(d => d.coord))].sort()
+            };
+
+            updateSelect('sel_ger', sets.ger, fGER);
+            updateSelect('sel_coord', sets.coord, fCOORD);
+        }
+
+        function updateSelect(id, lista, valorAtual) {
+            const el = document.getElementById(id);
+            el.innerHTML = '<option value="">Todos</option>';
+            lista.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                if (item === valorAtual) opt.selected = true;
+                el.appendChild(opt);
+            });
+        }
+
+        function filtrar() {
+            const fUF = selects.uf.value;
+            const fGER = selects.ger.value;
+            const fCOORD = selects.coord.value;
+
+            const trs = tbody.getElementsByTagName('tr');
+
+            for (let tr of trs) {
+                const tds = tr.getElementsByTagName('td');
+                const match =
+                    (fUF === "" || tds[0].textContent.trim() === fUF) &&
+                    (fGER === "" || tds[1].textContent.trim() === fGER) &&
+                    (fCOORD === "" || tds[2].textContent.trim() === fCOORD);
+
+                tr.style.display = match ? "" : "none";
+            }
+            atualizarOpcoes();
+        }
+
+        inicializar();
+    </script>
+</body>
+
+</html>
