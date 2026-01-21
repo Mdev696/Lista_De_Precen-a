@@ -1,27 +1,131 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise de Dados TLP - Filtros por Coluna</title>
+    <title>Analítico Operacional - Dashboard</title>
     <style>
         :root {
             --primary: #2c3e50;
-            --secondary: #3498db;
-            --bg: #f4f7f9;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: var(--bg);
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
             margin: 0;
-            position: relative;
-            /* Necessário para o posicionamento das abas */
+            padding: 20px;
         }
 
-        /* --- Estilo das Novas Abas --- */
+        .container {
+            max-width: 1300px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .filtro-box {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #dcdde1;
+        }
+
+        input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .txt-pr {
+            color: var(--success);
+        }
+
+        .txt-f {
+            color: var(--danger);
+        }
+
+        .txt-fo {
+            color: var(--warning);
+        }
+
+        .txt-fe {
+            color: var(--accent);
+        }
+
+        .txt-abs {
+            color: #8e44ad;
+            font-size: 22px;
+            background: #f8f0fb;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .btn-voltar {
+            background: var(--secondary);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .legenda {
+            margin-top: 30px;
+            padding: 15px;
+            background: #fffdf0;
+            border-left: 5px solid var(--warning);
+            font-size: 13px;
+        }
+
         .nav-tabs {
             position: absolute;
             top: 20px;
@@ -29,6 +133,8 @@
             display: flex;
             gap: 10px;
         }
+
+
 
         .nav-tabs a {
             text-decoration: none;
@@ -41,207 +147,127 @@
             transition: background 0.3s;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
-
-        .nav-tabs a:hover {
-            background-color: var(--secondary);
-        }
-
-        /* --------------------------- */
-
-        h2 {
-            color: var(--primary);
-            border-left: 5px solid var(--secondary);
-            padding-left: 15px;
-            margin-bottom: 20px;
-        }
-
-        .table-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            overflow: auto;
-            max-height: 85vh;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            min-width: 1400px;
-        }
-
-        thead th {
-            background-color: var(--primary);
-            color: white;
-            padding: 10px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            text-align: left;
-        }
-
-        .filter-input {
-            width: 90%;
-            margin-top: 5px;
-            padding: 4px;
-            font-size: 10px;
-            border-radius: 3px;
-            border: 1px solid #ddd;
-            outline: none;
-            color: #333;
-        }
-
-        td {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            white-space: nowrap;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        tbody tr:hover {
-            background-color: #f1f7ff;
-        }
-
-        .badge {
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-            display: inline-block;
-        }
-
-        .rj {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .es {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
     </style>
 </head>
 
 <body>
 
-    <div class="nav-tabs">
-        <a href="index.html" target="_blank">Lits</a>
-        <a href="analise.html" target="_blank">Tec</a>
-        <a href="coord.html" target="_blank">Ger-Coord-Sup</a>
-        <a href="ger.html" target="_blank">Ger-Coord</a>
-    </div>
+    
 
-    <h2>Relatório Analítico Consolidado - TLP</h2>
+    <div class="container">
 
-    <div class="table-container">
-        <table id="tableTLP">
-            <thead>
-                <tr>
-                    <th>UF<br><input type="text" class="filter-input" onkeyup="filterColumn(0)"
-                            placeholder="Filtrar..."></th>
-                    <th>GER_TLP<br><input type="text" class="filter-input" onkeyup="filterColumn(1)"
-                            placeholder="Filtrar..."></th>
-                    <th>COORD_TLP<br><input type="text" class="filter-input" onkeyup="filterColumn(2)"
-                            placeholder="Filtrar..."></th>
-                    <th>SUP_TLP<br><input type="text" class="filter-input" onkeyup="filterColumn(3)"
-                            placeholder="Filtrar..."></th>
-                    <th>COLABORADOR<br><input type="text" class="filter-input" onkeyup="filterColumn(4)"
-                            placeholder="Filtrar..."></th>
-                    <th>PR Σx M-1</th>
-                    <th>PR Σx W-1</th>
-                    <th>PR D-1</th>
-                    <th>PR</th>
-                    <th>F</th>
-                    <th>FO</th>
-                    <th>FE</th>
-                    <th>INTJ</th>
-                    <th>ABS</th>
-                </tr>
-            </thead>
-            <tbody id="lista">
-            </tbody>
-        </table>
+       
+
+        <header>
+            <h1>📊 Analítico de Indicadores KPI</h1>
+            <a href="index.html" class="btn-voltar">⬅ Voltar ao Lançamento</a>
+            <a href="Colab.html" class="btn-voltar">Colaborador</a>
+            <a href="coord.html" class="btn-voltar">Supervisor</a>
+            <a href="ger.html" class="btn-voltar">Coordenador</a>
+        </header>
+
+        <div class="filtro-box">
+            <strong>Data de Referência:</strong>
+            <input type="date" id="dataFiltro" onchange="gerarAnalise()">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PR Σx M-1</th>
+                        <th>PR Σx W-1</th>
+                        <th>PR D-1</th>
+                        <th>PR (Presença)</th>
+                        <th>F (Falta)</th>
+                        <th>FO (Folga)</th>
+                        <th>FE (Férias)</th>
+                        <th>INTJ</th>
+                        <th>ABS (Absenteísmo)</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
+        </div>
+
+        <div class="legenda">
+            <strong>Lógica de Correlação ABS:</strong><br>
+            O cálculo é a soma direta de <b>(Falta + Folga + Férias) / Total de Lançamentos</b>.<br>
+            Isso garante que qualquer ausência impacte negativamente o indicador.
+        </div>
     </div>
 
     <script>
-        // Mapeamento de Dados Espírito Santo (ES)
-        const mapeamentoES = {
-            "LIVIO MOREIRA": ["PEDRO IVO DA SILVA DIAS", "RONEY MELO SANTOS", "MARCO ANTONIO PETERLE TAVORA", "PATRICK HENRIQUE ALVES DE OLIV", "ABRAÃO SANTOS DOS ANJOS", "RAFAEL GUASTI MARTINS", "GABRIEL RODRIGUES E SOUZA", "JOSÉ THIAGO BRITO", "WARLEY CARVALHO BERNADES", "ARTHUR SCHULTZ DOS SANTOS", "EMANUEL MARTINS DE MORAES", "VINICIUS BARCELOS", "FRANCISCO FAGNER ALENCAR COSTA", "MICAIAS GARCIA", "LORRAN PEREIRA DA SILVA"],
-            "PABLO BATISTA": ["RAYAN SILVEIRA SCHAIDER", "JONATAS SANTOS DOS ANJOS", "JOEL FERREIRA PERREIRA", "DAVID COSTA MIRANDA", "GUSTAVO LEITE", "DIOSE ALENCAR DE SOUZA", "BRENO NICOLAU VALASCO DA SILVA", "LUCAS LUIZ ALMEIDA DA VITORIA", "IGOR MAGNO MARTINS LEITE", "DOUGLAS NUNES DA COSTA", "JEFERSON FELIX DE JESUS"],
-            "BRUNO ALCANTARA": ["MARCELO PEREIRA DOS SANTOS", "GUILHERME SOBREIRA MACHADO", "KAIQUE DE MELO DE SOUZA", "PABLO DOS SANTOS", "ANDRE DOS SANTOS FUKS", "EDER CELIO PEREIRA", "WETHYLLEY DO CARMO NETO", "FABIO DUARTE", "VALDECI DOS REIS ANTUNES", "CAIO JORGE PERREIRA HONORIO", "THAYRAN DE OLIVEIRA DIAS DE SOUZA"],
-            "ITALO COELHO": ["JOAIS SANTOS DE OLIVEIRA", "DEILSON DOS SANTOS SOUZA", "JEAN CAMPOS DA SILVA", "WDSON NASCIMENTO DO CARMO", "VALDINERES DOS SANTOS", "UALAS FERNANDES FERREIRA", "LUCAS SANTOS DE ALMEIDA", "PEDRO HENRIQUE", "CARLOS EDUARDO MENDONÇA", "IGOR ALVES DE OLIVEIRA", "EMANUEL FREITAS OTT"],
-            "RENAN ALVARINTO": ["AUGUSTO ALMEIDA NETO", "WILLIAN LOPES PACHECO"]
-        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataFiltro').value = hoje;
+            gerarAnalise();
+        });
 
-        // Mapeamento de Dados Rio de Janeiro (RJ)
-        const mapeamentoRJ = {
-            "LUCIANO INACIO DA SILVA": ["ALEXSSANDRO PEDRO ARAUJO DE FREITAS", "BRENO OLIVEIRA DA SILVA VILELA", "EDSON VANDER PAIXAO", "GABRIEL DA SILVA COSTA", "GABRIEL EMANUEL DOS SANTOS TORRES", "GABRIEL RODRIGUES DA SILVA", "JONATHAN SANTOS DA SILVA", "LUCAS DA SILVA NUNES", "MARCELO LUIZ LEITE", "MAX WILLIANFURTADO DE JESUS", "MOISES GOMES DA SILVA FILHO", "RODRIGO BANNY DA SILVA", "ROGERIO GOMES DA SILVA", "WALLACE FERREIRA", "BRUNO NOGUEIRA GONTIJO", "DIEGO RODRIGUES DE FREITAS LUCIO", "FABIANO DE SANTANA ANDRADE", "GUSTAVO DOS SANTOS FERREIRA", "HELTON GONÇALVES DIAS", "HEMERSON MARCULINO", "KARTLEY RODRIGUES DA SILVA", "LEANDRO MACEDO DO COUTO", "LEONARDO FERREIRA", "PAULO DANIEL DE OLIVEIRA FREIRE", "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNOR", "RUAN PEREIRA RIBEIRO", "TIAGO DE ARAUJO MARTINS"],
-            "RODRIGO CUNHA DE LIMA": ["ALESSANDER SANTOS DOMINGOS", "ALLAN CESAR SILVA DE SOUZA", "ATILA VICTORIO MOCO", "CARLOS EDUARDO LACEERDA DE OLIVEIRA", "LEANDERSON MARCOS VIEIRA DA SILVA", "LUCAS CONTES MOREIRA", "MARIO CESAR RODRIGUES DOS SANTOS", "NILTON VIEIRA DA SILVA", "ROMEU DO NASCIMENTO VALENTE", "THIAGO DE OLIVEIRA FONSECA", "VICTOR HUGO DE SOUZA KLEN", "JOEL SEBASTIÃO DE LIMA", "MATHEUS FELIPE PONCE DE OLIVEIRA", "VITOR EDUARDO ROCHA SILVA"],
-            "WELLINGTON MORENO": ["ANDRE LUIZ SOARES DA COSTA", "FABIANO OLIVEIRA DA SILVA", "FABIO EUGENIO GONCALVES", "FABIO RODRIGO SAIEGH DUARTE", "MARCIO DE OLIVEIRA DA SILVA", "SAMUEL FIRMINO DE OLIVEIRA", "WILLIAM CESAR NASCIMENTO SILVA", "JEAN SANTOS DA COSTA", "STEFANO EDUARDI AGUIAR SILVA", "IAGO VENÂNCIO DA SILVA", "ROGÉRIO DE CASTRO GONÇALVES"],
-            "RAFAEL FAGNER SANTOS DA SILVA": ["LEANDRO ALBERTO CORREA BERREDO", "ALEX SANTOS PEREIRA DA CRUZ", "MATEUS BATISTA DA CUNHA", "WAGNER FERNANDES DOS SANTOS", "CLEYSON ALVES DOS SANTOS", "FELIPE SILVA DE LIMA", "WALLACE DA CONCEICAO PEREIRA", "FELIPE DA SILVA FREIRE", "MÁRCIO JOSÉ DE OLIVEIRA E SILVA"],
-            "CLOVIS BATISTA TORRES JUNIOR": ["DAVID DE OLIVEIRA CARDOSO", "HIAGO MARQUES RUAS", "LUCAS PEREIRA BONFIM", "MATHEUS DA SILVA TORRES", "MIGUEL PEREIRA GIMENES JUNIOR", "THALLES ROCHA CASTELIANO"],
-            "DIEGO CARDOSO": ["BRUNO DE LIMA SALLES", "FELIPE MIRANDA DE OLIVEIRA", "PEDRO PAULO CARVALHO SALEMA", "THALLES EDUARDO MARQUES BORGES", "WILLIAN CORDEIRO DE MOURA"],
-            "LEANDRO MARTINS ABBUD": ["ALAN PETRILHO HONORIO", "IAGO DAVI D AVILA DAMAZIO", "MAX EMILIANO INACIO DA ROCHA", "RODOLPHO JOSE TAVARES", "VAUSLEY DA SILVA COUTINHO"],
-            "RICARDO LUIZ SANTA ROSA": ["CHRISTIANO SUZANO BARCELOS"]
-        };
+        function gerarAnalise() {
+            const registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+            const dataSelecionada = document.getElementById('dataFiltro').value;
+            const corpo = document.getElementById('corpoTabela');
 
-        const tbody = document.getElementById('lista');
+            let kpi = {
+                pr: 0, f: 0, fo: 0, fe: 0, intj: 0,
+                prD1: 0, prW1: 0, prM1: 0, totalDia: 0
+            };
 
-        function popularTabela() {
-            for (const [sup, colaboradores] of Object.entries(mapeamentoES)) {
-                colaboradores.forEach(nome => {
-                    const coord = (sup === "ITALO COELHO" || sup === "BRUNO ALCANTARA") ? "THIAGO JACOB" : "LUCAS PERES";
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><span class="badge es">ES</span></td>
-                        <td>PAULO RADAELLI</td>
-                        <td>${coord}</td>
-                        <td>${sup}</td>
-                        <td>${nome}</td>
-                        <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
-                    tbody.appendChild(tr);
-                });
-            }
+            // Datas para comparação
+            const dataAlvoObj = new Date(dataSelecionada + "T12:00:00");
+            const dataOntemStr = new Date(dataAlvoObj.getTime() - 86400000).toISOString().split('T')[0];
+            const dataSemanaObj = new Date(dataAlvoObj.getTime() - (7 * 86400000));
 
-            for (const [sup, colaboradores] of Object.entries(mapeamentoRJ)) {
-                colaboradores.forEach(nome => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><span class="badge rj">RJ</span></td>
-                        <td>FABRICIO LEAL</td>
-                        <td>MARCELO ROCHA BATISTA</td>
-                        <td>${sup}</td>
-                        <td>${nome}</td>
-                        <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
-                    tbody.appendChild(tr);
-                });
-            }
+            registros.forEach(r => {
+                const status = r.status.trim().toUpperCase();
+                const rData = r.data;
+                const rDataObj = new Date(rData + "T12:00:00");
+
+                // Identificadores de Status
+                const ehPresenca = status.includes("PRESENTE") || status.includes("NOTURNO");
+                const ehFalta = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("INSS");
+                const ehFolga = status.includes("FOLGA") || status === "FO";
+                const ehFerias = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
+
+                // Contagem do Dia Selecionado
+                if (rData === dataSelecionada) {
+                    kpi.totalDia++; // Incrementa o divisor (Total)
+
+                    if (ehPresenca) kpi.pr++;
+                    if (ehFalta) kpi.f++;
+                    if (ehFolga) kpi.fo++;
+                    if (ehFerias) kpi.fe++;
+                    if (status.includes("INTERJORNADA")) kpi.intj++;
+                }
+
+                // Correlações Temporais
+                if (rData === dataOntemStr && ehPresenca) kpi.prD1++;
+                if (rDataObj >= dataSemanaObj && rDataObj <= dataAlvoObj && ehPresenca) kpi.prW1++;
+                if (rData.substring(0, 7) === dataSelecionada.substring(0, 7) && ehPresenca) kpi.prM1++;
+            });
+
+            // APLICAÇÃO DA CORRELAÇÃO ABS: (Falta + Folga + Férias) / Total
+            const somaAusencias = kpi.f + kpi.fo + kpi.fe;
+            const valorABS = kpi.totalDia > 0 ? ((somaAusencias / kpi.totalDia) * 100).toFixed(2) : "0.00";
+
+            // Cálculo M-1 (Média aproximada)
+            const valorM1 = (kpi.prM1 / 22).toFixed(2);
+
+            corpo.innerHTML = `
+                <tr>
+                    <td>${valorM1}</td>
+                    <td>${kpi.prW1}</td>
+                    <td>${kpi.prD1}</td>
+                    <td class="txt-pr">${kpi.pr}</td>
+                    <td class="txt-f">${kpi.f}</td>
+                    <td class="txt-fo">${kpi.fo}</td>
+                    <td class="txt-fe">${kpi.fe}</td>
+                    <td>${kpi.intj}</td>
+                    <td class="txt-abs">${valorABS}%</td>
+                </tr>
+            `;
         }
-
-        function filterColumn(index) {
-            const inputs = document.querySelectorAll('.filter-input');
-            const table = document.getElementById("tableTLP");
-            const tr = table.getElementsByTagName("tr");
-
-            for (let i = 1; i < tr.length; i++) {
-                let display = true;
-                inputs.forEach((input, idx) => {
-                    const filter = input.value.toUpperCase();
-                    const td = tr[i].getElementsByTagName("td")[idx];
-                    if (td) {
-                        const txtValue = td.textContent || td.innerText;
-                        if (txtValue.toUpperCase().indexOf(filter) === -1) {
-                            display = false;
-                        }
-                    }
-                });
-                tr[i].style.display = display ? "" : "none";
-            }
-        }
-
-        popularTabela();
     </script>
 </body>
 

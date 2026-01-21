@@ -302,7 +302,7 @@
                 <tbody id="lista"></tbody>
             </table>
         </div>
-        <button onclick="lancarParaMain()" class="btn-lancar">🚀 Lançar para Main.html</button>
+        <button onclick="lancarParaMain()" class="btn-lancar"><a href="main.html">Lançar</a></button>
     </div>
 
     <script>
@@ -598,6 +598,103 @@
         function lancarParaMain() {
             alert("Dados sincronizados com o banco local. Abra o arquivo 'main.html' para visualizar o relatório consolidado.");
             window.location.href = "main.html";
+        }
+
+        // 1. Função que é disparada ao clicar no Status (Rádio)
+        function processarSelecaoAutomatica() {
+            const data = document.getElementById('dataSelecionada').value;
+            const statusSel = document.querySelector('input[name="status"]:checked')?.value;
+            const checkboxes = document.querySelectorAll('input[name="colab"]:checked');
+
+            if (!data) {
+                alert("Por favor, selecione uma data primeiro.");
+                return;
+            }
+
+            if (checkboxes.length === 0) {
+                alert("Selecione ao menos um colaborador.");
+                return;
+            }
+
+            checkboxes.forEach(cb => {
+                const nomeColaborador = cb.value;
+                const info = baseDados[nomeColaborador]; // Aqui acontece a CORRELAÇÃO
+
+                const novoRegistro = {
+                    id: Date.now() + Math.random(),
+                    data: data,
+                    uf: info.uf,
+                    empresa: info.empresa,
+                    micro: info.micro,
+                    colaborador: nomeColaborador,
+                    supervisor: info.super,
+                    coordenador: info.coord,
+                    gerente: getGerente(info.uf), // Correlação do Gerente por UF
+                    status: statusSel
+                };
+
+                // Evita duplicidade no mesmo dia
+                registros = registros.filter(r => !(r.colaborador === nomeColaborador && r.data === data));
+                registros.push(novoRegistro);
+            });
+
+            // Salva e atualiza a tela
+            localStorage.setItem('registros_presenca', JSON.stringify(registros));
+            atualizarTabela();
+            limparSelecao();
+        }
+
+        // 2. Função para desenhar a tabela com as correlações
+        function atualizarTabela() {
+            const dataFiltro = document.getElementById('dataSelecionada').value;
+            const listaFiltro = registros.filter(r => r.data === dataFiltro);
+            const corpoTabela = document.getElementById('lista');
+
+            corpoTabela.innerHTML = "";
+
+            // Atualiza os Cards do Dashboard
+            document.getElementById('count-uf').innerText = [...new Set(listaFiltro.map(r => r.uf))].length;
+            document.getElementById('count-empresa').innerText = [...new Set(listaFiltro.map(r => r.empresa))].length;
+            document.getElementById('count-colab').innerText = listaFiltro.length;
+            document.getElementById('count-super').innerText = [...new Set(listaFiltro.map(r => r.supervisor))].length;
+            document.getElementById('count-gerente').innerText = [...new Set(listaFiltro.map(r => r.gerente))].length;
+
+            // Preenche as linhas da tabela
+            listaFiltro.forEach(reg => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${reg.uf}</td>
+                    <td>${reg.empresa}</td>
+                    <td>${reg.micro}</td>
+                    <td><strong>${reg.colaborador}</strong></td>
+                    <td>${reg.supervisor}</td>
+                    <td>${reg.coordenador}</td>
+                    <td>${reg.gerente}</td>
+                    <td>${reg.status}</td>
+                    <td><button onclick="removerItem(${reg.id})" class="btn-del">Excluir</button></td>
+                `;
+                corpoTabela.appendChild(tr);
+            });
+        }
+
+        function removerItem(id) {
+            registros = registros.filter(r => r.id !== id);
+            localStorage.setItem('registros_presenca', JSON.stringify(registros));
+            atualizarTabela();
+        }
+
+        function limparSelecao() {
+            document.querySelectorAll('input[name="colab"]').forEach(c => c.checked = false);
+            document.querySelectorAll('input[name="status"]').forEach(r => r.checked = false);
+        }
+
+        function limparStatus() {
+            document.querySelectorAll('input[name="status"]').forEach(r => r.checked = false);
+        }
+
+        function lancarParaMain() {
+            alert("Dados prontos para envio!");
+            console.log(registros);
         }
     </script>
 </body>

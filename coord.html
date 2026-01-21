@@ -1,285 +1,208 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise de Dados TLP - Correlação Consolidada</title>
+    <title>Visão por Supervisor - Operacional</title>
     <style>
         :root {
             --primary: #2c3e50;
-            --secondary: #3498db;
-            --bg: #f4f7f9;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --light: #ecf0f1;
+            --border-color: #dcdde1;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: var(--bg);
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
             margin: 0;
-            position: relative;
+            padding: 10px;
         }
 
-        .nav-tabs {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .nav-tabs a {
-            text-decoration: none;
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 13px;
-            font-weight: bold;
-            transition: background 0.3s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .nav-tabs a:hover {
-            background-color: var(--secondary);
-        }
-
-        h2 {
-            color: var(--primary);
-            border-left: 5px solid var(--secondary);
-            padding-left: 15px;
-            margin-bottom: 20px;
-        }
-
-        .table-container {
+        .container {
+            max-width: 98%;
+            margin: 15px auto;
             background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .btn-voltar {
+            background-color: var(--secondary);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 650px;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            overflow: auto;
-            max-height: 85vh;
+            border: 1px solid var(--border-color);
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            min-width: 1400px;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
         }
 
-        thead th {
-            background-color: var(--primary);
+        th {
+            background: var(--primary);
             color: white;
-            padding: 10px;
+            padding: 15px 12px;
+            text-align: left;
             position: sticky;
             top: 0;
             z-index: 10;
-            text-align: left;
-        }
-
-        .filter-select {
-            width: 95%;
-            margin-top: 5px;
-            padding: 4px;
-            font-size: 10px;
-            border-radius: 3px;
-            border: 1px solid #ddd;
-            outline: none;
-            color: #333;
-            background: white;
-        }
-
-        td {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
             white-space: nowrap;
         }
 
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #edf0f2;
+            white-space: nowrap;
+            color: var(--secondary);
         }
 
-        tbody tr:hover {
+        tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+
+        tr:hover {
             background-color: #f1f7ff;
         }
 
-        .badge {
-            padding: 2px 6px;
-            border-radius: 3px;
+        /* Estilo unificado para a coluna Efetivo */
+        .col-efetivo-dado {
             font-weight: bold;
-            display: inline-block;
-        }
-
-        .rj {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .es {
-            background: #e8f5e9;
-            color: #2e7d32;
+            color: var(--primary);
+            text-align: left;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="nav-tabs">
-        <a href="analise.html" target="_blank">Tec</a>
-        <a href="coord.html" target="_blank">Ger-Coord-Sup</a>
-        <a href="ger.html" target="_blank">Ger-Coord</a>
-    </div>
+    <div class="container">
+        <header>
+            <h1>Visão Consolidada por Supervisor</h1>
+            <a href="index.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+        </header>
 
-    <h2>Relatório Analítico Consolidado - TLP</h2>
-
-    <div class="table-container">
-        <table id="tableTLP">
-            <thead>
-                <tr>
-                    <th>UF<br>
-                        <select id="sel_uf" class="filter-select" onchange="filtrar()">
-                            <option value="">Todos</option>
-                            <option value="ES">ES</option>
-                            <option value="RJ">RJ</option>
-                        </select>
-                    </th>
-                    <th>GER_TLP<br>
-                        <select id="sel_ger" class="filter-select" onchange="filtrar()">
-                            <option value="">Todos</option>
-                        </select>
-                    </th>
-                    <th>COORD_TLP<br>
-                        <select id="sel_coord" class="filter-select" onchange="filtrar()">
-                            <option value="">Todos</option>
-                        </select>
-                    </th>
-                    <th>SUP_TLP<br>
-                        <select id="sel_sup" class="filter-select" onchange="filtrar()">
-                            <option value="">Todos</option>
-                        </select>
-                    </th>
-                    <th>EFETIVO</th>
-                    <th>PR Σx M-1</th>
-                    <th>PR Σx W-1</th>
-                    <th>PR D-1</th>
-                    <th>PR</th>
-                    <th>F</th>
-                    <th>FO</th>
-                    <th>FE</th>
-                    <th>INTJ</th>
-                    <th>ABS</th>
-                </tr>
-            </thead>
-            <tbody id="lista"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>Gerente TLP</th>
+                        <th>Coordenador</th>
+                        <th>Supervisor</th>
+                        <th>Efetivo</th>
+                        <th>PR Σx M-1</th>
+                        <th>PR Σx W-1</th>
+                        <th>PR D-1</th>
+                        <th>PR</th>
+                        <th>F</th>
+                        <th>FO</th>
+                        <th>FE</th>
+                        <th>INTJ</th>
+                        <th>ABS</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        // DADOS ÚNICOS: Cada Supervisor aparece apenas uma vez correlacionado aos seus gestores
-        const dadosCorrelacionados = [
-            // RJ
-            { uf: "RJ", sup: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
-            { uf: "RJ", sup: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
-            { uf: "RJ", sup: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
-            { uf: "RJ", sup: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
-            { uf: "RJ", sup: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
-            { uf: "RJ", sup: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
-            { uf: "RJ", sup: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
-            { uf: "RJ", sup: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", ger: "FABRICIO LEAL" },
+        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
 
-            // ES
-            { uf: "ES", sup: "RENAN ALVARINTO", coord: "LUCAS PERES", ger: "PAULO RADAELLI" },
-            { uf: "ES", sup: "LIVIO MOREIRA", coord: "LUCAS PERES", ger: "PAULO RADAELLI" },
-            { uf: "ES", sup: "PABLO BATISTA", coord: "LUCAS PERES", ger: "PAULO RADAELLI" },
-            { uf: "ES", sup: "ITALO COELHO", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" },
-            { uf: "ES", sup: "BRUNO ALCANTARA", coord: "THIAGO JACOB", ger: "PAULO RADAELLI" }
-        ];
-
-        const tbody = document.getElementById('lista');
-        const selects = {
-            uf: document.getElementById('sel_uf'),
-            ger: document.getElementById('sel_ger'),
-            coord: document.getElementById('sel_coord'),
-            sup: document.getElementById('sel_sup')
+        window.onload = () => {
+            renderizarVisaoSupervisor();
         };
 
-        function inicializar() {
-            popularTabela();
-            atualizarOpcoes();
-        }
+        function renderizarVisaoSupervisor() {
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = "";
 
-        function popularTabela() {
-            tbody.innerHTML = "";
-            dadosCorrelacionados.forEach(d => {
+            const hoje = new Date().toISOString().split('T')[0];
+            const supervisoresUnicos = [...new Set(registros.map(r => r.supervisor))].sort();
+
+            supervisoresUnicos.forEach(supNome => {
+                const dadosHojeSup = registros.filter(r => r.supervisor === supNome && r.data === hoje);
+
+                if (dadosHojeSup.length === 0) return;
+
+                const ref = dadosHojeSup[0];
+                let total_efetivo = dadosHojeSup.length;
+                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_intj = 0;
+
+                dadosHojeSup.forEach(colab => {
+                    const status = (colab.status || "").toUpperCase();
+                    const historico = registros.filter(r => r.colaborador === colab.colaborador);
+                    const dataFoco = new Date(hoje);
+
+                    // PR M-1 Fracionado
+                    const registrosMes = historico.filter(r => {
+                        const d = new Date(r.data);
+                        return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
+                    });
+                    soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+
+                    // Somatórios
+                    soma_pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+
+                    const ontem = new Date(dataFoco);
+                    ontem.setDate(ontem.getDate() - 1);
+                    const dataOntemStr = ontem.toISOString().split('T')[0];
+                    if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
+
+                    if (status.includes('PRESENTE')) soma_pr++;
+                    if (status.includes('FALTA')) soma_f++;
+                    if (status.includes('FOLGA')) soma_fo++;
+                    if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
+                    soma_intj += parseFloat(colab.intj || 0);
+                });
+
+                const absEquipe = (((soma_f + soma_fo + soma_fe) / total_efetivo) * 100).toFixed(2) + "%";
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><span class="badge ${d.uf.toLowerCase()}">${d.uf}</span></td>
-                    <td>${d.ger}</td>
-                    <td>${d.coord}</td>
-                    <td>${d.sup}</td>
-                    <td>-</td>
-                    <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
-                tbody.appendChild(tr);
+                    <td>${ref.uf || ''}</td>
+                    <td>${ref.gerente || ''}</td>
+                    <td>${ref.coordenador || ''}</td>
+                    <td><strong>${supNome}</strong></td>
+                    <td class="col-efetivo-dado">${total_efetivo}</td>
+                    <td>${soma_pr_m1.toFixed(2)}</td>
+                    <td>${soma_pr_w1}</td>
+                    <td>${soma_pr_d1}</td>
+                    <td>${soma_pr}</td>
+                    <td>${soma_f}</td>
+                    <td>${soma_fo}</td>
+                    <td>${soma_fe}</td>
+                    <td>${soma_intj.toFixed(2)}</td>
+                    <td>${absEquipe}</td>
+                `;
+                corpo.appendChild(tr);
             });
         }
-
-        function atualizarOpcoes() {
-            const fUF = selects.uf.value;
-            const fGER = selects.ger.value;
-            const fCOORD = selects.coord.value;
-            const fSUP = selects.sup.value;
-
-            const dadosFiltrados = dadosCorrelacionados.filter(d =>
-                (fUF === "" || d.uf === fUF) &&
-                (fGER === "" || d.ger === fGER) &&
-                (fCOORD === "" || d.coord === fCOORD) &&
-                (fSUP === "" || d.sup === fSUP)
-            );
-
-            const sets = {
-                ger: [...new Set(dadosFiltrados.map(d => d.ger))].sort(),
-                coord: [...new Set(dadosFiltrados.map(d => d.coord))].sort(),
-                sup: [...new Set(dadosFiltrados.map(d => d.sup))].sort()
-            };
-
-            updateSelect('sel_ger', sets.ger, fGER);
-            updateSelect('sel_coord', sets.coord, fCOORD);
-            updateSelect('sel_sup', sets.sup, fSUP);
-        }
-
-        function updateSelect(id, lista, valorAtual) {
-            const el = document.getElementById(id);
-            el.innerHTML = '<option value="">Todos</option>';
-            lista.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item;
-                opt.textContent = item;
-                if (item === valorAtual) opt.selected = true;
-                el.appendChild(opt);
-            });
-        }
-
-        function filtrar() {
-            const fUF = selects.uf.value;
-            const fGER = selects.ger.value;
-            const fCOORD = selects.coord.value;
-            const fSUP = selects.sup.value;
-
-            const trs = tbody.getElementsByTagName('tr');
-
-            for (let tr of trs) {
-                const tds = tr.getElementsByTagName('td');
-                const match =
-                    (fUF === "" || tds[0].textContent.trim() === fUF) &&
-                    (fGER === "" || tds[1].textContent.trim() === fGER) &&
-                    (fCOORD === "" || tds[2].textContent.trim() === fCOORD) &&
-                    (fSUP === "" || tds[3].textContent.trim() === fSUP);
-
-                tr.style.display = match ? "" : "none";
-            }
-            atualizarOpcoes();
-        }
-
-        inicializar();
     </script>
 </body>
 

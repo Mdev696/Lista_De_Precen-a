@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Presença - Operacional</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --light: #ecf0f1;
+            --border-color: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 98%;
+            margin: 15px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .btn-voltar {
+            background-color: var(--secondary);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .filtros {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Dashboard Ocultado conforme solicitado */
+        .card-resumo {
+            display: none;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 650px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #edf0f2;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 10px;
+            min-width: 80px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .bg-presente {
+            background: #e6ffed;
+            color: #1e7e34;
+            border: 1px solid #b7ebc6;
+        }
+
+        .bg-falta {
+            background: #fff1f0;
+            color: #cf1322;
+            border: 1px solid #ffa39e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Relatório Analítico de Presença</h1>
+            <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+        </header>
+
+        <div class="filtros">
+            <div>
+                <label>Data de Análise:</label>
+                <input type="date" id="filtroData" onchange="renderizarAnalise()">
+            </div>
+            <div>
+                <label>Equipe / Supervisor:</label>
+                <select id="filtroSuper" onchange="renderizarAnalise()">
+                    <option value="TODOS">TODOS OS SUPERVISORES</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card-resumo" id="resumoCards"></div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>Gerente TLP</th>
+                        <th>Coordenador</th>
+                        <th>Supervisor</th>
+                        <th>Colaborador</th>
+                        <th>Status</th>
+                        <th>PR Σx M-1</th>
+                        <th>PR Σx W-1</th>
+                        <th>PR D-1</th>
+                        <th>PR</th>
+                        <th>F</th>
+                        <th>FO</th>
+                        <th>FE</th>
+                        <th>INTJ</th>
+                        <th>ABS</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+
+        window.onload = () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('filtroData').value = hoje;
+            preencherFiltroSupervisores();
+            renderizarAnalise();
+        };
+
+        function preencherFiltroSupervisores() {
+            const select = document.getElementById('filtroSuper');
+            const supervisores = [...new Set(registros.map(r => r.supervisor))].sort();
+            supervisores.forEach(sup => {
+                const opt = document.createElement('option');
+                opt.value = sup;
+                opt.innerText = sup;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderizarAnalise() {
+            const dataSel = document.getElementById('filtroData').value;
+            const superSel = document.getElementById('filtroSuper').value;
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = "";
+
+            const dadosFiltrados = registros.filter(r => {
+                const matchData = r.data === dataSel;
+                const matchSuper = superSel === "TODOS" || r.supervisor === superSel;
+                return matchData && matchSuper;
+            });
+
+            dadosFiltrados.forEach(reg => {
+                const tr = document.createElement('tr');
+                const statusNormalizado = (reg.status || "").toUpperCase();
+                const classeStatus = statusNormalizado.includes('PRESENTE') ? 'bg-presente' : 'bg-falta';
+
+                const historicoColab = registros.filter(r => r.colaborador === reg.colaborador);
+                const dataFoco = new Date(dataSel);
+
+                // Lógica de cálculo original mantida
+                const registrosMes = historicoColab.filter(r => {
+                    const d = new Date(r.data);
+                    return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
+                });
+                const presMes = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                const pr_m1 = presMes.toFixed(2);
+
+                const pr_w1 = historicoColab.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+
+                const ontem = new Date(dataFoco);
+                ontem.setDate(ontem.getDate() - 1);
+                const dataOntemStr = ontem.toISOString().split('T')[0];
+                const regOntem = historicoColab.find(r => r.data === dataOntemStr);
+                const pr_d1 = regOntem && regOntem.status.toUpperCase().includes('PRESENTE') ? 1 : 0;
+
+                const f = statusNormalizado.includes('FALTA') ? 1 : 0;
+                const fo = statusNormalizado.includes('FOLGA') ? 1 : 0;
+                const fe = statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS') ? 1 : 0;
+                const pr = statusNormalizado.includes('PRESENTE') ? 1 : 0;
+
+                const absValue = ((f + fo + fe) / 1) * 100;
+                const absDisplay = absValue.toFixed(2) + "%";
+
+                tr.innerHTML = `
+                    <td>${reg.uf || ''}</td>
+                    <td>${reg.gerente || ''}</td>
+                    <td>${reg.coordenador || ''}</td>
+                    <td>${reg.supervisor || ''}</td>
+                    <td><strong>${reg.colaborador || ''}</strong></td>
+                    <td><span class="status-badge ${classeStatus}">${reg.status || ''}</span></td>
+                    
+                    <td>${pr_m1}</td> 
+                    <td>${pr_w1}</td>
+                    <td>${pr_d1}</td>
+                    <td>${pr}</td>
+                    <td>${f}</td>
+                    <td>${fo}</td>
+                    <td>${fe}</td>
+                    <td>${reg.intj || '0'}</td>
+                    <td>${absDisplay}</td>
+                `;
+                corpo.appendChild(tr);
+            });
+
+            if (dadosFiltrados.length === 0) {
+                corpo.innerHTML = "<tr><td colspan='15' style='text-align:center; padding:30px;'>Nenhum registro encontrado.</td></tr>";
+            }
+        }
+    </script>
+</body>
+
+</html>
