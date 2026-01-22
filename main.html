@@ -54,8 +54,13 @@
             text-align: center;
         }
 
-        .summary-rj { background: var(--rj-color); }
-        .summary-es { background: var(--es-color); }
+        .summary-rj {
+            background: var(--rj-color);
+        }
+
+        .summary-es {
+            background: var(--es-color);
+        }
 
         .filter-bar {
             display: grid;
@@ -81,7 +86,8 @@
             text-transform: uppercase;
         }
 
-        select, input {
+        select,
+        input {
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -108,7 +114,9 @@
             border-bottom: 1px solid #eee;
         }
 
-        tr:hover { background-color: #f1faff; }
+        tr:hover {
+            background-color: #f1faff;
+        }
 
         .status-badge {
             padding: 4px 8px;
@@ -275,7 +283,7 @@
         function popularFiltrosDinamicos() {
             const selectSuper = document.getElementById('filtroSuper');
             const selectStatus = document.getElementById('filtroStatus');
-            
+
             const supers = [...new Set(todosOsRegistros.map(r => r.super))].filter(Boolean).sort();
             const stats = [...new Set(todosOsRegistros.map(r => r.status))].filter(Boolean).sort();
 
@@ -347,7 +355,7 @@
         function editarRegistro(index) {
             const reg = todosOsRegistros[index];
             let mensagem = `Editar Status de: ${reg.colab}\n\nDigite o número correspondente:\n`;
-            
+
             for (let n in listaStatusMap) {
                 mensagem += `${n}. ${listaStatusMap[n]}\n`;
             }
