@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório Geral - Presença</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -245,9 +246,13 @@
     </div>
 
     <script>
+        // CONFIGURAÇÃO DO SUPABASE
+        const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let todosOsRegistros = [];
 
-        // Lista de status atualizada
         const listaStatusMap = {
             "1": "PRESENTE",
             "2": "PRESENTE - CONJUNTA",
@@ -265,26 +270,38 @@
             "14": "FOLGA"
         };
 
-        window.onload = () => {
-            carregarDados();
-            popularFiltrosDinamicos();
-            aplicarFiltros();
+        window.onload = async () => {
+            await carregarDados();
         };
 
-        function carregarDados() {
-            const dados = localStorage.getItem('registros_presenca');
-            todosOsRegistros = dados ? JSON.parse(dados) : [];
+        async function carregarDados() {
+            const { data, error } = await _supabase
+                .from('registros_presenca')
+                .select('*');
+
+            if (error) {
+                console.error("Erro ao carregar dados:", error);
+                const local = localStorage.getItem('registros_presenca');
+                todosOsRegistros = local ? JSON.parse(local) : [];
+            } else {
+                todosOsRegistros = data;
+            }
+
+            // Ordenação idêntica à original
             todosOsRegistros.sort((a, b) => {
                 if (b.data !== a.data) return new Date(b.data) - new Date(a.data);
-                return a.uf.localeCompare(b.uf);
+                return (a.uf || '').localeCompare(b.uf || '');
             });
+
+            popularFiltrosDinamicos();
+            aplicarFiltros();
         }
 
         function popularFiltrosDinamicos() {
             const selectSuper = document.getElementById('filtroSuper');
             const selectStatus = document.getElementById('filtroStatus');
 
-            const supers = [...new Set(todosOsRegistros.map(r => r.super))].filter(Boolean).sort();
+            const supers = [...new Set(todosOsRegistros.map(r => r.supervisor || r.super))].filter(Boolean).sort();
             const stats = [...new Set(todosOsRegistros.map(r => r.status))].filter(Boolean).sort();
 
             selectSuper.innerHTML = '<option value="">Todos os Supervisores</option>';
@@ -301,9 +318,10 @@
             const fStatus = document.getElementById('filtroStatus').value;
 
             const filtrados = todosOsRegistros.filter(r => {
+                const rSuper = r.supervisor || r.super;
                 return (fData === "" || r.data === fData) &&
                     (fUF === "" || r.uf === fUF) &&
-                    (fSuper === "" || r.super === fSuper) &&
+                    (fSuper === "" || rSuper === fSuper) &&
                     (fStatus === "" || r.status === fStatus);
             });
 
@@ -332,29 +350,31 @@
             lista.forEach((r) => {
                 const dataBR = r.data.split('-').reverse().join('/');
                 const corUF = r.uf === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)';
-                const indexReal = todosOsRegistros.indexOf(r);
+                const rColab = r.colaborador || r.colab;
+                const rSuper = r.supervisor || r.super;
+                const rMicro = r.micro_area || r.micro;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${dataBR}</td>
                     <td><b style="color: ${corUF}">${r.uf}</b></td>
-                    <td><strong>${r.colab}</strong></td>
-                    <td>${r.super}</td>
-                    <td>${r.micro}</td>
-                    <td>${r.empresa}</td>
+                    <td><strong>${rColab}</strong></td>
+                    <td>${rSuper}</td>
+                    <td>${rMicro || ''}</td>
+                    <td>${r.empresa || ''}</td>
                     <td><span class="status-badge">${r.status}</span></td>
                     <td style="text-align:center; min-width:80px;">
-                        <button class="btn-edit" onclick="editarRegistro(${indexReal})" title="Editar Status">✏️</button>
-                        <button class="btn-delete" onclick="excluirRegistro(${indexReal})" title="Excluir">🗑️</button>
+                        <button class="btn-edit" onclick="editarRegistro('${r.id}')" title="Editar Status">✏️</button>
+                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${rColab}')" title="Excluir">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function editarRegistro(index) {
-            const reg = todosOsRegistros[index];
-            let mensagem = `Editar Status de: ${reg.colab}\n\nDigite o número correspondente:\n`;
+        async function editarRegistro(id) {
+            const reg = todosOsRegistros.find(r => r.id == id);
+            let mensagem = `Editar Status de: ${reg.colaborador || reg.colab}\n\nDigite o número correspondente:\n`;
 
             for (let n in listaStatusMap) {
                 mensagem += `${n}. ${listaStatusMap[n]}\n`;
@@ -363,24 +383,36 @@
             const escolha = prompt(mensagem);
 
             if (escolha !== null && listaStatusMap[escolha]) {
-                todosOsRegistros[index].status = listaStatusMap[escolha];
-                salvarDados();
+                const novoStatus = listaStatusMap[escolha];
+
+                const { error } = await _supabase
+                    .from('registros_presenca')
+                    .update({ status: novoStatus })
+                    .eq('id', id);
+
+                if (error) {
+                    alert("Erro ao atualizar no banco!");
+                } else {
+                    await carregarDados(); // Recarrega para atualizar a tela
+                }
             } else if (escolha !== null) {
-                alert("Opção inválida. Por favor, digite um número de 1 a 14.");
+                alert("Opção inválida.");
             }
         }
 
-        function excluirRegistro(index) {
-            if (confirm(`Deseja apagar o registro de ${todosOsRegistros[index].colab}?`)) {
-                todosOsRegistros.splice(index, 1);
-                salvarDados();
-            }
-        }
+        async function excluirRegistro(id, nome) {
+            if (confirm(`Deseja apagar o registro de ${nome}?`)) {
+                const { error } = await _supabase
+                    .from('registros_presenca')
+                    .delete()
+                    .eq('id', id);
 
-        function salvarDados() {
-            localStorage.setItem('registros_presenca', JSON.stringify(todosOsRegistros));
-            popularFiltrosDinamicos();
-            aplicarFiltros();
+                if (error) {
+                    alert("Erro ao excluir do banco!");
+                } else {
+                    await carregarDados();
+                }
+            }
         }
 
         function limparFiltros() {
@@ -391,7 +423,6 @@
             aplicarFiltros();
         }
     </script>
-
 </body>
 
 </html>

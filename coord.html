@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visão por Supervisor - Operacional</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -89,7 +90,6 @@
             background-color: #f1f7ff;
         }
 
-        /* Estilo unificado para a coluna Efetivo */
         .col-efetivo-dado {
             font-weight: bold;
             color: var(--primary);
@@ -132,11 +132,33 @@
     </div>
 
     <script>
-        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+        // CONFIGURAÇÃO DO SUPABASE
+        const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        window.onload = () => {
-            renderizarVisaoSupervisor();
+        let registros = [];
+
+        window.onload = async () => {
+            await carregarDadosDoBanco();
         };
+
+        async function carregarDadosDoBanco() {
+            // Busca os dados no Supabase
+            const { data, error } = await _supabase
+                .from('registros_presenca')
+                .select('*');
+
+            if (error) {
+                console.error("Erro ao buscar dados:", error);
+                // Caso falhe, tenta ler do localStorage para não parar a aplicação
+                registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+            } else {
+                registros = data;
+            }
+
+            renderizarVisaoSupervisor();
+        }
 
         function renderizarVisaoSupervisor() {
             const corpo = document.getElementById('tabelaCorpo');
@@ -146,6 +168,9 @@
             const supervisoresUnicos = [...new Set(registros.map(r => r.supervisor))].sort();
 
             supervisoresUnicos.forEach(supNome => {
+                if (!supNome) return;
+
+                // Filtra os registros do dia para este supervisor
                 const dadosHojeSup = registros.filter(r => r.supervisor === supNome && r.data === hoje);
 
                 if (dadosHojeSup.length === 0) return;
@@ -159,14 +184,14 @@
                     const historico = registros.filter(r => r.colaborador === colab.colaborador);
                     const dataFoco = new Date(hoje);
 
-                    // PR M-1 Fracionado
+                    // Lógica original de cálculo PR M-1
                     const registrosMes = historico.filter(r => {
                         const d = new Date(r.data);
                         return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // Somatórios
+                    // Somatórios originais
                     soma_pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
                     const ontem = new Date(dataFoco);
@@ -175,8 +200,8 @@
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
                     if (status.includes('PRESENTE')) soma_pr++;
-                    if (status.includes('FALTA')) soma_f++;
-                    if (status.includes('FOLGA')) soma_fo++;
+                    if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
+                    if (status.includes('FOLGA') || status === 'FO') soma_fo++;
                     if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
                     soma_intj += parseFloat(colab.intj || 0);
                 });
@@ -186,7 +211,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${ref.uf || ''}</td>
-                    <td>${ref.gerente || ''}</td>
+                    <td>${ref.gerente_tlp || ref.gerente || ''}</td>
                     <td>${ref.coordenador || ''}</td>
                     <td><strong>${supNome}</strong></td>
                     <td class="col-efetivo-dado">${total_efetivo}</td>
@@ -202,6 +227,10 @@
                 `;
                 corpo.appendChild(tr);
             });
+
+            if (corpo.innerHTML === "") {
+                corpo.innerHTML = "<tr><td colspan='14' style='text-align:center; padding:20px;'>Nenhum registro encontrado para a data de hoje.</td></tr>";
+            }
         }
     </script>
 </body>

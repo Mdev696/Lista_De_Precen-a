@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visão por Coordenador - Operacional</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -130,31 +129,11 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
-        const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
 
-        let registros = [];
-
-        window.onload = async () => {
-            await carregarDadosDoBanco();
-        };
-
-        async function carregarDadosDoBanco() {
-            const { data, error } = await _supabase
-                .from('registros_presenca')
-                .select('*');
-
-            if (error) {
-                console.error("Erro ao carregar dados:", error);
-                registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
-            } else {
-                registros = data;
-            }
-
+        window.onload = () => {
             renderizarVisaoCoordenador();
-        }
+        };
 
         function renderizarVisaoCoordenador() {
             const corpo = document.getElementById('tabelaCorpo');
@@ -166,8 +145,6 @@
             const coordenadoresUnicos = [...new Set(registros.map(r => r.coordenador))].sort();
 
             coordenadoresUnicos.forEach(coordNome => {
-                if (!coordNome) return;
-
                 // Filtra dados do coordenador no dia de hoje
                 const dadosHojeCoord = registros.filter(r => r.coordenador === coordNome && r.data === hoje);
 
@@ -198,8 +175,8 @@
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
                     if (status.includes('PRESENTE')) soma_pr++;
-                    if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
-                    if (status.includes('FOLGA') || status === 'FO') soma_fo++;
+                    if (status.includes('FALTA')) soma_f++;
+                    if (status.includes('FOLGA')) soma_fo++;
                     if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
                     soma_intj += parseFloat(colab.intj || 0);
                 });
@@ -209,7 +186,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${ref.uf || ''}</td>
-                    <td>${ref.gerente_tlp || ref.gerente || ''}</td>
+                    <td>${ref.gerente || ''}</td>
                     <td class="col-negrito">${coordNome}</td>
                     <td class="col-negrito">${total_efetivo}</td>
                     <td>${soma_pr_m1.toFixed(2)}</td>
@@ -224,10 +201,6 @@
                 `;
                 corpo.appendChild(tr);
             });
-
-            if (corpo.innerHTML === "") {
-                corpo.innerHTML = "<tr><td colspan='13' style='text-align:center; padding:20px;'>Nenhum dado consolidado para hoje.</td></tr>";
-            }
         }
     </script>
 </body>

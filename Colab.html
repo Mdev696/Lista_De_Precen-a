@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Análise de Presença - Operacional</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -59,7 +60,6 @@
             border: 1px solid var(--border-color);
         }
 
-        /* Dashboard Ocultado conforme solicitado */
         .card-resumo {
             display: none;
         }
@@ -173,23 +173,50 @@
     </div>
 
     <script>
-        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+        // CONFIGURAÇÃO DO SUPABASE
+        const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        window.onload = () => {
+        let registros = []; // Agora alimentado pelo banco
+
+        window.onload = async () => {
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('filtroData').value = hoje;
+            await carregarDadosDoBanco();
+        };
+
+        async function carregarDadosDoBanco() {
+            const { data, error } = await _supabase
+                .from('registros_presenca')
+                .select('*');
+
+            if (error) {
+                console.error("Erro ao carregar dados:", error);
+                // Fallback para localStorage se o banco falhar
+                registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+            } else {
+                registros = data;
+            }
+
             preencherFiltroSupervisores();
             renderizarAnalise();
-        };
+        }
 
         function preencherFiltroSupervisores() {
             const select = document.getElementById('filtroSuper');
             const supervisores = [...new Set(registros.map(r => r.supervisor))].sort();
+
+            // Limpa antes de preencher para não duplicar
+            select.innerHTML = '<option value="TODOS">TODOS OS SUPERVISORES</option>';
+
             supervisores.forEach(sup => {
-                const opt = document.createElement('option');
-                opt.value = sup;
-                opt.innerText = sup;
-                select.appendChild(opt);
+                if (sup) {
+                    const opt = document.createElement('option');
+                    opt.value = sup;
+                    opt.innerText = sup;
+                    select.appendChild(opt);
+                }
             });
         }
 
@@ -213,7 +240,7 @@
                 const historicoColab = registros.filter(r => r.colaborador === reg.colaborador);
                 const dataFoco = new Date(dataSel);
 
-                // Lógica de cálculo original mantida
+                // Sua lógica original de cálculos
                 const registrosMes = historicoColab.filter(r => {
                     const d = new Date(r.data);
                     return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
@@ -229,9 +256,9 @@
                 const regOntem = historicoColab.find(r => r.data === dataOntemStr);
                 const pr_d1 = regOntem && regOntem.status.toUpperCase().includes('PRESENTE') ? 1 : 0;
 
-                const f = statusNormalizado.includes('FALTA') ? 1 : 0;
-                const fo = statusNormalizado.includes('FOLGA') ? 1 : 0;
-                const fe = statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS') ? 1 : 0;
+                const f = (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) ? 1 : 0;
+                const fo = (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') ? 1 : 0;
+                const fe = (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) ? 1 : 0;
                 const pr = statusNormalizado.includes('PRESENTE') ? 1 : 0;
 
                 const absValue = ((f + fo + fe) / 1) * 100;
@@ -239,7 +266,7 @@
 
                 tr.innerHTML = `
                     <td>${reg.uf || ''}</td>
-                    <td>${reg.gerente || ''}</td>
+                    <td>${reg.gerente_tlp || reg.gerente || ''}</td>
                     <td>${reg.coordenador || ''}</td>
                     <td>${reg.supervisor || ''}</td>
                     <td><strong>${reg.colaborador || ''}</strong></td>
@@ -259,7 +286,7 @@
             });
 
             if (dadosFiltrados.length === 0) {
-                corpo.innerHTML = "<tr><td colspan='15' style='text-align:center; padding:30px;'>Nenhum registro encontrado.</td></tr>";
+                corpo.innerHTML = "<tr><td colspan='15' style='text-align:center; padding:30px;'>Nenhum registro encontrado para esta data.</td></tr>";
             }
         }
     </script>

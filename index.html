@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Presença - Operacional</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -195,37 +196,29 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 5px;
-
         }
 
-        /*BUTON*/
         .botao-analise {
             background-color: #007bff;
-            /* Cor de fundo (Azul) */
             color: white;
-            /* Cor do texto */
             padding: 10px 20px;
-            /* Espaçamento interno */
             text-decoration: none;
-            /* Remove o sublinhado */
             border-radius: 5px;
-            /* Arredonda os cantos */
             display: inline-block;
-            /* Permite ajustar o tamanho */
             font-family: Arial, sans-serif;
             transition: 0.3s;
-            /* Suaviza a mudança de cor */
         }
 
-        .botao-analise:hover {
-            background-color: #0056b3;
-            /* Cor quando passa o rato */
+        .btn-sync {
+            background: var(--success);
+            color: white;
+            margin-bottom: 10px;
+            display: none;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
         <header>
             <h1>Painel de Presença Operacional</h1>
@@ -233,10 +226,11 @@
                 <label>📅 Data: </label>
                 <input type="date" id="dataSelecionada" onchange="atualizarTabela()" style="width: auto;">
             </div>
-
-            <a href="analise.html" class="botao-analise">Analítico </a>
+            <a href="analise.html" class="botao-analise">Analítico</a>
         </header>
 
+        <button id="btnMigrar" class="btn-sync" onclick="migrarDadosParaNuvem()">Sincronizar Dados Antigos com a
+            Nuvem</button>
 
         <div class="dashboard-grid">
             <div class="db-card">
@@ -262,22 +256,17 @@
                 <option value="RJ">RJ - Rio de Janeiro</option>
                 <option value="ES">ES - Espirito Santo</option>
             </select>
-
             <select id="supervisorTLP" onchange="filtrarColaboradores()">
                 <option disabled selected value="">2º Selecione o Supervisor</option>
             </select>
-
             <div class="section-header" onclick="toggleSection('colabSection', this)">
-                <span>3º Selecione os Colaboradores</span>
-                <span class="arrow">▼</span>
+                <span>3º Selecione os Colaboradores</span><span class="arrow">▼</span>
             </div>
             <div id="colabSection" class="list-container">
                 <div id="colaboradoresCheckboxes" style="display: contents;"></div>
             </div>
-
             <div class="section-header" onclick="toggleSection('statusSection', this)">
-                <span>4º Selecione o Status (Gera o Registro)</span>
-                <span class="arrow">▼</span>
+                <span>4º Selecione o Status</span><span class="arrow">▼</span>
             </div>
             <div id="statusSection" class="list-container">
                 <div id="statusRadios" class="status-radio-group"></div>
@@ -302,10 +291,16 @@
                 <tbody id="lista"></tbody>
             </table>
         </div>
-        <button onclick="lancarParaMain()" class="btn-lancar"><a href="main.html">Lançar</a></button>
+        <button class="btn-lancar"><a href="main.html" style="color: white; text-decoration: none;">Ir para
+                Main</a></button>
     </div>
 
     <script>
+        // SUBSTITUA ESTES DADOS PELOS SEUS DO SUPABASE
+        const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         const getGerente = (uf) => uf === "RJ" ? "FABRICIO LEAL" : "PAULO RADAELLI";
 
         const baseDados = {
@@ -383,7 +378,7 @@
             "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
             "LEONARDO FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
             "MÁRCIO JOSÉ DE OLIVEIRA E SILVA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "MATHEUS FELIPE PONCE DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
+            "MATHEUS FELIPE PONCE DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNOR": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
             "ROGÉRIO DE CASTRO GONÇALVES": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
@@ -439,15 +434,53 @@
 
         const listaStatus = ["PRESENTE", "PRESENTE - CONJUNTA", "PRESENTE - FORMATAÇÃO", "PRESENTE - PREVENTIVA", "INTERJORNADA(10h)", "INTERMEDIÁRIO (13h)", "INTERJORNADA(13h)", "INTERJORNADA(16h)", "INTERJORNADA (SEM RETORNO)", "NOTURNO", "FÉRIAS", "INSS", "ATESTADO", "FOLGA"];
 
-        let registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
-
         window.onload = () => {
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dataSelecionada').value = hoje;
             gerarRadiosStatus();
+            verificarLocalStorage(); // Nova função de segurança
             atualizarTabela();
         };
 
+        // --- SISTEMA DE MIGRAÇÃO DE DADOS ---
+        function verificarLocalStorage() {
+            const antigos = JSON.parse(localStorage.getItem('registros_presenca'));
+            if (antigos && antigos.length > 0) {
+                document.getElementById('btnMigrar').style.display = 'block';
+            }
+        }
+
+        async function migrarDadosParaNuvem() {
+            const antigos = JSON.parse(localStorage.getItem('registros_presenca'));
+            if (!antigos) return;
+
+            if (confirm(`Existem ${antigos.length} registros no seu computador. Deseja enviá-los para a nuvem?`)) {
+                const formatados = antigos.map(reg => ({
+                    data: reg.data,
+                    uf: reg.uf,
+                    empresa: reg.empresa,
+                    micro_area: reg.micro || reg.micro_area,
+                    colaborador: reg.colaborador,
+                    supervisor: reg.supervisor,
+                    coordenador: reg.coordenador,
+                    gerente_tlp: reg.gerente_tlp,
+                    status: reg.status
+                }));
+
+                const { error } = await _supabase.from('registros_presenca').insert(formatados);
+
+                if (!error) {
+                    alert("Dados migrados com sucesso!");
+                    localStorage.removeItem('registros_presenca'); // Limpa após migrar
+                    document.getElementById('btnMigrar').style.display = 'none';
+                    atualizarTabela();
+                } else {
+                    alert("Erro ao migrar dados: " + error.message);
+                }
+            }
+        }
+
+        // --- FUNÇÕES DE INTERFACE ---
         function toggleSection(sectionId, headerEl) {
             const section = document.getElementById(sectionId);
             section.classList.toggle('hidden');
@@ -470,14 +503,9 @@
             const superSelect = document.getElementById('supervisorTLP');
             superSelect.innerHTML = '<option disabled selected value="">2º Selecione o Supervisor</option>';
             document.getElementById('colaboradoresCheckboxes').innerHTML = "";
-
-            const supervisores = [...new Set(Object.values(baseDados)
-                .filter(item => item.uf === ufSel)
-                .map(item => item.super))].sort();
-
+            const supervisores = [...new Set(Object.values(baseDados).filter(item => item.uf === ufSel).map(item => item.super))].sort();
             supervisores.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s; opt.text = s;
+                const opt = document.createElement('option'); opt.value = s; opt.text = s;
                 superSelect.appendChild(opt);
             });
         }
@@ -486,215 +514,90 @@
             const superSel = document.getElementById('supervisorTLP').value;
             const container = document.getElementById('colaboradoresCheckboxes');
             container.innerHTML = "";
-
             const nomes = Object.keys(baseDados).filter(n => baseDados[n].super === superSel).sort();
-
             nomes.forEach(nome => {
                 const label = document.createElement('label');
                 label.className = 'item-check';
-                label.innerHTML = `<input type="checkbox" name="colab" value="${nome}" onclick="limparStatus()"> ${nome}`;
+                label.innerHTML = `<input type="checkbox" name="colab" value="${nome}"> ${nome}`;
                 container.appendChild(label);
             });
         }
 
-        function limparStatus() {
-            document.querySelectorAll('input[name="status"]').forEach(r => r.checked = false);
-        }
-
-        function processarSelecaoAutomatica() {
-            const statusRadio = document.querySelector('input[name="status"]:checked');
-            if (!statusRadio) return;
-
-            const status = statusRadio.value;
-            const dataFiltro = document.getElementById('dataSelecionada').value;
-            const colabsMarcados = document.querySelectorAll('input[name="colab"]:checked');
-
-            if (colabsMarcados.length === 0) {
-                alert("Selecione ao menos um colaborador.");
-                limparStatus();
-                return;
-            }
-
-            colabsMarcados.forEach(cb => {
-                const nome = cb.value;
-                const info = baseDados[nome];
-
-                // Evitar duplicidade na mesma data
-                const existe = registros.some(r => r.colab === nome && r.data === dataFiltro);
-                if (!existe) {
-                    registros.push({
-                        data: dataFiltro,
-                        uf: info.uf,
-                        empresa: info.empresa,
-                        micro: info.micro,
-                        colab: nome,
-                        super: info.super,
-                        coord: info.coord,
-                        gerente: getGerente(info.uf),
-                        status: status
-                    });
-                }
-            });
-
-            localStorage.setItem('registros_presenca', JSON.stringify(registros));
-            atualizarTabela();
-            limparStatus();
-
-            // Desmarcar colabs após lançar para facilitar o próximo
-            colabsMarcados.forEach(cb => cb.checked = false);
-        }
-
-        function excluirRegistro(index) {
-            if (confirm("Deseja realmente excluir este registro?")) {
-                // Pegamos o registro da lista visual para encontrar o índice real no array registros
-                const dataFiltro = document.getElementById('dataSelecionada').value;
-                const registrosDaData = registros.filter(r => r.data === dataFiltro);
-                const itemParaRemover = registrosDaData[index];
-
-                // Encontra o índice real no array principal e remove
-                const realIndex = registros.indexOf(itemParaRemover);
-                if (realIndex > -1) {
-                    registros.splice(realIndex, 1);
-                    localStorage.setItem('registros_presenca', JSON.stringify(registros));
-                    atualizarTabela();
-                }
-            }
-        }
-
-        function atualizarTabela() {
-            const dataFiltro = document.getElementById('dataSelecionada').value;
-            const listaBody = document.getElementById('lista');
-            listaBody.innerHTML = "";
-
-            const filtrados = registros.filter(r => r.data === dataFiltro);
-
-            filtrados.forEach((r, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${r.uf}</td>
-                    <td>${r.empresa}</td>
-                    <td>${r.micro}</td>
-                    <td><b>${r.colab}</b></td>
-                    <td>${r.super}</td>
-                    <td>${r.coord}</td>
-                    <td>${r.gerente}</td>
-                    <td><span style="color: #27ae60; font-weight: bold">${r.status}</span></td>
-                    <td><button class="btn-del" onclick="excluirRegistro(${i})">Excluir</button></td>
-                `;
-                listaBody.appendChild(tr);
-            });
-
-            atualizarDashboard(filtrados);
-        }
-
-        function atualizarDashboard(lista) {
-            document.getElementById('count-uf').innerText = [...new Set(lista.map(r => r.uf))].length;
-            document.getElementById('count-empresa').innerText = [...new Set(lista.map(r => r.empresa))].length;
-            document.getElementById('count-colab').innerText = lista.length;
-            document.getElementById('count-super').innerText = [...new Set(lista.map(r => r.super))].length;
-            document.getElementById('count-gerente').innerText = [...new Set(lista.map(r => r.gerente))].length;
-        }
-
-        function lancarParaMain() {
-            alert("Dados sincronizados com o banco local. Abra o arquivo 'main.html' para visualizar o relatório consolidado.");
-            window.location.href = "main.html";
-        }
-
-        // 1. Função que é disparada ao clicar no Status (Rádio)
-        function processarSelecaoAutomatica() {
+        async function processarSelecaoAutomatica() {
             const data = document.getElementById('dataSelecionada').value;
-            const statusSel = document.querySelector('input[name="status"]:checked')?.value;
-            const checkboxes = document.querySelectorAll('input[name="colab"]:checked');
+            const statusRadio = document.querySelector('input[name="status"]:checked');
+            const colabsMarcados = Array.from(document.querySelectorAll('input[name="colab"]:checked')).map(cb => cb.value);
 
-            if (!data) {
-                alert("Por favor, selecione uma data primeiro.");
-                return;
-            }
+            if (!statusRadio) return;
+            const status = statusRadio.value;
+            if (colabsMarcados.length === 0) { alert("Selecione colaboradores."); statusRadio.checked = false; return; }
 
-            if (checkboxes.length === 0) {
-                alert("Selecione ao menos um colaborador.");
-                return;
-            }
-
-            checkboxes.forEach(cb => {
-                const nomeColaborador = cb.value;
-                const info = baseDados[nomeColaborador]; // Aqui acontece a CORRELAÇÃO
-
-                const novoRegistro = {
-                    id: Date.now() + Math.random(),
-                    data: data,
-                    uf: info.uf,
-                    empresa: info.empresa,
-                    micro: info.micro,
-                    colaborador: nomeColaborador,
-                    supervisor: info.super,
-                    coordenador: info.coord,
-                    gerente: getGerente(info.uf), // Correlação do Gerente por UF
-                    status: statusSel
+            const novosRegistros = colabsMarcados.map(nome => {
+                const info = baseDados[nome];
+                return {
+                    data: data, uf: info.uf, empresa: info.empresa, micro_area: info.micro,
+                    colaborador: nome, supervisor: info.super, coordenador: info.coord,
+                    gerente_tlp: getGerente(info.uf), status: status
                 };
-
-                // Evita duplicidade no mesmo dia
-                registros = registros.filter(r => !(r.colaborador === nomeColaborador && r.data === data));
-                registros.push(novoRegistro);
             });
 
-            // Salva e atualiza a tela
-            localStorage.setItem('registros_presenca', JSON.stringify(registros));
-            atualizarTabela();
-            limparSelecao();
+            const { error } = await _supabase.from('registros_presenca').insert(novosRegistros);
+            if (error) alert("Erro: " + error.message);
+            else {
+                document.querySelectorAll('input[name="colab"]').forEach(cb => cb.checked = false);
+                statusRadio.checked = false;
+                atualizarTabela();
+            }
         }
 
-        // 2. Função para desenhar a tabela com as correlações
-        function atualizarTabela() {
-            const dataFiltro = document.getElementById('dataSelecionada').value;
-            const listaFiltro = registros.filter(r => r.data === dataFiltro);
-            const corpoTabela = document.getElementById('lista');
+        async function atualizarTabela() {
+            const dataSel = document.getElementById('dataSelecionada').value;
+            const { data, error } = await _supabase.from('registros_presenca').select('*').eq('data', dataSel).order('colaborador', { ascending: true });
 
-            corpoTabela.innerHTML = "";
+            // Se o Supabase falhar ou estiver vazio, tentamos mostrar o LocalStorage (Backup)
+            const backup = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+            const registrosParaMostrar = (data && data.length > 0) ? data : backup.filter(r => r.data === dataSel);
 
-            // Atualiza os Cards do Dashboard
-            document.getElementById('count-uf').innerText = [...new Set(listaFiltro.map(r => r.uf))].length;
-            document.getElementById('count-empresa').innerText = [...new Set(listaFiltro.map(r => r.empresa))].length;
-            document.getElementById('count-colab').innerText = listaFiltro.length;
-            document.getElementById('count-super').innerText = [...new Set(listaFiltro.map(r => r.supervisor))].length;
-            document.getElementById('count-gerente').innerText = [...new Set(listaFiltro.map(r => r.gerente))].length;
+            renderizarLista(registrosParaMostrar);
+            atualizarDashboard(registrosParaMostrar);
+        }
 
-            // Preenche as linhas da tabela
-            listaFiltro.forEach(reg => {
+        function renderizarLista(registros) {
+            const tbody = document.getElementById('lista');
+            tbody.innerHTML = "";
+            registros.forEach(reg => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${reg.uf}</td>
                     <td>${reg.empresa}</td>
-                    <td>${reg.micro}</td>
-                    <td><strong>${reg.colaborador}</strong></td>
+                    <td>${reg.micro_area || reg.micro}</td>
+                    <td>${reg.colaborador}</td>
                     <td>${reg.supervisor}</td>
                     <td>${reg.coordenador}</td>
-                    <td>${reg.gerente}</td>
-                    <td>${reg.status}</td>
-                    <td><button onclick="removerItem(${reg.id})" class="btn-del">Excluir</button></td>
+                    <td>${reg.gerente_tlp}</td>
+                    <td><strong>${reg.status}</strong></td>
+                    <td><button class="btn-del" onclick="excluirRegistro('${reg.id}')">Excluir</button></td>
                 `;
-                corpoTabela.appendChild(tr);
+                tbody.appendChild(tr);
             });
         }
 
-        function removerItem(id) {
-            registros = registros.filter(r => r.id !== id);
-            localStorage.setItem('registros_presenca', JSON.stringify(registros));
+        async function excluirRegistro(id) {
+            if (!id || id === 'undefined') {
+                alert("Este registro está no seu computador. Use o botão de Sincronizar primeiro.");
+                return;
+            }
+            if (!confirm("Excluir?")) return;
+            await _supabase.from('registros_presenca').delete().eq('id', id);
             atualizarTabela();
         }
 
-        function limparSelecao() {
-            document.querySelectorAll('input[name="colab"]').forEach(c => c.checked = false);
-            document.querySelectorAll('input[name="status"]').forEach(r => r.checked = false);
-        }
-
-        function limparStatus() {
-            document.querySelectorAll('input[name="status"]').forEach(r => r.checked = false);
-        }
-
-        function lancarParaMain() {
-            alert("Dados prontos para envio!");
-            console.log(registros);
+        function atualizarDashboard(registros) {
+            document.getElementById('count-uf').innerText = [...new Set(registros.map(r => r.uf))].length;
+            document.getElementById('count-empresa').innerText = [...new Set(registros.map(r => r.empresa))].length;
+            document.getElementById('count-colab').innerText = registros.length;
+            document.getElementById('count-super').innerText = [...new Set(registros.map(r => r.supervisor))].length;
+            document.getElementById('count-gerente').innerText = [...new Set(registros.map(r => r.gerente_tlp))].length;
         }
     </script>
 </body>
