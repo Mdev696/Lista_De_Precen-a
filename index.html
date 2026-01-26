@@ -277,6 +277,87 @@
             margin-bottom: 10px;
             display: none;
         }
+
+        /*REONSIVO PARA CELULAR MOVEL*/
+
+        
+        /* --- ADAPTAÇÃO PARA CELULAR (MOBILE) --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                /* Reduz o respiro lateral no celular */
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            header {
+                flex-direction: column;
+                /* Título e botões um em cima do outro */
+                text-align: center;
+                gap: 15px;
+            }
+
+            header h1 {
+                font-size: 1.4rem;
+                margin-bottom: 5px;
+            }
+
+            /* Ajuste dos cards do Dashboard (2 por linha no celular) */
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .db-card {
+                padding: 10px;
+            }
+
+            .db-card .value {
+                font-size: 18px;
+            }
+
+            /* Ajuste dos seletores e campos de busca */
+            .add-box {
+                grid-template-columns: 1fr;
+                /* Tudo em uma coluna só */
+            }
+
+            .section-header {
+                font-size: 14px;
+                padding: 12px;
+            }
+
+            /* Ajuste da Tabela para não quebrar o layout */
+            table {
+                display: block;
+                overflow-x: auto;
+                /* Permite arrastar a tabela para o lado no dedo */
+                white-space: nowrap;
+            }
+
+            th,
+            td {
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            /* Botão Salvar em destaque */
+            .btn-lancar {
+                padding: 15px;
+                font-size: 18px;
+                position: sticky;
+                bottom: 10px;
+                box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Tela de Login mais amigável */
+            .login-card {
+                width: 85%;
+                padding: 25px;
+            }
+        }
     </style>
 </head>
 
