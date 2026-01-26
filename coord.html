@@ -95,6 +95,77 @@
             color: var(--primary);
             text-align: left;
         }
+
+
+        /* --- ESTRATÉGIA PARA DISPOSITIVOS MÓVEIS --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                padding: 15px;
+                margin: 5px auto;
+                max-width: 100%;
+                border-radius: 8px;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            header h1 {
+                font-size: 1.4rem;
+                line-height: 1.2;
+            }
+
+            .btn-voltar {
+                width: 100%;
+                display: block;
+                box-sizing: border-box;
+                text-align: center;
+                padding: 15px;
+                /* Botão maior para facilitar o toque */
+            }
+
+            /* Container da tabela com scroll lateral suave */
+            .table-wrapper {
+                max-height: 500px;
+                margin-top: 10px;
+                border: 1px solid var(--border-color);
+                -webkit-overflow-scrolling: touch;
+                /* Scroll suave no iOS */
+            }
+
+            table {
+                font-size: 11px;
+                /* Ajuste fino para densidade de dados */
+            }
+
+            th,
+            td {
+                padding: 12px 8px;
+                /* Células mais altas para facilitar a leitura */
+            }
+
+            th {
+                white-space: nowrap;
+            }
+
+            /* Destaque para o nome do supervisor no mobile */
+            td strong {
+                color: var(--accent);
+                font-size: 12px;
+            }
+
+            /* Ajuste da coluna de Efetivo */
+            .col-efetivo-dado {
+                text-align: center;
+                background-color: #f8f9fa;
+            }
+        }
     </style>
 </head>
 

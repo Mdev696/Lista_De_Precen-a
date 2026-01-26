@@ -94,6 +94,73 @@
             font-weight: bold;
             color: var(--primary);
         }
+
+        /* --- AJUSTES PARA DISPOSITIVOS MÓVEIS (COORDENADOR) --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                padding: 15px;
+                margin: 5px auto;
+                max-width: 100%;
+                border-radius: 10px;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            header h1 {
+                font-size: 1.3rem;
+                margin: 0;
+            }
+
+            .btn-voltar {
+                width: 100%;
+                display: block;
+                box-sizing: border-box;
+                text-align: center;
+                padding: 14px;
+            }
+
+            /* Container de Tabela com Scroll Lateral */
+            .table-wrapper {
+                max-height: 550px;
+                margin-top: 15px;
+                border: 1px solid var(--border-color);
+                box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+            }
+
+            table {
+                font-size: 11px;
+                /* Números legíveis, mas compactos */
+            }
+
+            th,
+            td {
+                padding: 12px 10px;
+                min-width: 80px;
+                /* Garante que os títulos não esmaguem */
+            }
+
+            /* Destaque para o Coordenador e Efetivo no Mobile */
+            .col-negrito {
+                color: var(--accent);
+                font-size: 12px;
+                background-color: #fcfcfc;
+            }
+
+            /* Melhora a visualização da última coluna (ABS) */
+            td:last-child {
+                font-weight: bold;
+                color: #e74c3c;
+                /* Cor de alerta para ABS */
+            }
+        }
     </style>
 </head>
 

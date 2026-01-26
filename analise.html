@@ -126,6 +126,85 @@
             border-left: 5px solid var(--warning);
             font-size: 13px;
         }
+        
+
+        /* --- ADAPTAÇÃO PARA CELULAR (MOBILE) --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+                border-radius: 10px;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+                margin-bottom: 10px;
+            }
+
+            /* Faz os botões de navegação ocuparem 100% da largura */
+            .btn-voltar {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+                margin-bottom: 5px;
+                text-align: center;
+            }
+
+            /* Ajusta a caixa de filtro */
+            .filtro-box {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 15px;
+            }
+
+            input[type="date"] {
+                width: 100%;
+            }
+
+            /* TRATAMENTO DA TABELA KPI */
+            .table-container {
+                margin-top: 10px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                /* Ativa o scroll lateral no dedo */
+                white-space: nowrap;
+                /* Impede que os números quebrem linha */
+            }
+
+            th {
+                padding: 10px 15px;
+                font-size: 10px;
+            }
+
+            td {
+                padding: 15px;
+                font-size: 16px;
+            }
+
+            .txt-abs {
+                font-size: 18px;
+            }
+
+            .legenda {
+                font-size: 12px;
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 

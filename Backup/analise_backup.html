@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analítico Operacional - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -125,39 +126,11 @@
             border-left: 5px solid var(--warning);
             font-size: 13px;
         }
-
-        .nav-tabs {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-
-
-        .nav-tabs a {
-            text-decoration: none;
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 13px;
-            font-weight: bold;
-            transition: background 0.3s;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
     </style>
 </head>
 
 <body>
-
-
-
     <div class="container">
-
-
-
         <header>
             <h1>📊 Analítico de Indicadores KPI</h1>
             <a href="index.html" class="btn-voltar">⬅ Voltar ao Lançamento</a>
@@ -198,23 +171,37 @@
     </div>
 
     <script>
+        // CONFIGURAÇÃO DO SUPABASE
+        const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         document.addEventListener('DOMContentLoaded', () => {
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dataFiltro').value = hoje;
             gerarAnalise();
         });
 
-        function gerarAnalise() {
-            const registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
+        async function gerarAnalise() {
             const dataSelecionada = document.getElementById('dataFiltro').value;
             const corpo = document.getElementById('corpoTabela');
+
+            // --- BUSCA NO SUPABASE EM VEZ DO LOCALSTORAGE ---
+            // Buscamos um intervalo maior para calcular o D-1, W-1 e M-1
+            const { data: registros, error } = await _supabase
+                .from('registros_presenca')
+                .select('*');
+
+            if (error) {
+                console.error("Erro ao carregar dados:", error);
+                return;
+            }
 
             let kpi = {
                 pr: 0, f: 0, fo: 0, fe: 0, intj: 0,
                 prD1: 0, prW1: 0, prM1: 0, totalDia: 0
             };
 
-            // Datas para comparação
             const dataAlvoObj = new Date(dataSelecionada + "T12:00:00");
             const dataOntemStr = new Date(dataAlvoObj.getTime() - 86400000).toISOString().split('T')[0];
             const dataSemanaObj = new Date(dataAlvoObj.getTime() - (7 * 86400000));
@@ -224,16 +211,13 @@
                 const rData = r.data;
                 const rDataObj = new Date(rData + "T12:00:00");
 
-                // Identificadores de Status
                 const ehPresenca = status.includes("PRESENTE") || status.includes("NOTURNO");
                 const ehFalta = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("INSS");
                 const ehFolga = status.includes("FOLGA") || status === "FO";
                 const ehFerias = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
 
-                // Contagem do Dia Selecionado
                 if (rData === dataSelecionada) {
-                    kpi.totalDia++; // Incrementa o divisor (Total)
-
+                    kpi.totalDia++;
                     if (ehPresenca) kpi.pr++;
                     if (ehFalta) kpi.f++;
                     if (ehFolga) kpi.fo++;
@@ -241,17 +225,13 @@
                     if (status.includes("INTERJORNADA")) kpi.intj++;
                 }
 
-                // Correlações Temporais
                 if (rData === dataOntemStr && ehPresenca) kpi.prD1++;
                 if (rDataObj >= dataSemanaObj && rDataObj <= dataAlvoObj && ehPresenca) kpi.prW1++;
                 if (rData.substring(0, 7) === dataSelecionada.substring(0, 7) && ehPresenca) kpi.prM1++;
             });
 
-            // APLICAÇÃO DA CORRELAÇÃO ABS: (Falta + Folga + Férias) / Total
             const somaAusencias = kpi.f + kpi.fo + kpi.fe;
             const valorABS = kpi.totalDia > 0 ? ((somaAusencias / kpi.totalDia) * 100).toFixed(2) : "0.00";
-
-            // Cálculo M-1 (Média aproximada)
             const valorM1 = (kpi.prM1 / 22).toFixed(2);
 
             corpo.innerHTML = `

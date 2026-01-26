@@ -120,6 +120,82 @@
             color: #cf1322;
             border: 1px solid #ffa39e;
         }
+
+        /* --- TÁTICA RESPONSIVA (MOBILE FIRST) --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                padding: 15px;
+                margin: 5px auto;
+                max-width: 100%;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .btn-voltar {
+                width: 100%;
+                display: block;
+                box-sizing: border-box;
+                text-align: center;
+            }
+
+            /* Filtros em coluna no celular */
+            .filtros {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .filtros div {
+                display: flex;
+                flex-direction: column;
+            }
+
+            label {
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+            input[type="date"],
+            select {
+                padding: 12px;
+                font-size: 16px;
+                /* Evita zoom automático no iOS */
+                width: 100%;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+            }
+
+            /* Scroll lateral para a tabela gigante */
+            .table-wrapper {
+                max-height: 500px;
+                margin-top: 10px;
+            }
+
+            table {
+                font-size: 11px;
+                /* Redução leve para caber mais dados */
+            }
+
+            th,
+            td {
+                padding: 10px 8px;
+            }
+
+            /* Badge de status menor no mobile */
+            .status-badge {
+                min-width: 60px;
+                padding: 4px 8px;
+                font-size: 9px;
+            }
+        }
     </style>
 </head>
 
