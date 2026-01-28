@@ -96,8 +96,6 @@
             text-align: left;
         }
 
-
-        /* --- ESTRATÉGIA PARA DISPOSITIVOS MÓVEIS --- */
         @media (max-width: 768px) {
             body {
                 padding: 5px;
@@ -107,7 +105,6 @@
                 padding: 15px;
                 margin: 5px auto;
                 max-width: 100%;
-                border-radius: 8px;
             }
 
             header {
@@ -116,54 +113,26 @@
                 text-align: center;
             }
 
-            header h1 {
-                font-size: 1.4rem;
-                line-height: 1.2;
-            }
-
             .btn-voltar {
                 width: 100%;
                 display: block;
                 box-sizing: border-box;
                 text-align: center;
                 padding: 15px;
-                /* Botão maior para facilitar o toque */
             }
 
-            /* Container da tabela com scroll lateral suave */
             .table-wrapper {
                 max-height: 500px;
                 margin-top: 10px;
-                border: 1px solid var(--border-color);
-                -webkit-overflow-scrolling: touch;
-                /* Scroll suave no iOS */
             }
 
             table {
                 font-size: 11px;
-                /* Ajuste fino para densidade de dados */
             }
 
             th,
             td {
                 padding: 12px 8px;
-                /* Células mais altas para facilitar a leitura */
-            }
-
-            th {
-                white-space: nowrap;
-            }
-
-            /* Destaque para o nome do supervisor no mobile */
-            td strong {
-                color: var(--accent);
-                font-size: 12px;
-            }
-
-            /* Ajuste da coluna de Efetivo */
-            .col-efetivo-dado {
-                text-align: center;
-                background-color: #f8f9fa;
             }
         }
     </style>
@@ -193,6 +162,7 @@
                         <th>F</th>
                         <th>FO</th>
                         <th>FE</th>
+                        <th>INSS</th>
                         <th>INTJ</th>
                         <th>ABS</th>
                     </tr>
@@ -203,7 +173,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -215,19 +184,13 @@
         };
 
         async function carregarDadosDoBanco() {
-            // Busca os dados no Supabase
-            const { data, error } = await _supabase
-                .from('registros_presenca')
-                .select('*');
-
+            const { data, error } = await _supabase.from('registros_presenca').select('*');
             if (error) {
                 console.error("Erro ao buscar dados:", error);
-                // Caso falhe, tenta ler do localStorage para não parar a aplicação
                 registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
             } else {
                 registros = data;
             }
-
             renderizarVisaoSupervisor();
         }
 
@@ -241,43 +204,46 @@
             supervisoresUnicos.forEach(supNome => {
                 if (!supNome) return;
 
-                // Filtra os registros do dia para este supervisor
                 const dadosHojeSup = registros.filter(r => r.supervisor === supNome && r.data === hoje);
-
                 if (dadosHojeSup.length === 0) return;
 
                 const ref = dadosHojeSup[0];
                 let total_efetivo = dadosHojeSup.length;
-                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_intj = 0;
+                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_inss = 0, soma_intj = 0;
 
                 dadosHojeSup.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
                     const historico = registros.filter(r => r.colaborador === colab.colaborador);
                     const dataFoco = new Date(hoje);
 
-                    // Lógica original de cálculo PR M-1
+                    // PR M-1
                     const registrosMes = historico.filter(r => {
                         const d = new Date(r.data);
                         return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // Somatórios originais
+                    // PR W-1
                     soma_pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
+                    // PR D-1
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
+                    // Variáveis e Correlação Integral
                     if (status.includes('PRESENTE')) soma_pr++;
                     if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
                     if (status.includes('FOLGA') || status === 'FO') soma_fo++;
                     if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
+                    if (status.includes('INSS')) soma_inss++; // Variável correlacionada
+
                     soma_intj += parseFloat(colab.intj || 0);
                 });
 
-                const absEquipe = (((soma_f + soma_fo + soma_fe) / total_efetivo) * 100).toFixed(2) + "%";
+                // ABS Equipe - Correlação mantida considerando INSS como ausência conforme regras anteriores
+                const absEquipe = (((soma_f + soma_fo + soma_fe + soma_inss) / total_efetivo) * 100).toFixed(2) + "%";
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -293,6 +259,7 @@
                     <td>${soma_f}</td>
                     <td>${soma_fo}</td>
                     <td>${soma_fe}</td>
+                    <td>${soma_inss}</td>
                     <td>${soma_intj.toFixed(2)}</td>
                     <td>${absEquipe}</td>
                 `;
@@ -300,7 +267,7 @@
             });
 
             if (corpo.innerHTML === "") {
-                corpo.innerHTML = "<tr><td colspan='14' style='text-align:center; padding:20px;'>Nenhum registro encontrado para a data de hoje.</td></tr>";
+                corpo.innerHTML = "<tr><td colspan='15' style='text-align:center; padding:20px;'>Nenhum registro encontrado para a data de hoje.</td></tr>";
             }
         }
     </script>

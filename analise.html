@@ -102,6 +102,12 @@
             color: var(--accent);
         }
 
+        .txt-inss {
+            color: #576574;
+        }
+
+        /* Cor neutra para o INSS */
+
         .txt-abs {
             color: #8e44ad;
             font-size: 22px;
@@ -126,9 +132,7 @@
             border-left: 5px solid var(--warning);
             font-size: 13px;
         }
-        
 
-        /* --- ADAPTAÇÃO PARA CELULAR (MOBILE) --- */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -150,7 +154,6 @@
                 margin-bottom: 10px;
             }
 
-            /* Faz os botões de navegação ocuparem 100% da largura */
             .btn-voltar {
                 display: block;
                 width: 100%;
@@ -159,7 +162,6 @@
                 text-align: center;
             }
 
-            /* Ajusta a caixa de filtro */
             .filtro-box {
                 flex-direction: column;
                 align-items: stretch;
@@ -171,7 +173,6 @@
                 width: 100%;
             }
 
-            /* TRATAMENTO DA TABELA KPI */
             .table-container {
                 margin-top: 10px;
                 border: 1px solid #ddd;
@@ -181,9 +182,7 @@
             table {
                 display: block;
                 overflow-x: auto;
-                /* Ativa o scroll lateral no dedo */
                 white-space: nowrap;
-                /* Impede que os números quebrem linha */
             }
 
             th {
@@ -234,6 +233,7 @@
                         <th>F (Falta)</th>
                         <th>FO (Folga)</th>
                         <th>FE (Férias)</th>
+                        <th>INSS</th>
                         <th>INTJ</th>
                         <th>ABS (Absenteísmo)</th>
                     </tr>
@@ -250,7 +250,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -265,8 +264,6 @@
             const dataSelecionada = document.getElementById('dataFiltro').value;
             const corpo = document.getElementById('corpoTabela');
 
-            // --- BUSCA NO SUPABASE EM VEZ DO LOCALSTORAGE ---
-            // Buscamos um intervalo maior para calcular o D-1, W-1 e M-1
             const { data: registros, error } = await _supabase
                 .from('registros_presenca')
                 .select('*');
@@ -277,7 +274,7 @@
             }
 
             let kpi = {
-                pr: 0, f: 0, fo: 0, fe: 0, intj: 0,
+                pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0,
                 prD1: 0, prW1: 0, prM1: 0, totalDia: 0
             };
 
@@ -291,9 +288,13 @@
                 const rDataObj = new Date(rData + "T12:00:00");
 
                 const ehPresenca = status.includes("PRESENTE") || status.includes("NOTURNO");
+                // Correlação original mantida para o ABS (Falta + Atestado + INSS entram em F)
                 const ehFalta = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("INSS");
                 const ehFolga = status.includes("FOLGA") || status === "FO";
                 const ehFerias = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
+
+                // Variável isolada apenas para exibição na tabela
+                const ehSomenteINSS = status === "INSS";
 
                 if (rData === dataSelecionada) {
                     kpi.totalDia++;
@@ -301,6 +302,7 @@
                     if (ehFalta) kpi.f++;
                     if (ehFolga) kpi.fo++;
                     if (ehFerias) kpi.fe++;
+                    if (ehSomenteINSS) kpi.inss++; // Incrementa a nova variável
                     if (status.includes("INTERJORNADA")) kpi.intj++;
                 }
 
@@ -322,6 +324,7 @@
                     <td class="txt-f">${kpi.f}</td>
                     <td class="txt-fo">${kpi.fo}</td>
                     <td class="txt-fe">${kpi.fe}</td>
+                    <td class="txt-inss">${kpi.inss}</td>
                     <td>${kpi.intj}</td>
                     <td class="txt-abs">${valorABS}%</td>
                 </tr>

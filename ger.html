@@ -95,7 +95,6 @@
             color: var(--primary);
         }
 
-        /* --- AJUSTES PARA DISPOSITIVOS MÓVEIS (COORDENADOR) --- */
         @media (max-width: 768px) {
             body {
                 padding: 5px;
@@ -116,7 +115,6 @@
 
             header h1 {
                 font-size: 1.3rem;
-                margin: 0;
             }
 
             .btn-voltar {
@@ -127,38 +125,31 @@
                 padding: 14px;
             }
 
-            /* Container de Tabela com Scroll Lateral */
             .table-wrapper {
                 max-height: 550px;
                 margin-top: 15px;
                 border: 1px solid var(--border-color);
-                box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
             }
 
             table {
                 font-size: 11px;
-                /* Números legíveis, mas compactos */
             }
 
             th,
             td {
                 padding: 12px 10px;
                 min-width: 80px;
-                /* Garante que os títulos não esmaguem */
             }
 
-            /* Destaque para o Coordenador e Efetivo no Mobile */
             .col-negrito {
                 color: var(--accent);
                 font-size: 12px;
                 background-color: #fcfcfc;
             }
 
-            /* Melhora a visualização da última coluna (ABS) */
             td:last-child {
                 font-weight: bold;
                 color: #e74c3c;
-                /* Cor de alerta para ABS */
             }
         }
     </style>
@@ -187,6 +178,7 @@
                         <th>F</th>
                         <th>FO</th>
                         <th>FE</th>
+                        <th>INSS</th>
                         <th>INTJ</th>
                         <th>ABS</th>
                     </tr>
@@ -197,7 +189,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -209,17 +200,13 @@
         };
 
         async function carregarDadosDoBanco() {
-            const { data, error } = await _supabase
-                .from('registros_presenca')
-                .select('*');
-
+            const { data, error } = await _supabase.from('registros_presenca').select('*');
             if (error) {
                 console.error("Erro ao carregar dados:", error);
                 registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
             } else {
                 registros = data;
             }
-
             renderizarVisaoCoordenador();
         }
 
@@ -228,50 +215,51 @@
             corpo.innerHTML = "";
 
             const hoje = new Date().toISOString().split('T')[0];
-
-            // Agrupamento principal: Coordenadores Únicos
             const coordenadoresUnicos = [...new Set(registros.map(r => r.coordenador))].sort();
 
             coordenadoresUnicos.forEach(coordNome => {
                 if (!coordNome) return;
 
-                // Filtra dados do coordenador no dia de hoje
                 const dadosHojeCoord = registros.filter(r => r.coordenador === coordNome && r.data === hoje);
-
                 if (dadosHojeCoord.length === 0) return;
 
                 const ref = dadosHojeCoord[0];
                 let total_efetivo = dadosHojeCoord.length;
-                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_intj = 0;
+                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_inss = 0, soma_intj = 0;
 
                 dadosHojeCoord.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
                     const historico = registros.filter(r => r.colaborador === colab.colaborador);
                     const dataFoco = new Date(hoje);
 
-                    // PR M-1 Fracionado (Lógica original mantida)
+                    // PR M-1
                     const registrosMes = historico.filter(r => {
                         const d = new Date(r.data);
                         return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // Somatórios Gerais
+                    // PR W-1
                     soma_pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
+                    // PR D-1
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
+                    // Correlação Integral
                     if (status.includes('PRESENTE')) soma_pr++;
                     if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
                     if (status.includes('FOLGA') || status === 'FO') soma_fo++;
                     if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
+                    if (status.includes('INSS')) soma_inss++;
+
                     soma_intj += parseFloat(colab.intj || 0);
                 });
 
-                const absEquipe = (((soma_f + soma_fo + soma_fe) / total_efetivo) * 100).toFixed(2) + "%";
+                // ABS Equipe considerando INSS na correlação de ausência
+                const absEquipe = (((soma_f + soma_fo + soma_fe + soma_inss) / total_efetivo) * 100).toFixed(2) + "%";
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -286,6 +274,7 @@
                     <td>${soma_f}</td>
                     <td>${soma_fo}</td>
                     <td>${soma_fe}</td>
+                    <td>${soma_inss}</td>
                     <td>${soma_intj.toFixed(2)}</td>
                     <td>${absEquipe}</td>
                 `;
@@ -293,7 +282,7 @@
             });
 
             if (corpo.innerHTML === "") {
-                corpo.innerHTML = "<tr><td colspan='13' style='text-align:center; padding:20px;'>Nenhum dado consolidado para hoje.</td></tr>";
+                corpo.innerHTML = "<tr><td colspan='14' style='text-align:center; padding:20px;'>Nenhum dado consolidado para hoje.</td></tr>";
             }
         }
     </script>

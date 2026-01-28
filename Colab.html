@@ -146,7 +146,6 @@
                 text-align: center;
             }
 
-            /* Filtros em coluna no celular */
             .filtros {
                 flex-direction: column;
                 gap: 15px;
@@ -167,13 +166,11 @@
             select {
                 padding: 12px;
                 font-size: 16px;
-                /* Evita zoom automático no iOS */
                 width: 100%;
                 border: 1px solid var(--border-color);
                 border-radius: 6px;
             }
 
-            /* Scroll lateral para a tabela gigante */
             .table-wrapper {
                 max-height: 500px;
                 margin-top: 10px;
@@ -181,7 +178,6 @@
 
             table {
                 font-size: 11px;
-                /* Redução leve para caber mais dados */
             }
 
             th,
@@ -189,7 +185,6 @@
                 padding: 10px 8px;
             }
 
-            /* Badge de status menor no mobile */
             .status-badge {
                 min-width: 60px;
                 padding: 4px 8px;
@@ -239,6 +234,7 @@
                         <th>F</th>
                         <th>FO</th>
                         <th>FE</th>
+                        <th>INSS</th>
                         <th>INTJ</th>
                         <th>ABS</th>
                     </tr>
@@ -254,7 +250,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let registros = []; // Agora alimentado pelo banco
+        let registros = [];
 
         window.onload = async () => {
             const hoje = new Date().toISOString().split('T')[0];
@@ -263,18 +259,13 @@
         };
 
         async function carregarDadosDoBanco() {
-            const { data, error } = await _supabase
-                .from('registros_presenca')
-                .select('*');
-
+            const { data, error } = await _supabase.from('registros_presenca').select('*');
             if (error) {
                 console.error("Erro ao carregar dados:", error);
-                // Fallback para localStorage se o banco falhar
                 registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
             } else {
                 registros = data;
             }
-
             preencherFiltroSupervisores();
             renderizarAnalise();
         }
@@ -282,16 +273,11 @@
         function preencherFiltroSupervisores() {
             const select = document.getElementById('filtroSuper');
             const supervisores = [...new Set(registros.map(r => r.supervisor))].sort();
-
-            // Limpa antes de preencher para não duplicar
             select.innerHTML = '<option value="TODOS">TODOS OS SUPERVISORES</option>';
-
             supervisores.forEach(sup => {
                 if (sup) {
                     const opt = document.createElement('option');
-                    opt.value = sup;
-                    opt.innerText = sup;
-                    select.appendChild(opt);
+                    opt.value = sup; opt.innerText = sup; select.appendChild(opt);
                 }
             });
         }
@@ -302,11 +288,7 @@
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
 
-            const dadosFiltrados = registros.filter(r => {
-                const matchData = r.data === dataSel;
-                const matchSuper = superSel === "TODOS" || r.supervisor === superSel;
-                return matchData && matchSuper;
-            });
+            const dadosFiltrados = registros.filter(r => (r.data === dataSel && (superSel === "TODOS" || r.supervisor === superSel)));
 
             dadosFiltrados.forEach(reg => {
                 const tr = document.createElement('tr');
@@ -316,14 +298,12 @@
                 const historicoColab = registros.filter(r => r.colaborador === reg.colaborador);
                 const dataFoco = new Date(dataSel);
 
-                // Sua lógica original de cálculos
                 const registrosMes = historicoColab.filter(r => {
                     const d = new Date(r.data);
                     return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
                 });
                 const presMes = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
                 const pr_m1 = presMes.toFixed(2);
-
                 const pr_w1 = historicoColab.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
                 const ontem = new Date(dataFoco);
@@ -332,13 +312,18 @@
                 const regOntem = historicoColab.find(r => r.data === dataOntemStr);
                 const pr_d1 = regOntem && regOntem.status.toUpperCase().includes('PRESENTE') ? 1 : 0;
 
+                // --- Lógica de Correlação Original Preservada ---
                 const f = (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) ? 1 : 0;
                 const fo = (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') ? 1 : 0;
                 const fe = (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) ? 1 : 0;
                 const pr = statusNormalizado.includes('PRESENTE') ? 1 : 0;
 
+                // Variável INSS integrada conforme solicitado
+                const inss = statusNormalizado.includes('INSS') ? 1 : 0;
+
+                // Cálculo do ABS mantendo a estrutura original (F+FO+FE) / 1
+                // Se desejar que o INSS também entre no cálculo do ABS, basta somar '+ inss' na linha abaixo
                 const absValue = ((f + fo + fe) / 1) * 100;
-                const absDisplay = absValue.toFixed(2) + "%";
 
                 tr.innerHTML = `
                     <td>${reg.uf || ''}</td>
@@ -347,7 +332,6 @@
                     <td>${reg.supervisor || ''}</td>
                     <td><strong>${reg.colaborador || ''}</strong></td>
                     <td><span class="status-badge ${classeStatus}">${reg.status || ''}</span></td>
-                    
                     <td>${pr_m1}</td> 
                     <td>${pr_w1}</td>
                     <td>${pr_d1}</td>
@@ -355,14 +339,15 @@
                     <td>${f}</td>
                     <td>${fo}</td>
                     <td>${fe}</td>
+                    <td>${inss}</td>
                     <td>${reg.intj || '0'}</td>
-                    <td>${absDisplay}</td>
+                    <td>${absValue.toFixed(2)}%</td>
                 `;
                 corpo.appendChild(tr);
             });
 
             if (dadosFiltrados.length === 0) {
-                corpo.innerHTML = "<tr><td colspan='15' style='text-align:center; padding:30px;'>Nenhum registro encontrado para esta data.</td></tr>";
+                corpo.innerHTML = "<tr><td colspan='16' style='text-align:center; padding:30px;'>Nenhum registro encontrado para esta data.</td></tr>";
             }
         }
     </script>
