@@ -108,6 +108,7 @@
             text-align: left;
             position: sticky;
             top: 0;
+            z-index: 5;
         }
 
         td {
@@ -150,7 +151,7 @@
             background: #f1c40f;
             color: black;
             border: none;
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
@@ -160,7 +161,7 @@
             background: var(--danger);
             color: white;
             border: none;
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 4px;
             cursor: pointer;
             margin-left: 5px;
@@ -223,7 +224,7 @@
             </div>
         </div>
 
-        <div style="overflow-x:auto; max-height: 500px; border: 1px solid #eee;">
+        <div style="overflow-x:auto; max-height: 550px; border: 1px solid #eee;">
             <table>
                 <thead>
                     <tr>
@@ -234,19 +235,18 @@
                         <th>Micro Área</th>
                         <th>Empresa</th>
                         <th>Status</th>
-                        <th style="text-align:center;">Ação</th>
+                        <th style="text-align:center;">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="corpoTabelaMain"></tbody>
             </table>
             <div id="mensagemVazia" class="no-data" style="display: none;">
-                Nenhum registro encontrado para esta combinação de filtros.
+                Nenhum registro encontrado.
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -254,44 +254,24 @@
         let todosOsRegistros = [];
 
         const listaStatusMap = {
-            "1": "PRESENTE",
-            "2": "PRESENTE - CONJUNTA",
-            "3": "PRESENTE - FORMATAÇÃO",
-            "4": "PRESENTE - PREVENTIVA",
-            "5": "INTERJORNADA(10h)",
-            "6": "INTERMEDIÁRIO (13h)",
-            "7": "INTERJORNADA(13h)",
-            "8": "INTERJORNADA(16h)",
-            "9": "INTERJORNADA (SEM RETORNO)",
-            "10": "NOTURNO",
-            "11": "FÉRIAS",
-            "12": "INSS",
-            "13": "ATESTADO",
-            "14": "FOLGA"
+            "1": "PRESENTE", "2": "PRESENTE - CONJUNTA", "3": "PRESENTE - FORMATAÇÃO",
+            "4": "PRESENTE - PREVENTIVA", "5": "INTERJORNADA(10h)", "6": "INTERMEDIÁRIO (13h)",
+            "7": "INTERJORNADA(13h)", "8": "INTERJORNADA(16h)", "9": "INTERJORNADA (SEM RETORNO)",
+            "10": "NOTURNO", "11": "FÉRIAS", "12": "INSS", "13": "ATESTADO", "14": "FOLGA"
         };
 
-        window.onload = async () => {
-            await carregarDados();
-        };
+        window.onload = async () => { await carregarDados(); };
 
         async function carregarDados() {
-            const { data, error } = await _supabase
-                .from('registros_presenca')
-                .select('*');
-
+            const { data, error } = await _supabase.from('registros_presenca').select('*');
             if (error) {
-                console.error("Erro ao carregar dados:", error);
-                const local = localStorage.getItem('registros_presenca');
-                todosOsRegistros = local ? JSON.parse(local) : [];
+                console.error("Erro Supabase:", error);
+                todosOsRegistros = [];
             } else {
-                todosOsRegistros = data;
+                todosOsRegistros = data || [];
             }
 
-            // Ordenação idêntica à original
-            todosOsRegistros.sort((a, b) => {
-                if (b.data !== a.data) return new Date(b.data) - new Date(a.data);
-                return (a.uf || '').localeCompare(b.uf || '');
-            });
+            todosOsRegistros.sort((a, b) => new Date(b.data) - new Date(a.data));
 
             popularFiltrosDinamicos();
             aplicarFiltros();
@@ -330,10 +310,8 @@
         }
 
         function atualizarResumo(lista) {
-            const rj = lista.filter(r => r.uf === 'RJ').length;
-            const es = lista.filter(r => r.uf === 'ES').length;
-            document.getElementById('total-rj').innerText = rj;
-            document.getElementById('total-es').innerText = es;
+            document.getElementById('total-rj').innerText = lista.filter(r => r.uf === 'RJ').length;
+            document.getElementById('total-es').innerText = lista.filter(r => r.uf === 'ES').length;
         }
 
         function exibirTabela(lista) {
@@ -349,23 +327,22 @@
             msgVazia.style.display = "none";
             lista.forEach((r) => {
                 const dataBR = r.data.split('-').reverse().join('/');
+                const rColab = r.colaborador || r.colab || "N/A";
+                const rSuper = r.supervisor || r.super || "N/A";
                 const corUF = r.uf === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)';
-                const rColab = r.colaborador || r.colab;
-                const rSuper = r.supervisor || r.super;
-                const rMicro = r.micro_area || r.micro;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${dataBR}</td>
-                    <td><b style="color: ${corUF}">${r.uf}</b></td>
+                    <td><b style="color: ${corUF}">${r.uf || ''}</b></td>
                     <td><strong>${rColab}</strong></td>
                     <td>${rSuper}</td>
-                    <td>${rMicro || ''}</td>
+                    <td>${r.micro_area || r.micro || ''}</td>
                     <td>${r.empresa || ''}</td>
-                    <td><span class="status-badge">${r.status}</span></td>
-                    <td style="text-align:center; min-width:80px;">
-                        <button class="btn-edit" onclick="editarRegistro('${r.id}')" title="Editar Status">✏️</button>
-                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${rColab}')" title="Excluir">🗑️</button>
+                    <td><span class="status-badge">${r.status || ''}</span></td>
+                    <td style="text-align:center;">
+                        <button class="btn-edit" onclick="editarRegistro('${r.id}')">✏️</button>
+                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${rColab}')">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -374,44 +351,46 @@
 
         async function editarRegistro(id) {
             const reg = todosOsRegistros.find(r => r.id == id);
-            let mensagem = `Editar Status de: ${reg.colaborador || reg.colab}\n\nDigite o número correspondente:\n`;
+            if (!reg) return;
 
-            for (let n in listaStatusMap) {
-                mensagem += `${n}. ${listaStatusMap[n]}\n`;
-            }
+            const opcao = prompt(`Editar ${reg.colaborador || reg.colab}:\n1. Alterar Status\n2. Alterar Supervisor`);
 
-            const escolha = prompt(mensagem);
+            if (opcao === "1") {
+                let msgStatus = "Escolha o número do Status:\n";
+                for (let k in listaStatusMap) msgStatus += `${k}. ${listaStatusMap[k]}\n`;
+                const esc = prompt(msgStatus);
 
-            if (escolha !== null && listaStatusMap[escolha]) {
-                const novoStatus = listaStatusMap[escolha];
+                if (esc && listaStatusMap[esc]) {
+                    const { error } = await _supabase.from('registros_presenca')
+                        .update({ status: listaStatusMap[esc] }).eq('id', id);
 
-                const { error } = await _supabase
-                    .from('registros_presenca')
-                    .update({ status: novoStatus })
-                    .eq('id', id);
-
-                if (error) {
-                    alert("Erro ao atualizar no banco!");
-                } else {
-                    await carregarDados(); // Recarrega para atualizar a tela
+                    if (error) alert("Erro: " + error.message);
+                    else await carregarDados();
                 }
-            } else if (escolha !== null) {
-                alert("Opção inválida.");
+            } else if (opcao === "2") {
+                const novoNome = prompt("Digite o nome do novo Supervisor:", reg.supervisor || reg.super);
+                if (novoNome) {
+                    const nomeFinal = novoNome.toUpperCase().trim();
+
+                    // Verificação dinâmica de colunas para evitar o erro "Erro ao atualizar"
+                    const updateData = {};
+                    if ('supervisor' in reg) updateData.supervisor = nomeFinal;
+                    if ('super' in reg) updateData.super = nomeFinal;
+
+                    const { error } = await _supabase.from('registros_presenca')
+                        .update(updateData).eq('id', id);
+
+                    if (error) alert("Erro: " + error.message);
+                    else await carregarDados();
+                }
             }
         }
 
         async function excluirRegistro(id, nome) {
-            if (confirm(`Deseja apagar o registro de ${nome}?`)) {
-                const { error } = await _supabase
-                    .from('registros_presenca')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) {
-                    alert("Erro ao excluir do banco!");
-                } else {
-                    await carregarDados();
-                }
+            if (confirm(`Excluir registro de ${nome}?`)) {
+                const { error } = await _supabase.from('registros_presenca').delete().eq('id', id);
+                if (error) alert("Erro ao excluir!");
+                else await carregarDados();
             }
         }
 

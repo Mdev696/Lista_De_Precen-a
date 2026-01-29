@@ -39,6 +39,24 @@
             border-bottom: 2px solid var(--light);
             padding-bottom: 20px;
             margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filtros {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .filtros input[type="date"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
         }
 
         .btn-voltar {
@@ -97,42 +115,14 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 5px;
-            }
-
-            .container {
-                padding: 15px;
-                margin: 5px auto;
-                max-width: 100%;
-            }
-
             header {
                 flex-direction: column;
-                gap: 15px;
                 text-align: center;
             }
 
-            .btn-voltar {
+            .filtros {
                 width: 100%;
-                display: block;
-                box-sizing: border-box;
-                text-align: center;
-                padding: 15px;
-            }
-
-            .table-wrapper {
-                max-height: 500px;
-                margin-top: 10px;
-            }
-
-            table {
-                font-size: 11px;
-            }
-
-            th,
-            td {
-                padding: 12px 8px;
+                justify-content: center;
             }
         }
     </style>
@@ -143,6 +133,12 @@
     <div class="container">
         <header>
             <h1>Visão Consolidada por Supervisor</h1>
+
+            <div class="filtros">
+                <label for="dataFiltro"><strong>Data de Análise:</strong></label>
+                <input type="date" id="dataFiltro" onchange="renderizarVisaoSupervisor()">
+            </div>
+
             <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
         </header>
 
@@ -180,6 +176,8 @@
         let registros = [];
 
         window.onload = async () => {
+            // Define a data padrão como hoje no input
+            document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
             await carregarDadosDoBanco();
         };
 
@@ -198,51 +196,54 @@
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
 
-            const hoje = new Date().toISOString().split('T')[0];
+            // CAPTURA A DATA DO CALENDÁRIO
+            const dataSelecionada = document.getElementById('dataFiltro').value;
+            if (!dataSelecionada) return;
+
             const supervisoresUnicos = [...new Set(registros.map(r => r.supervisor))].sort();
 
             supervisoresUnicos.forEach(supNome => {
                 if (!supNome) return;
 
-                const dadosHojeSup = registros.filter(r => r.supervisor === supNome && r.data === hoje);
-                if (dadosHojeSup.length === 0) return;
+                // Filtra pelo dia selecionado no calendário
+                const dadosDataSup = registros.filter(r => r.supervisor === supNome && r.data === dataSelecionada);
+                if (dadosDataSup.length === 0) return;
 
-                const ref = dadosHojeSup[0];
-                let total_efetivo = dadosHojeSup.length;
+                const ref = dadosDataSup[0];
+                let total_efetivo = dadosDataSup.length;
                 let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_inss = 0, soma_intj = 0;
 
-                dadosHojeSup.forEach(colab => {
+                dadosDataSup.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
                     const historico = registros.filter(r => r.colaborador === colab.colaborador);
-                    const dataFoco = new Date(hoje);
+                    const dataFoco = new Date(dataSelecionada + 'T12:00:00'); // Evita erro de fuso horário
 
-                    // PR M-1
+                    // PR M-1 (Mesma lógica correlacionada ao mês da data selecionada)
                     const registrosMes = historico.filter(r => {
-                        const d = new Date(r.data);
-                        return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
+                        const d = new Date(r.data + 'T12:00:00');
+                        return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR W-1
-                    soma_pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                    // PR W-1 (Total acumulado histórico até a data)
+                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR D-1
+                    // PR D-1 (Dia anterior à data selecionada)
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
-                    // Variáveis e Correlação Integral
+                    // Status do dia selecionado
                     if (status.includes('PRESENTE')) soma_pr++;
                     if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
                     if (status.includes('FOLGA') || status === 'FO') soma_fo++;
                     if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
-                    if (status.includes('INSS')) soma_inss++; // Variável correlacionada
+                    if (status.includes('INSS')) soma_inss++;
 
                     soma_intj += parseFloat(colab.intj || 0);
                 });
 
-                // ABS Equipe - Correlação mantida considerando INSS como ausência conforme regras anteriores
                 const absEquipe = (((soma_f + soma_fo + soma_fe + soma_inss) / total_efetivo) * 100).toFixed(2) + "%";
 
                 const tr = document.createElement('tr');
@@ -252,7 +253,7 @@
                     <td>${ref.coordenador || ''}</td>
                     <td><strong>${supNome}</strong></td>
                     <td class="col-efetivo-dado">${total_efetivo}</td>
-                    <td>${soma_pr_m1.toFixed(2)}</td>
+                    <td>${soma_pr_m1}</td>
                     <td>${soma_pr_w1}</td>
                     <td>${soma_pr_d1}</td>
                     <td>${soma_pr}</td>
@@ -267,7 +268,7 @@
             });
 
             if (corpo.innerHTML === "") {
-                corpo.innerHTML = "<tr><td colspan='15' style='text-align:center; padding:20px;'>Nenhum registro encontrado para a data de hoje.</td></tr>";
+                corpo.innerHTML = `<tr><td colspan='15' style='text-align:center; padding:20px;'>Nenhum registro encontrado para a data ${dataSelecionada}.</td></tr>`;
             }
         }
     </script>

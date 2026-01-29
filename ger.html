@@ -39,6 +39,24 @@
             border-bottom: 2px solid var(--light);
             padding-bottom: 20px;
             margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filtros {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .filtros input[type="date"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
         }
 
         .btn-voltar {
@@ -96,60 +114,19 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 5px;
-            }
-
-            .container {
-                padding: 15px;
-                margin: 5px auto;
-                max-width: 100%;
-                border-radius: 10px;
-            }
-
             header {
                 flex-direction: column;
-                gap: 15px;
                 text-align: center;
             }
 
-            header h1 {
-                font-size: 1.3rem;
+            .filtros {
+                width: 100%;
+                justify-content: center;
             }
 
             .btn-voltar {
                 width: 100%;
-                display: block;
                 box-sizing: border-box;
-                text-align: center;
-                padding: 14px;
-            }
-
-            .table-wrapper {
-                max-height: 550px;
-                margin-top: 15px;
-                border: 1px solid var(--border-color);
-            }
-
-            table {
-                font-size: 11px;
-            }
-
-            th,
-            td {
-                padding: 12px 10px;
-                min-width: 80px;
-            }
-
-            .col-negrito {
-                color: var(--accent);
-                font-size: 12px;
-                background-color: #fcfcfc;
-            }
-
-            td:last-child {
-                font-weight: bold;
-                color: #e74c3c;
             }
         }
     </style>
@@ -160,6 +137,12 @@
     <div class="container">
         <header>
             <h1>Visão Consolidada por Coordenador</h1>
+
+            <div class="filtros">
+                <label for="dataFiltro"><strong>Data de Análise:</strong></label>
+                <input type="date" id="dataFiltro" onchange="renderizarVisaoCoordenador()">
+            </div>
+
             <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
         </header>
 
@@ -196,6 +179,8 @@
         let registros = [];
 
         window.onload = async () => {
+            // Define data padrão como hoje no calendário
+            document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
             await carregarDadosDoBanco();
         };
 
@@ -214,41 +199,43 @@
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
 
-            const hoje = new Date().toISOString().split('T')[0];
+            const dataSelecionada = document.getElementById('dataFiltro').value;
+            if (!dataSelecionada) return;
+
             const coordenadoresUnicos = [...new Set(registros.map(r => r.coordenador))].sort();
 
             coordenadoresUnicos.forEach(coordNome => {
                 if (!coordNome) return;
 
-                const dadosHojeCoord = registros.filter(r => r.coordenador === coordNome && r.data === hoje);
-                if (dadosHojeCoord.length === 0) return;
+                const dadosDataCoord = registros.filter(r => r.coordenador === coordNome && r.data === dataSelecionada);
+                if (dadosDataCoord.length === 0) return;
 
-                const ref = dadosHojeCoord[0];
-                let total_efetivo = dadosHojeCoord.length;
+                const ref = dadosDataCoord[0];
+                let total_efetivo = dadosDataCoord.length;
                 let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_inss = 0, soma_intj = 0;
 
-                dadosHojeCoord.forEach(colab => {
+                dadosDataCoord.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
                     const historico = registros.filter(r => r.colaborador === colab.colaborador);
-                    const dataFoco = new Date(hoje);
+                    const dataFoco = new Date(dataSelecionada + 'T12:00:00');
 
-                    // PR M-1
+                    // PR M-1 (Mês referente à data selecionada)
                     const registrosMes = historico.filter(r => {
-                        const d = new Date(r.data);
-                        return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
+                        const d = new Date(r.data + 'T12:00:00');
+                        return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR W-1
-                    soma_pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                    // PR W-1 (Acumulado até a data selecionada)
+                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR D-1
+                    // PR D-1 (Dia anterior à seleção)
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
-                    // Correlação Integral
+                    // Status da data filtrada
                     if (status.includes('PRESENTE')) soma_pr++;
                     if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
                     if (status.includes('FOLGA') || status === 'FO') soma_fo++;
@@ -258,7 +245,6 @@
                     soma_intj += parseFloat(colab.intj || 0);
                 });
 
-                // ABS Equipe considerando INSS na correlação de ausência
                 const absEquipe = (((soma_f + soma_fo + soma_fe + soma_inss) / total_efetivo) * 100).toFixed(2) + "%";
 
                 const tr = document.createElement('tr');
@@ -267,7 +253,7 @@
                     <td>${ref.gerente_tlp || ref.gerente || ''}</td>
                     <td class="col-negrito">${coordNome}</td>
                     <td class="col-negrito">${total_efetivo}</td>
-                    <td>${soma_pr_m1.toFixed(2)}</td>
+                    <td>${soma_pr_m1}</td>
                     <td>${soma_pr_w1}</td>
                     <td>${soma_pr_d1}</td>
                     <td>${soma_pr}</td>
@@ -282,7 +268,7 @@
             });
 
             if (corpo.innerHTML === "") {
-                corpo.innerHTML = "<tr><td colspan='14' style='text-align:center; padding:20px;'>Nenhum dado consolidado para hoje.</td></tr>";
+                corpo.innerHTML = `<tr><td colspan='14' style='text-align:center; padding:20px;'>Sem dados para a data ${dataSelecionada}.</td></tr>`;
             }
         }
     </script>
