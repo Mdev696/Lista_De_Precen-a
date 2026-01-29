@@ -16,7 +16,6 @@
             --light: #ecf0f1;
         }
 
-        /* --- ESTILO TELA DE LOGIN --- */
         #login-view {
             position: fixed;
             top: 0;
@@ -77,7 +76,6 @@
             border-radius: 4px;
         }
 
-        /* --- SEU CSS ORIGINAL --- */
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #f4f7f6;
@@ -174,7 +172,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 8px;
-            max-height: 200px;
+            max-height: 250px;
             overflow-y: auto;
         }
 
@@ -369,8 +367,6 @@
             </div>
 
             <button class="btn-lancar" onclick="salvarPresenca()">Salvar Presença</button>
-            <button style="background: gray; margin-top: 10px; width: 100%;"><a href="main.html"
-                    style="color: white; text-decoration: none;">Ir para Main</a></button>
         </div>
     </div>
 
@@ -379,7 +375,6 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- LÓGICA DE LOGIN ---
         async function checarSessao() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (session) {
@@ -402,7 +397,6 @@
             location.reload();
         }
 
-        // --- INICIALIZAÇÃO DO APP ---
         function inicializarApp() {
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dataSelecionada').value = hoje;
@@ -413,155 +407,156 @@
 
         window.onload = checarSessao;
 
-        // --- DADOS E LÓGICA ORIGINAL PRESERVADOS ---
-        const getGerente = (uf) => uf === "RJ" ? "FABRICIO LEAL" : "PAULO RADAELLI";
-
         const baseDados = {
-            "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
-            "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "ANDRE LUIZ SOARES DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "ALEXSSANDRO PEDRO ARAUJO DE FREITAS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "ALLAN CESAR SILVA DE SOUZA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
-            "FABIANO OLIVEIRA DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "ATILA VICTORIO MOCO": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "BRENO OLIVEIRA DA SILVA VILELA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "BRUNO DE LIMA SALLES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
-            "CARLOS EDUARDO LACERDA DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
-            "FABIO EUGENIO GONCALVES": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "DAVID DE OLIVEIRA CARDOSO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
-            "EDSON VANDER PAIXAO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "FABIO RODRIGO SAIEGH DUARTE": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "MARCIO DE OLIVEIRA DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "SAMUEL FIRMINO DE OLIVEIRA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "FELIPE MIRANDA DE OLIVEIRA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
-            "WILLIAM CESAR NASCIMENTO SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "GABRIEL DA SILVA COSTA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "GABRIEL EMANUEL DOS SANTOS TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "GABRIEL RODRIGUES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "HIAGO MARQUES RUAS": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
-            "IAGO DAVI D AVILA DAMAZIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
-            "IAN MACIEL ALVES DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
-            "JEAN CARLOS SILVA DO NASCIMENTO": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - SUL" },
-            "JEAN SANTOS DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "JONATHAN SANTOS DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "LEANDERSON MARCOS VIEIRA DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "LEANDRO ALBERTO CORREA BERREDO": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
-            "LUCAS CONTES MOREIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - SUL" },
-            "LUCAS DA SILVA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "LUCAS PEREIRA BONFIM": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
-            "MARCELO LUIZ LEITE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "ALEX SANTOS PEREIRA DA CRUZ": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
-            "MARIO CESAR RODRIGUES DOS SANTOS": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
-            "MATEUS BATISTA DA CUNHA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
-            "MATHEUS DA SILVA TORRES": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
-            "MAX EMILIANO INACIO DA ROCHA": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
-            "MAX WILLIANFURTADO DE JESUS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
-            "MOISES GOMES DA SILVA FILHO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "NILTON VIEIRA DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "PEDRO PAULO CARVALHO SALEMA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
-            "RODOLPHO JOSE TAVARES": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
-            "RODRIGO BANNY DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "ROGERIO GOMES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "ROMEU DO NASCIMENTO VALENTE": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "WAGNER FERNANDES DOS SANTOS": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
-            "STEFANO EDUARDO AGUIAR SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "THALLES EDUARDO MARQUES BORGES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
-            "THALLES ROCHA CASTELIANO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERDE" },
-            "THIAGO DE OLIVEIRA FONSECA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "THIAGO PINTO EUGENIO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "VAUSLEY DA SILVA COUTINHO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
-            "VICTOR HUGO DE SOUZA KLEN": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
-            "CLEYSON ALVES DOS SANTOS": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
-            "FELIPE SILVA DE LIMA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
-            "WALLACE FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "WALLACE DA CONCEICAO PEREIRA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
-            "WILLIAN CORDEIRO DE MOURA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
-            "BRUNO NOGUEIRA GONTIJO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "DIEGO RODRIGUES DE FREITAS LUCIO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "FABIANO DE SANTANA ANDRADE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "FELIPE DA SILVA FREIRE": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "GUSTAVO DOS SANTOS FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "HELTON GONÇALVES DIAS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "HEMERSON MARCULINO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-            "IAGO VENÂNCIO DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "JOEL SEBASTIÃO DE LIMA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "KARTLEY RODRIGUES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
-            "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
-            "LEONARDO FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - BRZ SYS", micro: "SUB - CONTRATADA" },
-            "MÁRCIO JOSÉ DE OLIVEIRA E SILVA": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "MATHEUS FELIPE PONCE DE OLIVEIRA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNOR": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "ROGÉRIO DE CASTRO GONÇALVES": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "RUAN PEREIRA RIBEIRO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", empresa: "SUB - LUZ TELECOM", micro: "SUB - CONTRATADA" },
-            "AUGUSTO ALMEIDA NETO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
-            "PEDRO IVO DA SILVA DIAS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
-            "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
-            "WILLIAN LOPES PACHECO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
-            "RONEY MELO SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
-            "MARCO ANTONIO PETERLE TAVORA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
-            "JONATAS SANTOS DOS ANJOS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
-            "JOEL FERREIRA PERREIRA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
-            "PATRICK HENRIQUE ALVES DE OLIV": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
-            "ABRAÃO SANTOS DOS ANJOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
-            "JOAIS SANTOS DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "DAVID COSTA MIRANDA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
-            "GUSTAVO LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
-            "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
-            "GUILHERME SOBREIRA MACHADO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "RAFAEL GUASTI MARTINS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "GABRIEL RODRIGUES E SOUZA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "BRENO NICOLAU VALASCO DA SILVA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "LUCAS LUIZ ALMEIDA DA VITORIA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "IGOR MAGNO MARTINS LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "JOSÉ THIAGO BRITO": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "WARLEY CARVALHO BERNADES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "ARTHUR SCHULTZ DOS SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "DOUGLAS NUNES DA COSTA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "JEFERSON FELIX DE JESUS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "EDER CELIO PEREIRA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "DEILSON DOS SANTOS SOUZA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "JEAN CAMPOS DA SILVA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "FABIO DUARTE": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "WDSON NASCIMENTO DO CARMO": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "VALDINERES DOS SANTOS": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
-            "CAIO JORGE PERREIRA HONORIO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
-            "UALAS FERNANDES FERREIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "EMANUEL MARTINS DE MORAES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "VINICIUS BARCELOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "FRANCISCO FAGNER ALENCAR COSTA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "MICAIAS GARCIA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "PEDRO HENRIQUE": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", empresa: "TLP SERVIÇOS", micro: "SERRA" }
+            // --- DADOS RJ ---
+            "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "ANDRE LUIZ SOARES DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "ALEXSSANDRO PEDRO ARAUJO DE FREITAS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "ALLAN CESAR SILVA DE SOUZA": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
+            "FABIANO OLIVEIRA DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "ATILA VICTORIO MOCO": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "BRENO OLIVEIRA DA SILVA VILELA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "BRUNO DE LIMA SALLES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "CARLOS EDUARDO LACERDA DE OLIVEIRA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
+            "FABIO EUGENIO GONCALVES": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "DAVID DE OLIVEIRA CARDOSO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "EDSON VANDER PAIXAO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "FABIO RODRIGO SAIEGH DUARTE": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "MARCIO DE OLIVEIRA DA SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "SAMUEL FIRMINO DE OLIVEIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
+            "FELIPE MIRANDA DE OLIVEIRA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "WILLIAM CESAR NASCIMENTO SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "GABRIEL DA SILVA COSTA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "GABRIEL EMANUEL DOS SANTOS TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "GABRIEL RODRIGUES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "HIAGO MARQUES RUAS": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "IAGO DAVI D AVILA DAMAZIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "IAN MACIEL ALVES DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
+            "JEAN CARLOS SILVA DO NASCIMENTO": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - SUL" },
+            "JEAN SANTOS DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "JONATHAN SANTOS DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "LEANDERSON MARCOS VIEIRA DA SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "LEANDRO ALBERTO CORREA BERREDO": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "LUCAS CONTES MOREIRA": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - SUL" },
+            "LUCAS DA SILVA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "LUCAS PEREIRA BONFIM": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "MARCELO LUIZ LEITE": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "ALEX SANTOS PEREIRA DA CRUZ": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
+            "MARIO CESAR RODRIGUES DOS SANTOS": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
+            "MATEUS BATISTA DA CUNHA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "MATHEUS DA SILVA TORRES": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "MAX EMILIANO INACIO DA ROCHA": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "MAX WILLIANFURTADO DE JESUS": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "MOISES GOMES DA SILVA FILHO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "NILTON VIEIRA DA SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "PEDRO PAULO CARVALHO SALEMA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "RODOLPHO JOSE TAVARES": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "RODRIGO BANNY DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "ROGERIO GOMES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "ROMEU DO NASCIMENTO VALENTE": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "WAGNER FERNANDES DOS SANTOS": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
+            "STEFANO EDUARDO AGUIAR SILVA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "THALLES EDUARDO MARQUES BORGES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "THALLES ROCHA CASTELIANO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERDE" },
+            "THIAGO DE OLIVEIRA FONSECA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
+            "THIAGO PINTO EUGENIO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "VAUSLEY DA SILVA COUTINHO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
+            "VICTOR HUGO DE SOUZA KLEN": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
+            "CLEYSON ALVES DOS SANTOS": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "FELIPE SILVA DE LIMA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "WALLACE FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "WALLACE DA CONCEICAO PEREIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "WILLIAN CORDEIRO DE MOURA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
+            "MATEUS FONSECA DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "RAMON PEREIRA VIANA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "ITALO MARTINS DA GRAÇA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "ANDRE FRANÇA VIEIRA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "BRUNO NOGUEIRA GONTIJO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "FELIPE DA SILVA FREIRE": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "GABRIEL ZULU MARQUES DE OLIVIERA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "GUSTAVO DOS SANTOS FERREIRA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "IAGO VENÂNCIO DA SILVA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "JOEL SEBASTIÃO DE LIMA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "LEONARDO FERREIRA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNOR": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "RODRIGO GOMEZ AZEVEDO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "RUAN PEREIRA RIBEIRO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+
+            // --- DADOS ES ---
+            "AUGUSTO ALMEIDA NETO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "PEDRO IVO DA SILVA DIAS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "WILLIAN LOPES PACHECO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "RONEY MELO SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "MARCO ANTONIO PETERLE TAVORA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "JONATAS SANTOS DOS ANJOS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "JOEL FERREIRA PERREIRA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "PATRICK HENRIQUE ALVES DE OLIV": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "ABRAÃO SANTOS DOS ANJOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "JOAIS SANTOS DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "DAVID COSTA MIRANDA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "GUSTAVO LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "GUILHERME SOBREIRA MACHADO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "RAFAEL GUASTI MARTINS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "GABRIEL RODRIGUES E SOUZA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "BRENO NICOLAU VALASCO DA SILVA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "LUCAS LUIZ ALMEIDA DA VITORIA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "IGOR MAGNO MARTINS LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "JOSÉ THIAGO BRITO": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "WARLEY CARVALHO BERNADES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "ARTHUR SCHULTZ DOS SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "DOUGLAS NUNES DA COSTA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "JEFERSON FELIX DE JESUS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "EDER CELIO PEREIRA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "DEILSON DOS SANTOS SOUZA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "JEAN CAMPOS DA SILVA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "FABIO DUARTE": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "WDSON NASCIMENTO DO CARMO": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "VALDINERES DOS SANTOS": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
+            "CAIO JORGE PERREIRA HONORIO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
+            "UALAS FERNANDES FERREIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "EMANUEL MARTINS DE MORAES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "VINICIUS BARCELOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "FRANCISCO FAGNER ALENCAR COSTA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "MICAIAS GARCIA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "PEDRO HENRIQUE": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "CARLOS EDUARDO MENDONÇA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
+            "IGOR ALVES DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
+            "THAYRAN DE OLIVEIRA DIAS DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VIANA" },
+            "EMANUEL FREITAS OTT": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VIANA" },
+            "LORRAN PEREIRA DA SILVA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" }
         };
 
-        const listaStatus = ["PRESENTE", "PRESENTE - CONJUNTA", "PRESENTE - FORMATAÇÃO", "PRESENTE - PREVENTIVA", "INTERJORNADA(10h)", "INTERMEDIÁRIO (13h)", "INTERJORNADA(13h)", "INTERJORNADA(16h)", "INTERJORNADA (SEM RETORNO)", "NOTURNO", "FÉRIAS", "INSS", "ATESTADO", "FOLGA"];
+        // LISTA DE STATUS ATUALIZADA COM INTERJORNADA(12H)
+        const listaStatus = ["PRESENTE", "PRESENTE - CONJUNTA", "PRESENTE - FORMATAÇÃO", "PRESENTE - PREVENTIVA", "FALTA", "INTERJORNADA(10h)", "INTERJORNADA(12H)", "INTERMEDIÁRIO (13h)", "INTERJORNADA(13h)", "INTERJORNADA(16h)", "INTERJORNADA (SEM RETORNO)", "NOTURNO", "FÉRIAS", "INSS", "ATESTADO", "FOLGA"];
 
-        // --- SISTEMA DE MIGRAÇÃO ---
         function verificarLocalStorage() {
             const antigos = JSON.parse(localStorage.getItem('registros_presenca'));
-            if (antigos && antigos.length > 0) {
-                document.getElementById('btnMigrar').style.display = 'block';
-            }
+            if (antigos && antigos.length > 0) document.getElementById('btnMigrar').style.display = 'block';
         }
 
         async function migrarDadosParaNuvem() {
             const antigos = JSON.parse(localStorage.getItem('registros_presenca'));
             if (!antigos) return;
-            if (confirm(`Existem ${antigos.length} registros locais. Migrar?`)) {
+            if (confirm(`Existem ${antigos.length} registros locais. Migrar para a nuvem?`)) {
                 const { error } = await _supabase.from('registros_presenca').insert(antigos);
                 if (!error) {
-                    alert("Dados migrados!");
+                    alert("Dados migrados com sucesso!");
                     localStorage.removeItem('registros_presenca');
                     document.getElementById('btnMigrar').style.display = 'none';
                     atualizarTabela();
@@ -569,7 +564,6 @@
             }
         }
 
-        // --- FUNÇÕES DE INTERFACE ---
         function toggleSection(sectionId, headerEl) {
             const section = document.getElementById(sectionId);
             section.classList.toggle('hidden');
@@ -587,15 +581,16 @@
 
         function filtrarSupervisores() {
             const uf = document.getElementById('uf').value;
-            const supervisores = [...new Set(Object.values(baseDados).filter(d => d.uf === uf).map(d => d.super))];
+            const supervisores = [...new Set(Object.values(baseDados).filter(d => d.uf === uf).map(d => d.super))].sort();
             const select = document.getElementById('supervisorTLP');
             select.innerHTML = '<option disabled selected value="">2º Selecione o Supervisor</option>' +
                 supervisores.map(s => `<option value="${s}">${s}</option>`).join('');
+            document.getElementById('colaboradoresCheckboxes').innerHTML = '';
         }
 
         function filtrarColaboradores() {
             const superv = document.getElementById('supervisorTLP').value;
-            const colabs = Object.keys(baseDados).filter(nome => baseDados[nome].super === superv);
+            const colabs = Object.keys(baseDados).filter(nome => baseDados[nome].super === superv).sort();
             const container = document.getElementById('colaboradoresCheckboxes');
             container.innerHTML = colabs.map(c => `
                 <label class="item-check">
@@ -608,21 +603,32 @@
             const data = document.getElementById('dataSelecionada').value;
             const colabs = Array.from(document.querySelectorAll('input[name="colab"]:checked')).map(i => i.value);
             const status = document.querySelector('input[name="status"]:checked')?.value;
-            if (!data || colabs.length === 0 || !status) return alert("Preencha tudo!");
+            if (!data || colabs.length === 0 || !status) return alert("Por favor, selecione a data, os colaboradores e o status.");
 
             const registros = colabs.map(nome => ({
-                data, uf: baseDados[nome].uf, empresa: baseDados[nome].empresa,
-                micro_area: baseDados[nome].micro, colaborador: nome, supervisor: baseDados[nome].super,
-                coordenador: baseDados[nome].coord, gerente_tlp: getGerente(baseDados[nome].uf), status
+                data,
+                uf: baseDados[nome].uf,
+                empresa: baseDados[nome].empresa,
+                micro_area: baseDados[nome].micro,
+                colaborador: nome,
+                supervisor: baseDados[nome].super,
+                coordenador: baseDados[nome].coord,
+                gerente_tlp: baseDados[nome].gerente,
+                status
             }));
 
             const { error } = await _supabase.from('registros_presenca').insert(registros);
             if (error) alert("Erro ao salvar: " + error.message);
-            else { alert("Salvo com sucesso!"); atualizarTabela(); }
+            else {
+                alert("Presença lançada com sucesso!");
+                document.querySelectorAll('input[name="colab"]').forEach(i => i.checked = false);
+                atualizarTabela();
+            }
         }
 
         async function atualizarTabela() {
             const data = document.getElementById('dataSelecionada').value;
+            if (!data) return;
             const { data: registros, error } = await _supabase.from('registros_presenca').select('*').eq('data', data);
             if (error) return;
             const tbody = document.getElementById('lista');

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=create extension if not exists pgcrypto;
+    create table registros_presenca (
+    id uuid default gen_random_uuid () primary key,
+    data date not null,
+    uf text,
+    empresa text,
+    micro_area text,
+    colaborador text,
+    supervisor text,
+    coordenador text,
+    gerente_tlp text,
+    status text,
+    criado_em timestamp with time zone default now()
+    );
+
+    alter table registros_presenca enable row level security;
+
+create policy " Permitir tudo para usuários autenticados" on registros_presenca for all to authenticated using (true)
+        with check (true); , initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+
+</html>

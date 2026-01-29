@@ -270,9 +270,7 @@
             } else {
                 todosOsRegistros = data || [];
             }
-
             todosOsRegistros.sort((a, b) => new Date(b.data) - new Date(a.data));
-
             popularFiltrosDinamicos();
             aplicarFiltros();
         }
@@ -356,13 +354,22 @@
             const opcao = prompt(`Editar ${reg.colaborador || reg.colab}:\n1. Alterar Status\n2. Alterar Supervisor`);
 
             if (opcao === "1") {
-                let msgStatus = "Escolha o número do Status:\n";
+                let msgStatus = "Escolha o número OU digite o nome do Status:\n\n";
                 for (let k in listaStatusMap) msgStatus += `${k}. ${listaStatusMap[k]}\n`;
+
                 const esc = prompt(msgStatus);
 
-                if (esc && listaStatusMap[esc]) {
+                if (esc) {
+                    let statusFinal;
+                    // Se for um número da lista, usa o mapa. Se for texto, usa o texto.
+                    if (listaStatusMap[esc]) {
+                        statusFinal = listaStatusMap[esc];
+                    } else {
+                        statusFinal = esc.toUpperCase().trim();
+                    }
+
                     const { error } = await _supabase.from('registros_presenca')
-                        .update({ status: listaStatusMap[esc] }).eq('id', id);
+                        .update({ status: statusFinal }).eq('id', id);
 
                     if (error) alert("Erro: " + error.message);
                     else await carregarDados();
@@ -371,8 +378,6 @@
                 const novoNome = prompt("Digite o nome do novo Supervisor:", reg.supervisor || reg.super);
                 if (novoNome) {
                     const nomeFinal = novoNome.toUpperCase().trim();
-
-                    // Verificação dinâmica de colunas para evitar o erro "Erro ao atualizar"
                     const updateData = {};
                     if ('supervisor' in reg) updateData.supervisor = nomeFinal;
                     if ('super' in reg) updateData.super = nomeFinal;
