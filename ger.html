@@ -179,8 +179,8 @@
         let registros = [];
 
         window.onload = async () => {
-            // Define data padrão como hoje no calendário
-            document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
+            const hoje = new Date();
+            document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
             await carregarDadosDoBanco();
         };
 
@@ -216,33 +216,41 @@
 
                 dadosDataCoord.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
-                    const historico = registros.filter(r => r.colaborador === colab.colaborador);
+                    // Compatibilidade para nomes de coluna variados
+                    const nomeColab = colab.colaborador || colab.colab;
+                    const historico = registros.filter(r => (r.colaborador || r.colab) === nomeColab);
                     const dataFoco = new Date(dataSelecionada + 'T12:00:00');
 
-                    // PR M-1 (Mês referente à data selecionada)
+                    // PR M-1
                     const registrosMes = historico.filter(r => {
                         const d = new Date(r.data + 'T12:00:00');
                         return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR W-1 (Acumulado até a data selecionada)
+                    // PR W-1
                     soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR D-1 (Dia anterior à seleção)
+                    // PR D-1
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
-                    // Status da data filtrada
-                    if (status.includes('PRESENTE')) soma_pr++;
-                    if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
-                    if (status.includes('FOLGA') || status === 'FO') soma_fo++;
-                    if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
-                    if (status.includes('INSS')) soma_inss++;
-
-                    soma_intj += parseFloat(colab.intj || 0);
+                    // LOGICA DE STATUS CONSOLIDADA
+                    if (status.includes('PRESENTE')) {
+                        soma_pr++;
+                    } else if (status.includes('INTERJORNADA') || status.includes('INTERMEDIÁRIO')) {
+                        soma_intj++; // Correlacionado ao Status em vez de campo extra
+                    } else if (status.includes('FALTA') || status.includes('ATESTADO')) {
+                        soma_f++;
+                    } else if (status.includes('FOLGA') || status === 'FO') {
+                        soma_fo++;
+                    } else if (status.includes('FERIAS') || status.includes('FÉRIAS')) {
+                        soma_fe++;
+                    } else if (status.includes('INSS')) {
+                        soma_inss++;
+                    }
                 });
 
                 const absEquipe = (((soma_f + soma_fo + soma_fe + soma_inss) / total_efetivo) * 100).toFixed(2) + "%";
@@ -261,7 +269,7 @@
                     <td>${soma_fo}</td>
                     <td>${soma_fe}</td>
                     <td>${soma_inss}</td>
-                    <td>${soma_intj.toFixed(2)}</td>
+                    <td>${soma_intj}</td>
                     <td>${absEquipe}</td>
                 `;
                 corpo.appendChild(tr);

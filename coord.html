@@ -176,8 +176,9 @@
         let registros = [];
 
         window.onload = async () => {
-            // Define a data padrão como hoje no input
-            document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
+            // Define a data padrão como hoje no fuso local
+            const hoje = new Date();
+            document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
             await carregarDadosDoBanco();
         };
 
@@ -196,7 +197,6 @@
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
 
-            // CAPTURA A DATA DO CALENDÁRIO
             const dataSelecionada = document.getElementById('dataFiltro').value;
             if (!dataSelecionada) return;
 
@@ -205,7 +205,6 @@
             supervisoresUnicos.forEach(supNome => {
                 if (!supNome) return;
 
-                // Filtra pelo dia selecionado no calendário
                 const dadosDataSup = registros.filter(r => r.supervisor === supNome && r.data === dataSelecionada);
                 if (dadosDataSup.length === 0) return;
 
@@ -215,33 +214,40 @@
 
                 dadosDataSup.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
-                    const historico = registros.filter(r => r.colaborador === colab.colaborador);
-                    const dataFoco = new Date(dataSelecionada + 'T12:00:00'); // Evita erro de fuso horário
+                    const historico = registros.filter(r => (r.colaborador || r.colab) === (colab.colaborador || colab.colab));
+                    const dataFoco = new Date(dataSelecionada + 'T12:00:00');
 
-                    // PR M-1 (Mesma lógica correlacionada ao mês da data selecionada)
+                    // PR M-1
                     const registrosMes = historico.filter(r => {
                         const d = new Date(r.data + 'T12:00:00');
                         return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR W-1 (Total acumulado histórico até a data)
+                    // PR W-1 (Acumulado)
                     soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // PR D-1 (Dia anterior à data selecionada)
+                    // PR D-1
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
-                    // Status do dia selecionado
-                    if (status.includes('PRESENTE')) soma_pr++;
-                    if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
-                    if (status.includes('FOLGA') || status === 'FO') soma_fo++;
-                    if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
-                    if (status.includes('INSS')) soma_inss++;
-
-                    soma_intj += parseFloat(colab.intj || 0);
+                    // LÓGICA DE STATUS DO DIA
+                    if (status.includes('PRESENTE')) {
+                        soma_pr++;
+                    } else if (status.includes('INTERJORNADA') || status.includes('INTERMEDIÁRIO')) {
+                        // Se for INTERJORNADA, ele conta na coluna INTJ
+                        soma_intj++;
+                    } else if (status.includes('FALTA') || status.includes('ATESTADO')) {
+                        soma_f++;
+                    } else if (status.includes('FOLGA') || status === 'FO') {
+                        soma_fo++;
+                    } else if (status.includes('FERIAS') || status.includes('FÉRIAS')) {
+                        soma_fe++;
+                    } else if (status.includes('INSS')) {
+                        soma_inss++;
+                    }
                 });
 
                 const absEquipe = (((soma_f + soma_fo + soma_fe + soma_inss) / total_efetivo) * 100).toFixed(2) + "%";
@@ -261,7 +267,7 @@
                     <td>${soma_fo}</td>
                     <td>${soma_fe}</td>
                     <td>${soma_inss}</td>
-                    <td>${soma_intj.toFixed(2)}</td>
+                    <td>${soma_intj}</td>
                     <td>${absEquipe}</td>
                 `;
                 corpo.appendChild(tr);
