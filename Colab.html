@@ -121,74 +121,19 @@
             border: 1px solid #ffa39e;
         }
 
-        /* --- TÁTICA RESPONSIVA (MOBILE FIRST) --- */
         @media (max-width: 768px) {
-            body {
-                padding: 5px;
+            .filtros {
+                flex-direction: column;
             }
 
             .container {
                 padding: 15px;
-                margin: 5px auto;
-                max-width: 100%;
             }
 
             header {
                 flex-direction: column;
                 gap: 15px;
                 text-align: center;
-            }
-
-            .btn-voltar {
-                width: 100%;
-                display: block;
-                box-sizing: border-box;
-                text-align: center;
-            }
-
-            .filtros {
-                flex-direction: column;
-                gap: 15px;
-                padding: 15px;
-            }
-
-            .filtros div {
-                display: flex;
-                flex-direction: column;
-            }
-
-            label {
-                margin-bottom: 5px;
-                font-weight: bold;
-            }
-
-            input[type="date"],
-            select {
-                padding: 12px;
-                font-size: 16px;
-                width: 100%;
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-            }
-
-            .table-wrapper {
-                max-height: 500px;
-                margin-top: 10px;
-            }
-
-            table {
-                font-size: 11px;
-            }
-
-            th,
-            td {
-                padding: 10px 8px;
-            }
-
-            .status-badge {
-                min-width: 60px;
-                padding: 4px 8px;
-                font-size: 9px;
             }
         }
     </style>
@@ -214,8 +159,6 @@
                 </select>
             </div>
         </div>
-
-        <div class="card-resumo" id="resumoCards"></div>
 
         <div class="table-wrapper">
             <table>
@@ -245,7 +188,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -288,6 +230,8 @@
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
 
+            if (!dataSel) return;
+
             const dadosFiltrados = registros.filter(r => (r.data === dataSel && (superSel === "TODOS" || r.supervisor === superSel)));
 
             dadosFiltrados.forEach(reg => {
@@ -295,35 +239,41 @@
                 const statusNormalizado = (reg.status || "").toUpperCase();
                 const classeStatus = statusNormalizado.includes('PRESENTE') ? 'bg-presente' : 'bg-falta';
 
-                const historicoColab = registros.filter(r => r.colaborador === reg.colaborador);
-                const dataFoco = new Date(dataSel);
+                const historicoColab = registros.filter(r => (r.colaborador || r.colab) === (reg.colaborador || reg.colab));
+                const dataFoco = new Date(dataSel + 'T12:00:00');
 
+                // Histórico conforme referência
                 const registrosMes = historicoColab.filter(r => {
-                    const d = new Date(r.data);
-                    return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
+                    const d = new Date(r.data + 'T12:00:00');
+                    return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                 });
-                const presMes = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
-                const pr_m1 = presMes.toFixed(2);
-                const pr_w1 = historicoColab.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                const pr_m1 = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                const pr_w1 = historicoColab.filter(r => r.data <= dataSel && r.status.toUpperCase().includes('PRESENTE')).length;
 
                 const ontem = new Date(dataFoco);
                 ontem.setDate(ontem.getDate() - 1);
                 const dataOntemStr = ontem.toISOString().split('T')[0];
-                const regOntem = historicoColab.find(r => r.data === dataOntemStr);
-                const pr_d1 = regOntem && regOntem.status.toUpperCase().includes('PRESENTE') ? 1 : 0;
+                const pr_d1 = historicoColab.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE')) ? 1 : 0;
 
-                // --- Lógica de Correlação Original Preservada ---
-                const f = (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) ? 1 : 0;
-                const fo = (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') ? 1 : 0;
-                const fe = (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) ? 1 : 0;
-                const pr = statusNormalizado.includes('PRESENTE') ? 1 : 0;
+                // --- LÓGICA DE VARIÁVEIS (BASEADA NA SUA REFERÊNCIA) ---
+                let pr = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0;
 
-                // Variável INSS integrada conforme solicitado
-                const inss = statusNormalizado.includes('INSS') ? 1 : 0;
+                if (statusNormalizado.includes('PRESENTE')) {
+                    pr = 1;
+                } else if (statusNormalizado.includes('INTRAJORNADA') || statusNormalizado.includes('INTERJORNADA') || statusNormalizado.includes('INTERMEDIÁRIO')) {
+                    intj = 1;
+                } else if (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) {
+                    f = 1;
+                } else if (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') {
+                    fo = 1;
+                } else if (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) {
+                    fe = 1;
+                } else if (statusNormalizado.includes('INSS')) {
+                    inss = 1;
+                }
 
-                // Cálculo do ABS mantendo a estrutura original (F+FO+FE) / 1
-                // Se desejar que o INSS também entre no cálculo do ABS, basta somar '+ inss' na linha abaixo
-                const absValue = ((f + fo + fe) / 1) * 100;
+                // Cálculo do ABS baseado na sua referência de consolidado
+                const absValue = ((f + fo + fe + inss) / 1) * 100;
 
                 tr.innerHTML = `
                     <td>${reg.uf || ''}</td>
@@ -340,14 +290,14 @@
                     <td>${fo}</td>
                     <td>${fe}</td>
                     <td>${inss}</td>
-                    <td>${reg.intj || '0'}</td>
+                    <td>${intj}</td>
                     <td>${absValue.toFixed(2)}%</td>
                 `;
                 corpo.appendChild(tr);
             });
 
             if (dadosFiltrados.length === 0) {
-                corpo.innerHTML = "<tr><td colspan='16' style='text-align:center; padding:30px;'>Nenhum registro encontrado para esta data.</td></tr>";
+                corpo.innerHTML = `<tr><td colspan='16' style='text-align:center; padding:30px;'>Nenhum registro encontrado para a data ${dataSel}.</td></tr>`;
             }
         }
     </script>
