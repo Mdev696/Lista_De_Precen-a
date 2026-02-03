@@ -225,11 +225,21 @@
             font-size: 16px;
         }
 
+        .btn-del,
+        .btn-note {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
         .btn-del {
             background: var(--danger);
             color: white;
-            padding: 5px 10px;
-            font-size: 10px;
+        }
+
+        .btn-note {
+            background: #f39c12;
+            color: white;
         }
 
         table {
@@ -249,6 +259,54 @@
         td {
             padding: 10px;
             border-bottom: 1px solid #eee;
+        }
+
+        /* ESTILO DO MODAL DE NOTAS */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        #notaTexto {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: none;
+            box-sizing: border-box;
+        }
+
+        .modal-footer {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
         }
 
         .status-radio-group {
@@ -370,10 +428,27 @@
         </div>
     </div>
 
+    <div id="modalNotas" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin:0;">📝 Bloco de Notas</h2>
+                <small>ID: <span id="modalId"></span></small>
+            </div>
+            <label><b>Observação / Notas:</b></label>
+            <textarea id="notaTexto" placeholder="Digite aqui as observações..."></textarea>
+            <div class="modal-footer">
+                <button onclick="fecharModal()" style="background: #eee;">Cancelar</button>
+                <button onclick="salvarNotaBD()" style="background: #27ae60; color:white;">💾 Salvar Nota</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let idAtualNota = null;
 
         async function checarSessao() {
             const { data: { session } } = await _supabase.auth.getSession();
@@ -408,7 +483,6 @@
         window.onload = checarSessao;
 
         const baseDados = {
-            // --- DADOS RJ ---
             "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
             "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
             "ANDRE LUIZ SOARES DA COSTA": { uf: "RJ", super: "WELLINGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
@@ -489,60 +563,34 @@
             "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
             "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
 
-            // --- DADOS ES ---
-            "AUGUSTO ALMEIDA NETO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
-            "PEDRO IVO DA SILVA DIAS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
-            "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
-            "WILLIAN LOPES PACHECO": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
-            "RONEY MELO SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
-            "MARCO ANTONIO PETERLE TAVORA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            // --- DADOS ATUALIZADOS ESPÍRITO SANTO (ES) ---
+            "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "RONEY MELO SANTOS": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
             "JONATAS SANTOS DOS ANJOS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
-            "JOEL FERREIRA PERREIRA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
             "PATRICK HENRIQUE ALVES DE OLIV": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
-            "ABRAÃO SANTOS DOS ANJOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
             "JOAIS SANTOS DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
             "DAVID COSTA MIRANDA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
-            "GUSTAVO LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
             "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
-            "GUILHERME SOBREIRA MACHADO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "RAFAEL GUASTI MARTINS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "GABRIEL RODRIGUES E SOUZA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "RAFAEL GUASTI MARTINS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "BRENO NICOLAU VALASCO DA SILVA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "LUCAS LUIZ ALMEIDA DA VITORIA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "IGOR MAGNO MARTINS LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "JOSÉ THIAGO BRITO": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "WARLEY CARVALHO BERNADES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "ARTHUR SCHULTZ DOS SANTOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "DOUGLAS NUNES DA COSTA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "JEFERSON FELIX DE JESUS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "EDER CELIO PEREIRA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
             "DEILSON DOS SANTOS SOUZA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "JEAN CAMPOS DA SILVA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
             "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "FABIO DUARTE": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
             "WDSON NASCIMENTO DO CARMO": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "VALDINERES DOS SANTOS": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
             "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
-            "CAIO JORGE PERREIRA HONORIO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
-            "UALAS FERNANDES FERREIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
             "EMANUEL MARTINS DE MORAES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "VINICIUS BARCELOS": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "FRANCISCO FAGNER ALENCAR COSTA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "MICAIAS GARCIA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "PEDRO HENRIQUE": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
             "CARLOS EDUARDO MENDONÇA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
-            "IGOR ALVES DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
-            "THAYRAN DE OLIVEIRA DIAS DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VIANA" },
             "EMANUEL FREITAS OTT": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VIANA" },
             "LORRAN PEREIRA DA SILVA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" }
         };
 
-        // LISTA DE STATUS ATUALIZADA COM INTERJORNADA(12H)
         const listaStatus = ["PRESENTE", "PRESENTE - CONJUNTA", "PRESENTE - FORMATAÇÃO", "PRESENTE - PREVENTIVA", "FALTA", "INTERJORNADA(10h)", "INTERJORNADA(12H)", "INTERMEDIÁRIO (13h)", "INTERJORNADA(13h)", "INTERJORNADA(16h)", "INTERJORNADA (SEM RETORNO)", "NOTURNO", "FÉRIAS", "INSS", "ATESTADO", "FOLGA"];
 
         function verificarLocalStorage() {
@@ -604,7 +652,6 @@
             const colabs = Array.from(document.querySelectorAll('input[name="colab"]:checked')).map(i => i.value);
             const status = document.querySelector('input[name="status"]:checked')?.value;
             if (!data || colabs.length === 0 || !status) return alert("Por favor, selecione a data, os colaboradores e o status.");
-
             const registros = colabs.map(nome => ({
                 data,
                 uf: baseDados[nome].uf,
@@ -616,7 +663,6 @@
                 gerente_tlp: baseDados[nome].gerente,
                 status
             }));
-
             const { error } = await _supabase.from('registros_presenca').insert(registros);
             if (error) alert("Erro ao salvar: " + error.message);
             else {
@@ -637,10 +683,40 @@
                     <td>${r.uf}</td><td>${r.empresa}</td><td>${r.micro_area}</td>
                     <td>${r.colaborador}</td><td>${r.supervisor}</td><td>${r.coordenador}</td>
                     <td>${r.gerente_tlp}</td><td>${r.status}</td>
-                    <td><button class="btn-del" onclick="deletar('${r.id}')">X</button></td>
+                    <td>
+                        <button class="btn-note" onclick="abrirNotas('${r.id}', \`${r.observacao || ''}\`)">📝</button>
+                        <button class="btn-del" onclick="deletar('${r.id}')">🗑️</button>
+                    </td>
                 </tr>
             `).join('');
             atualizarDashboard(registros);
+        }
+
+        // BLOCO DE NOTAS - MODAL
+        function abrirNotas(id, texto) {
+            idAtualNota = id;
+            document.getElementById("modalId").innerText = id;
+            document.getElementById("notaTexto").value = texto;
+            document.getElementById("modalNotas").style.display = "block";
+        }
+
+        function fecharModal() {
+            document.getElementById("modalNotas").style.display = "none";
+        }
+
+        async function salvarNotaBD() {
+            const texto = document.getElementById("notaTexto").value;
+            const { error } = await _supabase
+                .from('registros_presenca')
+                .update({ observacao: texto })
+                .eq('id', idAtualNota);
+
+            if (error) alert("Erro ao salvar nota: " + error.message);
+            else {
+                alert("Nota salva com sucesso!");
+                fecharModal();
+                atualizarTabela();
+            }
         }
 
         function atualizarDashboard(regs) {
@@ -656,6 +732,11 @@
                 await _supabase.from('registros_presenca').delete().eq('id', id);
                 atualizarTabela();
             }
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function (event) {
+            if (event.target == document.getElementById("modalNotas")) fecharModal();
         }
     </script>
 </body>

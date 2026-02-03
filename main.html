@@ -202,7 +202,7 @@
             <div class="filter-group">
                 <label>UF (Divisão):</label>
                 <select id="filtroUF" onchange="aplicarFiltros()">
-                    <option value="">UF</option>
+                    <option value="">Todas as UFs</option>
                     <option value="RJ">RJ - Rio de Janeiro</option>
                     <option value="ES">ES - Espírito Santo</option>
                 </select>
@@ -210,13 +210,13 @@
             <div class="filter-group">
                 <label>Supervisor:</label>
                 <select id="filtroSuper" onchange="aplicarFiltros()">
-                    <option value="">Supervisor</option>
+                    <option value="">Todos os Supervisores</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label>Status:</label>
                 <select id="filtroStatus" onchange="aplicarFiltros()">
-                    <option value="">Status</option>
+                    <option value="">Todos os Status</option>
                 </select>
             </div>
             <div class="filter-group" style="justify-content: flex-end;">
@@ -263,15 +263,21 @@
         window.onload = async () => { await carregarDados(); };
 
         async function carregarDados() {
-            const { data, error } = await _supabase.from('registros_presenca').select('*');
+            // Pegando um range grande para garantir que nada fique de fora
+            const { data, error } = await _supabase
+                .from('registros_presenca')
+                .select('*')
+                .range(0, 5000)
+                .order('data', { ascending: false });
+
             if (error) {
                 console.error("Erro Supabase:", error);
-                todosOsRegistros = [];
-            } else {
-                todosOsRegistros = data || [];
+                return;
             }
-            todosOsRegistros.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+            todosOsRegistros = data || [];
             popularFiltrosDinamicos();
+            // Ao carregar, mostramos tudo e somamos tudo
             aplicarFiltros();
         }
 
@@ -295,21 +301,30 @@
             const fSuper = document.getElementById('filtroSuper').value;
             const fStatus = document.getElementById('filtroStatus').value;
 
+            // Filtra a lista principal para a tabela
             const filtrados = todosOsRegistros.filter(r => {
-                const rSuper = r.supervisor || r.super;
+                const rSuper = (r.supervisor || r.super || "").toString();
+                const rUF = (r.uf || "").toString().trim().toUpperCase();
+                const rStatus = (r.status || "").toString();
+
                 return (fData === "" || r.data === fData) &&
-                    (fUF === "" || r.uf === fUF) &&
+                    (fUF === "" || rUF === fUF) &&
                     (fSuper === "" || rSuper === fSuper) &&
-                    (fStatus === "" || r.status === fStatus);
+                    (fStatus === "" || rStatus === fStatus);
             });
 
+            // IMPORTANTE: O resumo (dashboard) deve sempre refletir o que está na tela (filtrados)
             atualizarResumo(filtrados);
             exibirTabela(filtrados);
         }
 
-        function atualizarResumo(lista) {
-            document.getElementById('total-rj').innerText = lista.filter(r => r.uf === 'RJ').length;
-            document.getElementById('total-es').innerText = lista.filter(r => r.uf === 'ES').length;
+        function atualizarResumo(listaParaSomar) {
+            // Conta apenas o que está na lista fornecida (respeitando filtros ou mostrando total)
+            const contagemRJ = listaParaSomar.filter(r => (r.uf || "").toString().trim().toUpperCase() === 'RJ').length;
+            const contagemES = listaParaSomar.filter(r => (r.uf || "").toString().trim().toUpperCase() === 'ES').length;
+
+            document.getElementById('total-rj').innerText = contagemRJ;
+            document.getElementById('total-es').innerText = contagemES;
         }
 
         function exibirTabela(lista) {
@@ -324,23 +339,22 @@
 
             msgVazia.style.display = "none";
             lista.forEach((r) => {
-                const dataBR = r.data.split('-').reverse().join('/');
-                const rColab = r.colaborador || r.colab || "N/A";
-                const rSuper = r.supervisor || r.super || "N/A";
-                const corUF = r.uf === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)';
+                const dataBR = r.data ? r.data.split('-').reverse().join('/') : "---";
+                const rUF = (r.uf || "").toString().trim().toUpperCase();
+                const corUF = rUF === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${dataBR}</td>
-                    <td><b style="color: ${corUF}">${r.uf || ''}</b></td>
-                    <td><strong>${rColab}</strong></td>
-                    <td>${rSuper}</td>
+                    <td><b style="color: ${corUF}">${rUF}</b></td>
+                    <td><strong>${r.colaborador || r.colab || "N/A"}</strong></td>
+                    <td>${r.supervisor || r.super || "N/A"}</td>
                     <td>${r.micro_area || r.micro || ''}</td>
                     <td>${r.empresa || ''}</td>
                     <td><span class="status-badge">${r.status || ''}</span></td>
                     <td style="text-align:center;">
                         <button class="btn-edit" onclick="editarRegistro('${r.id}')">✏️</button>
-                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${rColab}')">🗑️</button>
+                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${r.colaborador || r.colab}')">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -350,52 +364,30 @@
         async function editarRegistro(id) {
             const reg = todosOsRegistros.find(r => r.id == id);
             if (!reg) return;
-
             const opcao = prompt(`Editar ${reg.colaborador || reg.colab}:\n1. Alterar Status\n2. Alterar Supervisor`);
-
             if (opcao === "1") {
-                let msgStatus = "Escolha o número OU digite o nome do Status:\n\n";
+                let msgStatus = "Escolha o número ou digite o Status:\n";
                 for (let k in listaStatusMap) msgStatus += `${k}. ${listaStatusMap[k]}\n`;
-
                 const esc = prompt(msgStatus);
-
                 if (esc) {
-                    let statusFinal;
-                    // Se for um número da lista, usa o mapa. Se for texto, usa o texto.
-                    if (listaStatusMap[esc]) {
-                        statusFinal = listaStatusMap[esc];
-                    } else {
-                        statusFinal = esc.toUpperCase().trim();
-                    }
-
-                    const { error } = await _supabase.from('registros_presenca')
-                        .update({ status: statusFinal }).eq('id', id);
-
-                    if (error) alert("Erro: " + error.message);
-                    else await carregarDados();
+                    const statusFinal = listaStatusMap[esc] || esc.toUpperCase().trim();
+                    await _supabase.from('registros_presenca').update({ status: statusFinal }).eq('id', id);
+                    await carregarDados();
                 }
             } else if (opcao === "2") {
-                const novoNome = prompt("Digite o nome do novo Supervisor:", reg.supervisor || reg.super);
+                const novoNome = prompt("Novo Supervisor:", reg.supervisor || reg.super);
                 if (novoNome) {
-                    const nomeFinal = novoNome.toUpperCase().trim();
-                    const updateData = {};
-                    if ('supervisor' in reg) updateData.supervisor = nomeFinal;
-                    if ('super' in reg) updateData.super = nomeFinal;
-
-                    const { error } = await _supabase.from('registros_presenca')
-                        .update(updateData).eq('id', id);
-
-                    if (error) alert("Erro: " + error.message);
-                    else await carregarDados();
+                    const campo = ('supervisor' in reg) ? 'supervisor' : 'super';
+                    await _supabase.from('registros_presenca').update({ [campo]: novoNome.toUpperCase().trim() }).eq('id', id);
+                    await carregarDados();
                 }
             }
         }
 
         async function excluirRegistro(id, nome) {
             if (confirm(`Excluir registro de ${nome}?`)) {
-                const { error } = await _supabase.from('registros_presenca').delete().eq('id', id);
-                if (error) alert("Erro ao excluir!");
-                else await carregarDados();
+                await _supabase.from('registros_presenca').delete().eq('id', id);
+                await carregarDados();
             }
         }
 

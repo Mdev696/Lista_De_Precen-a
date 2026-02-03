@@ -60,10 +60,6 @@
             border: 1px solid var(--border-color);
         }
 
-        .card-resumo {
-            display: none;
-        }
-
         .table-wrapper {
             overflow-x: auto;
             max-height: 650px;
@@ -121,13 +117,25 @@
             border: 1px solid #ffa39e;
         }
 
+        /* Estilo da nova coluna de Ações + Notas */
+        .col-correlacao {
+            white-space: normal;
+            /* Permite que o texto quebre linha */
+            min-width: 200px;
+            color: #2c3e50;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .texto-nota {
+            color: #2980b9;
+            /* Azul para as Notas */
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .filtros {
                 flex-direction: column;
-            }
-
-            .container {
-                padding: 15px;
             }
 
             header {
@@ -169,6 +177,7 @@
                         <th>Coordenador</th>
                         <th>Supervisor</th>
                         <th>Colaborador</th>
+                        <th>Ações / Notas</th>
                         <th>Status</th>
                         <th>PR Σx M-1</th>
                         <th>PR Σx W-1</th>
@@ -179,7 +188,6 @@
                         <th>FE</th>
                         <th>INSS</th>
                         <th>INTJ</th>
-                        <th>ABS</th>
                     </tr>
                 </thead>
                 <tbody id="tabelaCorpo"></tbody>
@@ -239,14 +247,15 @@
                 const statusNormalizado = (reg.status || "").toUpperCase();
                 const classeStatus = statusNormalizado.includes('PRESENTE') ? 'bg-presente' : 'bg-falta';
 
+                // Lógica de histórico
                 const historicoColab = registros.filter(r => (r.colaborador || r.colab) === (reg.colaborador || reg.colab));
                 const dataFoco = new Date(dataSel + 'T12:00:00');
 
-                // Histórico conforme referência
                 const registrosMes = historicoColab.filter(r => {
                     const d = new Date(r.data + 'T12:00:00');
                     return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                 });
+
                 const pr_m1 = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
                 const pr_w1 = historicoColab.filter(r => r.data <= dataSel && r.status.toUpperCase().includes('PRESENTE')).length;
 
@@ -255,25 +264,25 @@
                 const dataOntemStr = ontem.toISOString().split('T')[0];
                 const pr_d1 = historicoColab.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE')) ? 1 : 0;
 
-                // --- LÓGICA DE VARIÁVEIS (BASEADA NA SUA REFERÊNCIA) ---
                 let pr = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0;
+                if (statusNormalizado.includes('PRESENTE')) pr = 1;
+                else if (statusNormalizado.includes('INTRA') || statusNormalizado.includes('INTER')) intj = 1;
+                else if (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) f = 1;
+                else if (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') fo = 1;
+                else if (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) fe = 1;
+                else if (statusNormalizado.includes('INSS')) inss = 1;
 
-                if (statusNormalizado.includes('PRESENTE')) {
-                    pr = 1;
-                } else if (statusNormalizado.includes('INTRAJORNADA') || statusNormalizado.includes('INTERJORNADA') || statusNormalizado.includes('INTERMEDIÁRIO')) {
-                    intj = 1;
-                } else if (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) {
-                    f = 1;
-                } else if (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') {
-                    fo = 1;
-                } else if (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) {
-                    fe = 1;
-                } else if (statusNormalizado.includes('INSS')) {
-                    inss = 1;
+                // --- CORRELAÇÃO DE AÇÕES E NOTAS ---
+                const acao = reg['Ações'] || reg['acoes'] || "";
+                const nota = reg['Notas'] || reg['nota'] || reg['observacao'] || "";
+
+                // Monta o texto combinado
+                let correlacaoFinal = "";
+                if (acao && nota) {
+                    correlacaoFinal = `${acao} <br> <span class="texto-nota">Nota: ${nota}</span>`;
+                } else {
+                    correlacaoFinal = acao || (nota ? `<span class="texto-nota">Nota: ${nota}</span>` : "-");
                 }
-
-                // Cálculo do ABS baseado na sua referência de consolidado
-                const absValue = ((f + fo + fe + inss) / 1) * 100;
 
                 tr.innerHTML = `
                     <td>${reg.uf || ''}</td>
@@ -281,6 +290,7 @@
                     <td>${reg.coordenador || ''}</td>
                     <td>${reg.supervisor || ''}</td>
                     <td><strong>${reg.colaborador || ''}</strong></td>
+                    <td class="col-correlacao">${correlacaoFinal}</td>
                     <td><span class="status-badge ${classeStatus}">${reg.status || ''}</span></td>
                     <td>${pr_m1}</td> 
                     <td>${pr_w1}</td>
@@ -291,7 +301,6 @@
                     <td>${fe}</td>
                     <td>${inss}</td>
                     <td>${intj}</td>
-                    <td>${absValue.toFixed(2)}%</td>
                 `;
                 corpo.appendChild(tr);
             });
