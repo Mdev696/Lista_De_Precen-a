@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório Geral - Presença</title>
+    <title>Relatório Administrativo - Presença</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -108,7 +108,7 @@
             text-align: left;
             position: sticky;
             top: 0;
-            z-index: 5;
+            z-index: 10;
         }
 
         td {
@@ -129,15 +129,6 @@
             white-space: nowrap;
         }
 
-        .btn-back {
-            background: var(--accent);
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
         .btn-clear {
             background: #95a5a6;
             color: white;
@@ -145,26 +136,6 @@
             border-radius: 4px;
             cursor: pointer;
             padding: 8px;
-        }
-
-        .btn-edit {
-            background: #f1c40f;
-            color: black;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .btn-delete {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 5px;
         }
 
         .no-data {
@@ -179,44 +150,46 @@
 
     <div class="container">
         <header>
-            <h1>📋 Relatório Geral de Presença</h1>
-            <a href="index.html" class="btn-back">⬅ Novo Lançamento</a>
+            <h1>📋 Relatório Administrativo</h1>
+            <a href="index.html"
+                style="text-decoration:none; background:var(--accent); color:white; padding:10px; border-radius:4px; font-weight:bold;">⬅
+                Novo Lançamento</a>
         </header>
 
         <div class="uf-summary">
             <div class="summary-card summary-rj">
-                <div style="font-size: 12px;">REGISTROS RJ</div>
-                <div id="total-rj" style="font-size: 24px; font-weight: bold;">0</div>
+                <div style="font-size: 11px;">REGISTROS RJ</div>
+                <div id="total-rj" style="font-size: 22px; font-weight: bold;">0</div>
             </div>
             <div class="summary-card summary-es">
-                <div style="font-size: 12px;">REGISTROS ES</div>
-                <div id="total-es" style="font-size: 24px; font-weight: bold;">0</div>
+                <div style="font-size: 11px;">REGISTROS ES</div>
+                <div id="total-es" style="font-size: 22px; font-weight: bold;">0</div>
             </div>
         </div>
 
         <div class="filter-bar">
             <div class="filter-group">
-                <label>Data:</label>
+                <label>Data (Calendário):</label>
                 <input type="date" id="filtroData" onchange="aplicarFiltros()">
             </div>
             <div class="filter-group">
-                <label>UF (Divisão):</label>
+                <label>UF:</label>
                 <select id="filtroUF" onchange="aplicarFiltros()">
-                    <option value="">Todas as UFs</option>
-                    <option value="RJ">RJ - Rio de Janeiro</option>
-                    <option value="ES">ES - Espírito Santo</option>
+                    <option value="">Todas</option>
+                    <option value="RJ">RJ</option>
+                    <option value="ES">ES</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label>Supervisor:</label>
                 <select id="filtroSuper" onchange="aplicarFiltros()">
-                    <option value="">Todos os Supervisores</option>
+                    <option value="">Todos</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label>Status:</label>
                 <select id="filtroStatus" onchange="aplicarFiltros()">
-                    <option value="">Todos os Status</option>
+                    <option value="">Todos</option>
                 </select>
             </div>
             <div class="filter-group" style="justify-content: flex-end;">
@@ -232,8 +205,6 @@
                         <th>UF</th>
                         <th>Colaborador</th>
                         <th>Supervisor</th>
-                        <th>Micro Área</th>
-                        <th>Empresa</th>
                         <th>Status</th>
                         <th style="text-align:center;">Ações</th>
                     </tr>
@@ -247,37 +218,28 @@
     </div>
 
     <script>
+        // Configurações do Supabase
         const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let todosOsRegistros = [];
 
-        const listaStatusMap = {
-            "1": "PRESENTE", "2": "PRESENTE - CONJUNTA", "3": "PRESENTE - FORMATAÇÃO",
-            "4": "PRESENTE - PREVENTIVA", "5": "INTERJORNADA(10h)", "6": "INTERMEDIÁRIO (13h)",
-            "7": "INTERJORNADA(13h)", "8": "INTERJORNADA(16h)", "9": "INTERJORNADA (SEM RETORNO)",
-            "10": "NOTURNO", "11": "FÉRIAS", "12": "INSS", "13": "ATESTADO", "14": "FOLGA"
-        };
-
-        window.onload = async () => { await carregarDados(); };
+        window.onload = carregarDados;
 
         async function carregarDados() {
-            // Pegando um range grande para garantir que nada fique de fora
             const { data, error } = await _supabase
                 .from('registros_presenca')
                 .select('*')
-                .range(0, 5000)
                 .order('data', { ascending: false });
 
             if (error) {
-                console.error("Erro Supabase:", error);
+                console.error("Erro ao carregar:", error.message);
                 return;
             }
 
             todosOsRegistros = data || [];
             popularFiltrosDinamicos();
-            // Ao carregar, mostramos tudo e somamos tudo
             aplicarFiltros();
         }
 
@@ -285,46 +247,37 @@
             const selectSuper = document.getElementById('filtroSuper');
             const selectStatus = document.getElementById('filtroStatus');
 
-            const supers = [...new Set(todosOsRegistros.map(r => r.supervisor || r.super))].filter(Boolean).sort();
+            // Pegando valores únicos para os filtros
+            const supers = [...new Set(todosOsRegistros.map(r => r.supervisor))].filter(Boolean).sort();
             const stats = [...new Set(todosOsRegistros.map(r => r.status))].filter(Boolean).sort();
 
-            selectSuper.innerHTML = '<option value="">Todos os Supervisores</option>';
-            selectStatus.innerHTML = '<option value="">Todos os Status</option>';
+            selectSuper.innerHTML = '<option value="">Todos</option>';
+            selectStatus.innerHTML = '<option value="">Todos</option>';
 
             supers.forEach(s => selectSuper.add(new Option(s, s)));
             stats.forEach(st => selectStatus.add(new Option(st, st)));
         }
 
         function aplicarFiltros() {
-            const fData = document.getElementById('filtroData').value;
+            const fData = document.getElementById('filtroData').value; // Formato YYYY-MM-DD
             const fUF = document.getElementById('filtroUF').value;
             const fSuper = document.getElementById('filtroSuper').value;
             const fStatus = document.getElementById('filtroStatus').value;
 
-            // Filtra a lista principal para a tabela
             const filtrados = todosOsRegistros.filter(r => {
-                const rSuper = (r.supervisor || r.super || "").toString();
-                const rUF = (r.uf || "").toString().trim().toUpperCase();
-                const rStatus = (r.status || "").toString();
+                // BLINDAGEM DA DATA (DIA 01 A 12):
+                // Tratamos o valor do banco como texto puro para evitar fuso horário
+                const dataBancoTexto = r.data ? r.data.substring(0, 10) : "";
 
-                return (fData === "" || r.data === fData) &&
-                    (fUF === "" || rUF === fUF) &&
-                    (fSuper === "" || rSuper === fSuper) &&
-                    (fStatus === "" || rStatus === fStatus);
+                const bateData = fData === "" || dataBancoTexto === fData;
+                const bateUF = fUF === "" || r.uf === fUF;
+                const bateSuper = fSuper === "" || r.supervisor === fSuper;
+                const bateStatus = fStatus === "" || r.status === fStatus;
+
+                return bateData && bateUF && bateSuper && bateStatus;
             });
 
-            // IMPORTANTE: O resumo (dashboard) deve sempre refletir o que está na tela (filtrados)
-            atualizarResumo(filtrados);
             exibirTabela(filtrados);
-        }
-
-        function atualizarResumo(listaParaSomar) {
-            // Conta apenas o que está na lista fornecida (respeitando filtros ou mostrando total)
-            const contagemRJ = listaParaSomar.filter(r => (r.uf || "").toString().trim().toUpperCase() === 'RJ').length;
-            const contagemES = listaParaSomar.filter(r => (r.uf || "").toString().trim().toUpperCase() === 'ES').length;
-
-            document.getElementById('total-rj').innerText = contagemRJ;
-            document.getElementById('total-es').innerText = contagemES;
         }
 
         function exibirTabela(lista) {
@@ -332,62 +285,45 @@
             const msgVazia = document.getElementById('mensagemVazia');
             tbody.innerHTML = "";
 
+            let rjCount = 0;
+            let esCount = 0;
+
             if (lista.length === 0) {
                 msgVazia.style.display = "block";
-                return;
+            } else {
+                msgVazia.style.display = "none";
+                lista.forEach(r => {
+                    if (r.uf === 'RJ') rjCount++;
+                    if (r.uf === 'ES') esCount++;
+
+                    // Inverte a data de YYYY-MM-DD para DD/MM/YYYY apenas para exibição visual
+                    const dataFormatada = r.data ? r.data.substring(0, 10).split('-').reverse().join('/') : "---";
+                    const corUF = r.uf === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${dataFormatada}</td>
+                        <td><b style="color: ${corUF}">${r.uf}</b></td>
+                        <td><strong>${r.colaborador || '---'}</strong></td>
+                        <td>${r.supervisor || '---'}</td>
+                        <td><span class="status-badge">${r.status || '---'}</span></td>
+                        <td style="text-align:center;">
+                            <button onclick="excluir('${r.id}')" style="cursor:pointer; border:none; background:none;">🗑️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             }
 
-            msgVazia.style.display = "none";
-            lista.forEach((r) => {
-                const dataBR = r.data ? r.data.split('-').reverse().join('/') : "---";
-                const rUF = (r.uf || "").toString().trim().toUpperCase();
-                const corUF = rUF === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${dataBR}</td>
-                    <td><b style="color: ${corUF}">${rUF}</b></td>
-                    <td><strong>${r.colaborador || r.colab || "N/A"}</strong></td>
-                    <td>${r.supervisor || r.super || "N/A"}</td>
-                    <td>${r.micro_area || r.micro || ''}</td>
-                    <td>${r.empresa || ''}</td>
-                    <td><span class="status-badge">${r.status || ''}</span></td>
-                    <td style="text-align:center;">
-                        <button class="btn-edit" onclick="editarRegistro('${r.id}')">✏️</button>
-                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${r.colaborador || r.colab}')">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            document.getElementById('total-rj').innerText = rjCount;
+            document.getElementById('total-es').innerText = esCount;
         }
 
-        async function editarRegistro(id) {
-            const reg = todosOsRegistros.find(r => r.id == id);
-            if (!reg) return;
-            const opcao = prompt(`Editar ${reg.colaborador || reg.colab}:\n1. Alterar Status\n2. Alterar Supervisor`);
-            if (opcao === "1") {
-                let msgStatus = "Escolha o número ou digite o Status:\n";
-                for (let k in listaStatusMap) msgStatus += `${k}. ${listaStatusMap[k]}\n`;
-                const esc = prompt(msgStatus);
-                if (esc) {
-                    const statusFinal = listaStatusMap[esc] || esc.toUpperCase().trim();
-                    await _supabase.from('registros_presenca').update({ status: statusFinal }).eq('id', id);
-                    await carregarDados();
-                }
-            } else if (opcao === "2") {
-                const novoNome = prompt("Novo Supervisor:", reg.supervisor || reg.super);
-                if (novoNome) {
-                    const campo = ('supervisor' in reg) ? 'supervisor' : 'super';
-                    await _supabase.from('registros_presenca').update({ [campo]: novoNome.toUpperCase().trim() }).eq('id', id);
-                    await carregarDados();
-                }
-            }
-        }
-
-        async function excluirRegistro(id, nome) {
-            if (confirm(`Excluir registro de ${nome}?`)) {
-                await _supabase.from('registros_presenca').delete().eq('id', id);
-                await carregarDados();
+        async function excluir(id) {
+            if (confirm("Deseja realmente excluir este registro?")) {
+                const { error } = await _supabase.from('registros_presenca').delete().eq('id', id);
+                if (!error) carregarDados();
+                else alert("Erro ao excluir.");
             }
         }
 
