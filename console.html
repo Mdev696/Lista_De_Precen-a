@@ -44,7 +44,6 @@
             gap: 15px;
         }
 
-        /* Estilos Novos: Controles e Correlação */
         .header-controls {
             display: flex;
             align-items: center;
@@ -65,44 +64,15 @@
             gap: 8px;
         }
 
-        .btn-play {
-            background-color: var(--success);
-        }
-
-        .btn-pause {
-            background-color: var(--danger);
-        }
+        .btn-play { background-color: var(--success); }
+        .btn-pause { background-color: var(--danger); }
 
         .btn-play-pause:disabled {
             opacity: 0.3;
             cursor: not-allowed;
         }
 
-        .correlation-card {
-            background: #f8f9fa;
-            border-left: 5px solid var(--accent);
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .corr-value {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .insight-box {
-            max-width: 75%;
-            font-size: 13px;
-            color: var(--secondary);
-        }
-
-        /* Estilos Originais Mantidos */
+        /* Barra de Filtros Mantida e Expandida */
         .filtros {
             display: flex;
             align-items: center;
@@ -110,13 +80,16 @@
             background: var(--light);
             padding: 10px 15px;
             border-radius: 8px;
+            flex-wrap: wrap;
         }
 
-        .filtros input[type="date"] {
+        .filtros select, .filtros input[type="date"] {
             padding: 8px;
             border-radius: 4px;
             border: 1px solid var(--border-color);
             font-family: inherit;
+            font-size: 12px;
+            outline: none;
         }
 
         .btn-voltar {
@@ -160,28 +133,12 @@
             color: var(--secondary);
         }
 
-        tr:nth-child(even) {
-            background-color: #fafbfc;
-        }
-
-        tr:hover {
-            background-color: #f1f7ff;
-        }
+        tr:nth-child(even) { background-color: #fafbfc; }
+        tr:hover { background-color: #f1f7ff; }
 
         .col-efetivo-dado {
             font-weight: bold;
             color: var(--primary);
-        }
-
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .header-controls {
-                justify-content: center;
-            }
         }
     </style>
 </head>
@@ -193,22 +150,32 @@
             <h1>Visão Consolidada</h1>
 
             <div class="header-controls">
-                <button id="btnPlay" class="btn-play-pause btn-play" onclick="toggleAutoUpdate(true)" disabled>▶
-                    Play</button>
-                <button id="btnPause" class="btn-play-pause btn-pause" onclick="toggleAutoUpdate(false)">⏸
-                    Pause</button>
+                <button id="btnPlay" class="btn-play-pause btn-play" onclick="toggleAutoUpdate(true)" disabled>▶ Play</button>
+                <button id="btnPause" class="btn-play-pause btn-pause" onclick="toggleAutoUpdate(false)">⏸ Pause</button>
 
                 <div class="filtros">
-                    <label for="dataFiltro"><strong>Data:</strong></label>
                     <input type="date" id="dataFiltro" onchange="renderizarVisaoSupervisor()">
+                    
+                    <select id="selUF" onchange="aoMudarFiltroPrincipal()">
+                        <option value="">UF: Todas</option>
+                    </select>
+
+                    <select id="selGerente" onchange="aoMudarFiltroPrincipal()">
+                        <option value="">Gerente: Todos</option>
+                    </select>
+
+                    <select id="selCoord" onchange="aoMudarFiltroPrincipal()">
+                        <option value="">Coord: Todos</option>
+                    </select>
+
+                    <select id="selSup" onchange="renderizarVisaoSupervisor()">
+                        <option value="">Supervisor: Todos</option>
+                    </select>
                 </div>
             </div>
 
-            <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+            <a href="analise.html" class="btn-voltar">⬅ Voltar</a>
         </header>
-
-       
-
 
         <div class="table-wrapper">
             <table>
@@ -248,105 +215,96 @@
             const hoje = new Date();
             document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
             await carregarDadosDoBanco();
-            toggleAutoUpdate(true); // Começa no Play
+            toggleAutoUpdate(true);
         };
 
         async function carregarDadosDoBanco() {
-            console.log("Sincronizando com Banco de Dados...");
             const { data, error } = await _supabase.from('registros_presenca').select('*');
-            if (error) {
-                console.error("Erro ao buscar dados:", error);
-                registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
-            } else {
+            if (!error) {
                 registros = data;
+                popularSelects();
+                renderizarVisaoSupervisor();
             }
+        }
+
+        function popularSelects() {
+            const ufs = [...new Set(registros.map(r => r.uf))].filter(Boolean).sort();
+            const gerentes = [...new Set(registros.map(r => r.gerente_tlp || r.gerente))].filter(Boolean).sort();
+            const coords = [...new Set(registros.map(r => r.coordenador))].filter(Boolean).sort();
+            const sups = [...new Set(registros.map(r => r.supervisor))].filter(Boolean).sort();
+
+            atualizarOpcoes('selUF', ufs, 'UF');
+            atualizarOpcoes('selGerente', gerentes, 'Gerente');
+            atualizarOpcoes('selCoord', coords, 'Coord');
+            atualizarOpcoes('selSup', sups, 'Supervisor');
+        }
+
+        function atualizarOpcoes(id, lista, label) {
+            const el = document.getElementById(id);
+            const valorAtual = el.value;
+            el.innerHTML = `<option value="">${label}: Todos</option>`;
+            lista.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = item;
+                el.appendChild(opt);
+            });
+            el.value = valorAtual;
+        }
+
+        function aoMudarFiltroPrincipal() {
             renderizarVisaoSupervisor();
         }
 
         function toggleAutoUpdate(enable) {
             const btnP = document.getElementById('btnPlay');
             const btnS = document.getElementById('btnPause');
-
             if (enable) {
-                updateInterval = setInterval(carregarDadosDoBanco, 30000); // 30 segundos
-                btnP.disabled = true;
-                btnS.disabled = false;
+                updateInterval = setInterval(carregarDadosDoBanco, 30000);
+                btnP.disabled = true; btnS.disabled = false;
             } else {
                 clearInterval(updateInterval);
-                btnP.disabled = false;
-                btnS.disabled = true;
+                btnP.disabled = false; btnS.disabled = true;
             }
-        }
-
-        // Função Matemática de Correlação de Pearson
-        function calcularPearson(x, y) {
-            const n = x.length;
-            if (n < 2) return 0;
-            const somaX = x.reduce((a, b) => a + b, 0);
-            const somaY = y.reduce((a, b) => a + b, 0);
-            const somaXY = x.reduce((a, b, i) => a + (b * y[i]), 0);
-            const somaX2 = x.reduce((a, b) => a + (b * b), 0);
-            const somaY2 = y.reduce((a, b) => a + (b * b), 0);
-            const num = (n * somaXY) - (somaX * somaY);
-            const den = Math.sqrt(((n * somaX2) - (somaX ** 2)) * ((n * somaY2) - (somaY ** 2)));
-            return den === 0 ? 0 : num / den;
         }
 
         function renderizarVisaoSupervisor() {
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
-            const dataSelecionada = document.getElementById('dataFiltro').value;
-            if (!dataSelecionada) return;
+            const dataSel = document.getElementById('dataFiltro').value;
+            
+            const fUF = document.getElementById('selUF').value;
+            const fGer = document.getElementById('selGerente').value;
+            const fCor = document.getElementById('selCoord').value;
+            const fSup = document.getElementById('selSup').value;
 
-            const supervisoresUnicos = [...new Set(registros.map(r => r.supervisor))].sort();
+            // Filtra por Data e pelos Selects
+            let filtrados = registros.filter(r => r.data === dataSel);
+            if(fUF) filtrados = filtrados.filter(r => r.uf === fUF);
+            if(fGer) filtrados = filtrados.filter(r => (r.gerente_tlp || r.gerente) === fGer);
+            if(fCor) filtrados = filtrados.filter(r => r.coordenador === fCor);
+            if(fSup) filtrados = filtrados.filter(r => r.supervisor === fSup);
 
-            // Arrays para a correlação
-            let dadosEfetivo = [];
-            let dadosABS = [];
+            const supervisores = [...new Set(filtrados.map(r => r.supervisor))].sort();
 
-            supervisoresUnicos.forEach(supNome => {
+            supervisores.forEach(supNome => {
                 if (!supNome) return;
-                const dadosDataSup = registros.filter(r => r.supervisor === supNome && r.data === dataSelecionada);
-                if (dadosDataSup.length === 0) return;
+                const dadosSup = filtrados.filter(r => r.supervisor === supNome);
+                const ref = dadosSup[0];
+                
+                let tot = dadosSup.length;
+                let s_pr = 0, s_f = 0, s_fo = 0, s_fe = 0, s_inss = 0, s_intj = 0;
 
-                const ref = dadosDataSup[0];
-                let total_efetivo = dadosDataSup.length;
-                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_inss = 0, soma_intj = 0;
-
-                dadosDataSup.forEach(colab => {
-                    const status = (colab.status || "").toUpperCase();
-                    const historico = registros.filter(r => (r.colaborador || r.colab) === (colab.colaborador || colab.colab));
-                    const dataFoco = new Date(dataSelecionada + 'T12:00:00');
-
-                    // PR M-1
-                    const registrosMes = historico.filter(r => {
-                        const d = new Date(r.data + 'T12:00:00');
-                        return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
-                    });
-                    soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
-
-                    // PR W-1
-                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
-
-                    // PR D-1
-                    const ontem = new Date(dataFoco); ontem.setDate(ontem.getDate() - 1);
-                    const dataOntemStr = ontem.toISOString().split('T')[0];
-                    if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
-
-                    if (status.includes('PRESENTE')) soma_pr++;
-                    else if (status.includes('INTERJORNADA') || status.includes('INTERMEDIÁRIO')) soma_intj++;
-                    else if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
-                    else if (status.includes('FOLGA') || status === 'FO') soma_fo++;
-                    else if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
-                    else if (status.includes('INSS')) soma_inss++;
+                dadosSup.forEach(colab => {
+                    const st = (colab.status || "").toUpperCase();
+                    if (st.includes('PRESENTE')) s_pr++;
+                    else if (st.includes('FALTA') || st.includes('ATESTADO')) s_f++;
+                    else if (st.includes('FOLGA') || st === 'FO') s_fo++;
+                    else if (st.includes('FERIAS') || st.includes('FÉRIAS')) s_fe++;
+                    else if (st.includes('INSS')) s_inss++;
+                    else if (st.includes('INTERJORNADA')) s_intj++;
                 });
 
-                const valorAbs = ((soma_f / total_efetivo) * 100);
-                const absEquipe = valorAbs.toFixed(2) + "%";
-
-                // Coletar dados para correlação
-                dadosEfetivo.push(total_efetivo);
-                dadosABS.push(valorAbs);
+                const absVal = (s_f / tot) * 100;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -354,34 +312,13 @@
                     <td>${ref.gerente_tlp || ref.gerente || ''}</td>
                     <td>${ref.coordenador || ''}</td>
                     <td><strong>${supNome}</strong></td>
-                    <td class="col-efetivo-dado">${total_efetivo}</td>
-                    <td>${soma_pr_m1}</td>
-                    <td>${soma_pr_w1}</td>
-                    <td>${soma_pr_d1}</td>
-                    <td>${soma_pr}</td>
-                    <td>${soma_f}</td>
-                    <td>${soma_fo}</td>
-                    <td>${soma_fe}</td>
-                    <td>${soma_inss}</td>
-                    <td>${soma_intj}</td>
-                    <td style="color: ${valorAbs > 10 ? 'red' : 'inherit'}; font-weight: bold;">${absEquipe}</td>
+                    <td class="col-efetivo-dado">${tot}</td>
+                    <td>-</td><td>-</td><td>-</td>
+                    <td>${s_pr}</td><td>${s_f}</td><td>${s_fo}</td><td>${s_fe}</td><td>${s_inss}</td><td>${s_intj}</td>
+                    <td style="color: ${absVal > 10 ? 'red' : 'inherit'}; font-weight: bold;">${absVal.toFixed(2)}%</td>
                 `;
                 corpo.appendChild(tr);
             });
-
-            // Processar Correlação
-            const corr = calcularPearson(dadosEfetivo, dadosABS);
-            const card = document.getElementById('cardCorrelacao');
-            if (dadosEfetivo.length > 2) {
-                card.style.display = 'flex';
-                document.getElementById('valorCorrelacao').innerText = corr.toFixed(2);
-
-                let insight = "";
-                if (corr > 0.5) insight = "Correlação Positiva: Equipes maiores estão apresentando proporcionalmente mais faltas.";
-                else if (corr < -0.5) insight = "Correlação Negativa: Equipes menores estão sofrendo mais com o absenteísmo.";
-                else insight = "Sem correlação: O tamanho da equipe não está influenciando diretamente as faltas hoje.";
-                document.getElementById('textoInsight').innerText = insight;
-            }
         }
     </script>
 </body>
