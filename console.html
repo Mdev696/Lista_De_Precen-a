@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visão por Supervisor - Operacional Live</title>
+    <title>Visão por Supervisor - Operacional</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -12,7 +12,6 @@
             --secondary: #34495e;
             --accent: #348ddb;
             --success: #27ae60;
-            --danger: #e74c3c;
             --light: #ecf0f1;
             --border-color: #dcdde1;
         }
@@ -44,35 +43,6 @@
             gap: 15px;
         }
 
-        .header-controls {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .btn-play-pause {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            color: white;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-play { background-color: var(--success); }
-        .btn-pause { background-color: var(--danger); }
-
-        .btn-play-pause:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        /* Barra de Filtros Mantida e Expandida */
         .filtros {
             display: flex;
             align-items: center;
@@ -80,16 +50,13 @@
             background: var(--light);
             padding: 10px 15px;
             border-radius: 8px;
-            flex-wrap: wrap;
         }
 
-        .filtros select, .filtros input[type="date"] {
+        .filtros input[type="date"] {
             padding: 8px;
             border-radius: 4px;
             border: 1px solid var(--border-color);
             font-family: inherit;
-            font-size: 12px;
-            outline: none;
         }
 
         .btn-voltar {
@@ -112,7 +79,8 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            font-size: 12px;
+            font-size: 11px;
+            /* Ajustado para caber mais info */
         }
 
         th {
@@ -131,14 +99,41 @@
             border-bottom: 1px solid #edf0f2;
             white-space: nowrap;
             color: var(--secondary);
+            text-align: center;
         }
 
-        tr:nth-child(even) { background-color: #fafbfc; }
-        tr:hover { background-color: #f1f7ff; }
+        .text-left {
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+
+        tr:hover {
+            background-color: #f1f7ff;
+        }
 
         .col-efetivo-dado {
             font-weight: bold;
             color: var(--primary);
+        }
+
+        .abs-critico {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .filtros {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -147,34 +142,14 @@
 
     <div class="container">
         <header>
-            <h1>Visão Consolidada</h1>
+            <h1 style="color: var(--primary); margin:0;">Visão Consolidada</h1>
 
-            <div class="header-controls">
-                <button id="btnPlay" class="btn-play-pause btn-play" onclick="toggleAutoUpdate(true)" disabled>▶ Play</button>
-                <button id="btnPause" class="btn-play-pause btn-pause" onclick="toggleAutoUpdate(false)">⏸ Pause</button>
-
-                <div class="filtros">
-                    <input type="date" id="dataFiltro" onchange="renderizarVisaoSupervisor()">
-                    
-                    <select id="selUF" onchange="aoMudarFiltroPrincipal()">
-                        <option value="">UF: Todas</option>
-                    </select>
-
-                    <select id="selGerente" onchange="aoMudarFiltroPrincipal()">
-                        <option value="">Gerente: Todos</option>
-                    </select>
-
-                    <select id="selCoord" onchange="aoMudarFiltroPrincipal()">
-                        <option value="">Coord: Todos</option>
-                    </select>
-
-                    <select id="selSup" onchange="renderizarVisaoSupervisor()">
-                        <option value="">Supervisor: Todos</option>
-                    </select>
-                </div>
+            <div class="filtros">
+                <label for="dataFiltro"><strong>Data de Análise:</strong></label>
+                <input type="date" id="dataFiltro" onchange="renderizarTabela()">
             </div>
 
-            <a href="analise.html" class="btn-voltar">⬅ Voltar</a>
+            <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
         </header>
 
         <div class="table-wrapper">
@@ -182,10 +157,10 @@
                 <thead>
                     <tr>
                         <th>UF</th>
-                        <th>Gerente TLP</th>
-                        <th>Coordenador</th>
-                        <th>Supervisor</th>
-                        <th>Efetivo</th>
+                        <th>GERENTE TLP</th>
+                        <th>COORDENADOR</th>
+                        <th>SUPERVISOR</th>
+                        <th>EFETIVO</th>
                         <th>PR Σx M-1</th>
                         <th>PR Σx W-1</th>
                         <th>PR D-1</th>
@@ -208,118 +183,214 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let registros = [];
-        let updateInterval = null;
+        let registrosBanco = [];
+
+        // BASE DE DADOS ATUALIZADA (84+ Colaboradores)
+        const baseColaboradores = {
+            "RODOLPHO JOSE TAVARES": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MAX EMILIANO INACIO DA ROCHA": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "VAUSLEY DA SILVA COUTINHO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "IAN MACIEL ALVES DA SILVA": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILLAN TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GABRIEL RODRIGUES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GABRIEL EMANUEL DOS SANTOS TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "THALLES EDUARDO MARQUES BORGES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "IVANILDO EDUARDO DE LIMA NETO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LUCAS OLIVEIRA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "HIAGO MARQUES RUAS": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "BRUNO DE LIMA SALLES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "FELIPE MIRANDA DE OLIVEIRA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "PEDRO PAULO CARVALHO SALEMA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "WALLACE FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILLIAM CORDEIRO DE MOURA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ROGERIO GOMES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "IAGO DAVI D AVILA DAMAZIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "DAVID DE OLIVEIRA CARDOSO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "THALLES ROCHA CASTELIANO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "LUCAS PEREIRA BONFIM": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MATHEUS DA SILVA TORRES": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "THIAGO PINTO EUGENIO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GABRIEL DA SILVA COSTA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MAX WILLIANFURTADO DE JESUS": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "JONATHAN SANTOS DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MOISES GOMES DA SILVA FILHO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MATEUS DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MATEUS FONSECA DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RODRIGO BANNY DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ALLAN CESAR SILVA DE SOUZA": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "VICTOR HUGO DE SOUZA KLEN": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "JEAN CARLOS SILVA DO NASCIMENTO": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MARIO CESAR RODRIGUES DOS SANTOS": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "LUCAS CONTES MOREIRA": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "FELIPE SILVA DE LIMA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILLIAM CESAR NASCIMENTO SILVA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MARCELO LUIZ LEITE": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LEANDRO ALBERTO CORREA BERREDO": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ALEX SANTOS PEREIRA DA CRUZ": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MATEUS BATISTA DA CUNHA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "FABIO EUGENIO GONCALVES": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RAMON PEREIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WALLACE DA CONCEICAO PEREIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "CLEYSON ALVES DOS SANTOS": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LEANDERSON MARCOS VIEIRA DA SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ROMEU DO NASCIMENTO VALENTE": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ALEXSSANDRO PEDRO ARAUJO DE FREITAS": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "THIAGO DE OLIVEIRA FONSECA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "NILTON VIEIRA DA SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "REGINALDO AVELINO": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ATILA VICTORIO MOCO": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "CARLOS EDUARDO LACERDA DE OLIVEIRA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ANDRE FRANÇA VIEIRA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "BRUNO NOGUEIRA GONTIJO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "FELIPE DA SILVA FREIRE": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GABRIEL ZULU MARQUES DE OLIVIERA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GUSTAVO DOS SANTOS FERREIRA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "IAGO VENÂNCIO DA SILVA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "JOEL SEBASTIÃO DE LIMA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LEONARDO FERREIRA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MATHEUS FELIPE PONCE DE OLIVEIRA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNOR": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RUAN PEREIRA RIBEIRO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "EDUARDO OSÓRIO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "TIAGO ALVEZ": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RODRIGO GOMEZ AZEVEDO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "ALEXSANDRO MALAQUIAS", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "FABIO RODRIGO SAIEGH DUARTE": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WAGNER FERNANDES DOS SANTOS": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MARCIO DE OLIVEIRA DA SILVA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "SAMUEL FIRMINO DE OLIVEIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "STEFANO EDUARDO AGUIAR SILVA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "FABIANO OLIVEIRA DA SILVA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "EDSON VANDER PAIXAO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "FABIANO DE SANTANA ANDRADE": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "RONEY MELO SANTOS": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "JONATAS SANTOS DOS ANJOS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "PATRICK HENRIQUE ALVES DE OLIV": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "JOAIS SANTOS DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "DAVID COSTA MIRANDA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "RAFAEL GUASTI MARTINS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "BRENO NICOLAU VALASCO DA SILVA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "IGOR MAGNO MARTINS LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "WARLEY CARVALHO BERNADES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "DOUGLAS NUNES DA COSTA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "DEILSON DOS SANTOS SOUZA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "WDSON NASCIMENTO DO CARMO": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "EMANUEL MARTINS DE MORAES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" },
+            "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "CARLOS EDUARDO MENDONÇA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "EMANUEL FREITAS OTT": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI" },
+            "LORRAN PEREIRA DA SILVA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI" }
+        };
 
         window.onload = async () => {
             const hoje = new Date();
             document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
             await carregarDadosDoBanco();
-            toggleAutoUpdate(true);
         };
 
         async function carregarDadosDoBanco() {
             const { data, error } = await _supabase.from('registros_presenca').select('*');
-            if (!error) {
-                registros = data;
-                popularSelects();
-                renderizarVisaoSupervisor();
-            }
+            registrosBanco = error ? [] : data;
+            renderizarTabela();
         }
 
-        function popularSelects() {
-            const ufs = [...new Set(registros.map(r => r.uf))].filter(Boolean).sort();
-            const gerentes = [...new Set(registros.map(r => r.gerente_tlp || r.gerente))].filter(Boolean).sort();
-            const coords = [...new Set(registros.map(r => r.coordenador))].filter(Boolean).sort();
-            const sups = [...new Set(registros.map(r => r.supervisor))].filter(Boolean).sort();
-
-            atualizarOpcoes('selUF', ufs, 'UF');
-            atualizarOpcoes('selGerente', gerentes, 'Gerente');
-            atualizarOpcoes('selCoord', coords, 'Coord');
-            atualizarOpcoes('selSup', sups, 'Supervisor');
-        }
-
-        function atualizarOpcoes(id, lista, label) {
-            const el = document.getElementById(id);
-            const valorAtual = el.value;
-            el.innerHTML = `<option value="">${label}: Todos</option>`;
-            lista.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = opt.textContent = item;
-                el.appendChild(opt);
-            });
-            el.value = valorAtual;
-        }
-
-        function aoMudarFiltroPrincipal() {
-            renderizarVisaoSupervisor();
-        }
-
-        function toggleAutoUpdate(enable) {
-            const btnP = document.getElementById('btnPlay');
-            const btnS = document.getElementById('btnPause');
-            if (enable) {
-                updateInterval = setInterval(carregarDadosDoBanco, 30000);
-                btnP.disabled = true; btnS.disabled = false;
-            } else {
-                clearInterval(updateInterval);
-                btnP.disabled = false; btnS.disabled = true;
-            }
-        }
-
-        function renderizarVisaoSupervisor() {
+        function renderizarTabela() {
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
-            const dataSel = document.getElementById('dataFiltro').value;
-            
-            const fUF = document.getElementById('selUF').value;
-            const fGer = document.getElementById('selGerente').value;
-            const fCor = document.getElementById('selCoord').value;
-            const fSup = document.getElementById('selSup').value;
+            const dataFiltro = document.getElementById('dataFiltro').value;
+            if (!dataFiltro) return;
 
-            // Filtra por Data e pelos Selects
-            let filtrados = registros.filter(r => r.data === dataSel);
-            if(fUF) filtrados = filtrados.filter(r => r.uf === fUF);
-            if(fGer) filtrados = filtrados.filter(r => (r.gerente_tlp || r.gerente) === fGer);
-            if(fCor) filtrados = filtrados.filter(r => r.coordenador === fCor);
-            if(fSup) filtrados = filtrados.filter(r => r.supervisor === fSup);
+            // Agrupar supervisores únicos da base
+            const supervisoresMap = {};
+            Object.values(baseColaboradores).forEach(c => {
+                if (!supervisoresMap[c.super]) {
+                    supervisoresMap[c.super] = { uf: c.uf, gerente: c.gerente, coord: c.coord };
+                }
+            });
 
-            const supervisores = [...new Set(filtrados.map(r => r.supervisor))].sort();
+            // Ordenar por UF e Supervisor
+            const listaSeps = Object.keys(supervisoresMap).sort((a, b) => {
+                if (supervisoresMap[a].uf !== supervisoresMap[b].uf) return supervisoresMap[a].uf.localeCompare(supervisoresMap[b].uf);
+                return a.localeCompare(b);
+            });
 
-            supervisores.forEach(supNome => {
-                if (!supNome) return;
-                const dadosSup = filtrados.filter(r => r.supervisor === supNome);
-                const ref = dadosSup[0];
-                
-                let tot = dadosSup.length;
-                let s_pr = 0, s_f = 0, s_fo = 0, s_fe = 0, s_inss = 0, s_intj = 0;
+            listaSeps.forEach(supNome => {
+                const info = supervisoresMap[supNome];
+                const nomesEquipe = Object.keys(baseColaboradores).filter(n => baseColaboradores[n].super === supNome);
+                const efetivo = nomesEquipe.length;
 
-                dadosSup.forEach(colab => {
-                    const st = (colab.status || "").toUpperCase();
-                    if (st.includes('PRESENTE')) s_pr++;
-                    else if (st.includes('FALTA') || st.includes('ATESTADO')) s_f++;
-                    else if (st.includes('FOLGA') || st === 'FO') s_fo++;
-                    else if (st.includes('FERIAS') || st.includes('FÉRIAS')) s_fe++;
-                    else if (st.includes('INSS')) s_inss++;
-                    else if (st.includes('INTERJORNADA')) s_intj++;
+                let pr_m1 = 0, pr_w1 = 0, pr_d1 = 0, pr_dia = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0;
+
+                const dFoco = new Date(dataFiltro + 'T12:00:00');
+                const dOntem = new Date(dFoco); dOntem.setDate(dOntem.getDate() - 1);
+                const ontemStr = dOntem.toISOString().split('T')[0];
+
+                nomesEquipe.forEach(nome => {
+                    const historico = registrosBanco.filter(r => (r.colaborador || r.colab) === nome);
+                    const regHoje = historico.find(r => r.data === dataFiltro);
+
+                    // PR M-1 (Mês atual até hoje)
+                    pr_m1 += historico.filter(r => {
+                        const d = new Date(r.data + 'T12:00:00');
+                        return d.getMonth() === dFoco.getMonth() && d.getFullYear() === dFoco.getFullYear() && r.data <= dataFiltro && r.status.toUpperCase().includes('PRESENTE');
+                    }).length;
+
+                    // PR W-1 (Total Histórico)
+                    pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+
+                    // PR D-1
+                    if (historico.find(r => r.data === ontemStr && r.status.toUpperCase().includes('PRESENTE'))) pr_d1++;
+
+                    if (regHoje) {
+                        const st = regHoje.status.toUpperCase();
+                        if (st.includes('PRESENTE')) pr_dia++;
+                        else if (st.includes('FALTA') || st.includes('ATESTADO')) f++;
+                        else if (st.includes('FOLGA')) fo++;
+                        else if (st.includes('FERIAS') || st.includes('FÉRIAS')) fe++;
+                        else if (st.includes('INSS')) inss++;
+                        else if (st.includes('INTJ') || st.includes('INTERJORNADA')) intj++;
+                    }
                 });
 
-                const absVal = (s_f / tot) * 100;
+                const absVal = efetivo > 0 ? ((f + fo + fe + inss) / efetivo * 100).toFixed(2) : "0.00";
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${ref.uf || ''}</td>
-                    <td>${ref.gerente_tlp || ref.gerente || ''}</td>
-                    <td>${ref.coordenador || ''}</td>
-                    <td><strong>${supNome}</strong></td>
-                    <td class="col-efetivo-dado">${tot}</td>
-                    <td>-</td><td>-</td><td>-</td>
-                    <td>${s_pr}</td><td>${s_f}</td><td>${s_fo}</td><td>${s_fe}</td><td>${s_inss}</td><td>${s_intj}</td>
-                    <td style="color: ${absVal > 10 ? 'red' : 'inherit'}; font-weight: bold;">${absVal.toFixed(2)}%</td>
+                    <td>${info.uf}</td>
+                    <td class="text-left">${info.gerente}</td>
+                    <td class="text-left">${info.coord}</td>
+                    <td class="text-left"><strong>${supNome}</strong></td>
+                    <td class="col-efetivo-dado">${efetivo}</td>
+                    <td>${pr_m1}</td>
+                    <td>${pr_w1}</td>
+                    <td>${pr_d1}</td>
+                    <td style="font-weight:bold; color:var(--accent)">${pr_dia}</td>
+                    <td>${f}</td>
+                    <td>${fo}</td>
+                    <td>${fe}</td>
+                    <td>${inss}</td>
+                    <td>${intj}</td>
+                    <td class="${parseFloat(absVal) > 15 ? 'abs-critico' : ''}">${absVal}%</td>
                 `;
                 corpo.appendChild(tr);
             });
         }
     </script>
 </body>
+
 </html>
