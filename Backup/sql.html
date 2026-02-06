@@ -27,6 +27,91 @@ create policy " Permitir tudo para usuários autenticados" on registros_presenca
 
 <body>
 
+    <p> create table registros_presenca (
+        id uuid default gen_random_uuid () primary key,
+        data date not null,
+        uf text,
+        empresa text,
+        micro_area text,
+        colaborador text,
+        supervisor text,
+        coordenador text,
+        gerente_tlp text,
+        status text,
+        criado_em timestamp with time zone default now()
+        );
+
+        alter table registros_presenca enable row level security;
+
+        create policy " Permitir tudo para usuários autenticados" on registros_presenca for all to authenticated using
+        (true)
+        with check (true); , initial-scale=1.0"></p>
+
+    <!--=====================================================================================================================-->
+
+    <p>-- 1. Cria a tabela com todas as colunas necessárias, incluindo 'observacao'
+
+        create table if not exists registros_presenca (
+
+        id uuid default gen_random_uuid () primary key,
+
+        data date not null,
+
+        uf text,
+
+        empresa text,
+
+        micro_area text,
+
+        colaborador text,
+
+        supervisor text,
+
+        coordenador text,
+
+        gerente_tlp text,
+
+        status text,
+
+        observacao text, -- Coluna para as notas/observações
+
+        criado_em timestamp with time zone default now()
+
+        );
+
+
+
+        -- 2. Habilita a segurança de linha (RLS)
+
+        alter table registros_presenca enable row level security;
+
+
+
+        -- 3. Remove política antiga se existir e cria a nova sem erros de código HTML
+
+        drop policy if exists "Permitir tudo para usuários autenticados" on registros_presenca;
+
+
+
+        create policy "Permitir tudo para usuários autenticados"
+
+        on registros_presenca
+
+        for all
+
+        to authenticated
+
+        using (true)
+
+        with check (true);</p>
+
+    <!--======================================================================================================================-->
+
+    <p> const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
+        const SUPABASE_KEY =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);</p>
+
 </body>
 
 </html>
