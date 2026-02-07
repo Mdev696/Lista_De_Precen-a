@@ -117,10 +117,8 @@
             border: 1px solid #ffa39e;
         }
 
-        /* Estilo da nova coluna de Ações + Notas */
         .col-correlacao {
             white-space: normal;
-            /* Permite que o texto quebre linha */
             min-width: 200px;
             color: #2c3e50;
             font-size: 11px;
@@ -129,7 +127,6 @@
 
         .texto-nota {
             color: #2980b9;
-            /* Azul para as Notas */
             font-weight: bold;
         }
 
@@ -245,9 +242,10 @@
             dadosFiltrados.forEach(reg => {
                 const tr = document.createElement('tr');
                 const statusNormalizado = (reg.status || "").toUpperCase();
-                const classeStatus = statusNormalizado.includes('PRESENTE') ? 'bg-presente' : 'bg-falta';
 
-                // Lógica de histórico
+                // NOTURNO conta como PRESENTE para definição da cor
+                const classeStatus = (statusNormalizado.includes('PRESENTE') || statusNormalizado.includes('NOTURNO')) ? 'bg-presente' : 'bg-falta';
+
                 const historicoColab = registros.filter(r => (r.colaborador || r.colab) === (reg.colaborador || reg.colab));
                 const dataFoco = new Date(dataSel + 'T12:00:00');
 
@@ -256,27 +254,28 @@
                     return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                 });
 
-                const pr_m1 = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
-                const pr_w1 = historicoColab.filter(r => r.data <= dataSel && r.status.toUpperCase().includes('PRESENTE')).length;
+                // Contabilização histórica incluindo NOTURNO
+                const pr_m1 = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')).length;
+                const pr_w1 = historicoColab.filter(r => r.data <= dataSel && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))).length;
 
                 const ontem = new Date(dataFoco);
                 ontem.setDate(ontem.getDate() - 1);
                 const dataOntemStr = ontem.toISOString().split('T')[0];
-                const pr_d1 = historicoColab.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE')) ? 1 : 0;
+                const pr_d1 = historicoColab.find(r => r.data === dataOntemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))) ? 1 : 0;
 
                 let pr = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0;
-                if (statusNormalizado.includes('PRESENTE')) pr = 1;
+
+                // Lógica de contagem individual: NOTURNO = PR (Presença)
+                if (statusNormalizado.includes('PRESENTE') || statusNormalizado.includes('NOTURNO')) pr = 1;
                 else if (statusNormalizado.includes('INTRA') || statusNormalizado.includes('INTER')) intj = 1;
                 else if (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) f = 1;
                 else if (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') fo = 1;
                 else if (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) fe = 1;
                 else if (statusNormalizado.includes('INSS')) inss = 1;
 
-                // --- CORRELAÇÃO DE AÇÕES E NOTAS ---
                 const acao = reg['Ações'] || reg['acoes'] || "";
                 const nota = reg['Notas'] || reg['nota'] || reg['observacao'] || "";
 
-                // Monta o texto combinado
                 let correlacaoFinal = "";
                 if (acao && nota) {
                     correlacaoFinal = `${acao} <br> <span class="texto-nota">Nota: ${nota}</span>`;

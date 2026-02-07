@@ -139,7 +139,8 @@
                 <input type="date" id="dataFiltro" onchange="renderizarVisaoSupervisor()">
             </div>
 
-            <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+            <a href="console.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+            
         </header>
 
         <div class="table-wrapper">
@@ -176,7 +177,6 @@
         let registros = [];
 
         window.onload = async () => {
-            // Define a data padrão como hoje no fuso local
             const hoje = new Date();
             document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
             await carregarDadosDoBanco();
@@ -217,27 +217,26 @@
                     const historico = registros.filter(r => (r.colaborador || r.colab) === (colab.colaborador || colab.colab));
                     const dataFoco = new Date(dataSelecionada + 'T12:00:00');
 
-                    // PR M-1
+                    // PR M-1 (Considera PRESENTE ou NOTURNO)
                     const registrosMes = historico.filter(r => {
                         const d = new Date(r.data + 'T12:00:00');
                         return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                     });
-                    soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                    soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')).length;
 
-                    // PR W-1 (Acumulado)
-                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
+                    // PR W-1 (Considera PRESENTE ou NOTURNO)
+                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))).length;
 
-                    // PR D-1
+                    // PR D-1 (Considera PRESENTE ou NOTURNO)
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
-                    if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
+                    if (historico.find(r => r.data === dataOntemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')))) soma_pr_d1++;
 
-                    // LÓGICA DE STATUS DO DIA
-                    if (status.includes('PRESENTE')) {
+                    // LÓGICA DE STATUS DO DIA (Considera PRESENTE ou NOTURNO)
+                    if (status.includes('PRESENTE') || status.includes('NOTURNO')) {
                         soma_pr++;
                     } else if (status.includes('INTERJORNADA') || status.includes('INTERMEDIÁRIO')) {
-                        // Se for INTERJORNADA, ele conta na coluna INTJ
                         soma_intj++;
                     } else if (status.includes('FALTA') || status.includes('ATESTADO')) {
                         soma_f++;

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visão por Supervisor - Operacional</title>
+    <title>Visão Consolidada - Coordenadores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -73,6 +73,9 @@
             max-height: 650px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            /* Garante que a tabela fique centralizada se for menor que a tela */
+            display: flex;
+            justify-content: center;
         }
 
         table {
@@ -80,14 +83,16 @@
             border-collapse: separate;
             border-spacing: 0;
             font-size: 11px;
-            /* Ajustado para caber mais info */
+            /* Centraliza a tabela em si */
+            margin: 0 auto;
         }
 
         th {
             background: var(--primary);
             color: white;
             padding: 15px 12px;
-            text-align: left;
+            /* CENTRALIZAÇÃO DOS CABEÇALHOS */
+            text-align: center;
             position: sticky;
             top: 0;
             z-index: 10;
@@ -99,11 +104,15 @@
             border-bottom: 1px solid #edf0f2;
             white-space: nowrap;
             color: var(--secondary);
+            /* CENTRALIZAÇÃO DOS DADOS */
             text-align: center;
         }
 
+        /* Mantemos o alinhamento à esquerda apenas para nomes se preferir, 
+           mas se quiser TUDO no meio, pode remover as classes .text-left abaixo */
         .text-left {
-            text-align: left;
+            text-align: center;
+            /* Alterado de left para center */
         }
 
         tr:nth-child(even) {
@@ -123,32 +132,17 @@
             color: #e74c3c;
             font-weight: bold;
         }
-
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .filtros {
-                width: 100%;
-                justify-content: center;
-            }
-        }
     </style>
 </head>
 
 <body>
-
     <div class="container">
         <header>
-            <h1 style="color: var(--primary); margin:0;">Visão Consolidada</h1>
-
+            <h1 style="color: var(--primary); margin:0;">Visão Consolidada por Coordenador</h1>
             <div class="filtros">
                 <label for="dataFiltro"><strong>Data de Análise:</strong></label>
                 <input type="date" id="dataFiltro" onchange="renderizarTabela()">
             </div>
-
             <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
         </header>
 
@@ -159,7 +153,6 @@
                         <th>UF</th>
                         <th>GERENTE TLP</th>
                         <th>COORDENADOR</th>
-                        <th>SUPERVISOR</th>
                         <th>EFETIVO</th>
                         <th>PR Σx M-1</th>
                         <th>PR Σx W-1</th>
@@ -179,13 +172,13 @@
     </div>
 
     <script>
+        // ... (Todo o seu script do Supabase e a função renderizarTabela() do passo anterior)
+        // Mantive a lógica de agrupamento por Coordenador enviada anteriormente.
         const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let registrosBanco = [];
-
-        // BASE DE DADOS ATUALIZADA (84+ Colaboradores)
         const baseColaboradores = {
             "RODOLPHO JOSE TAVARES": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
@@ -315,23 +308,21 @@
             const dataFiltro = document.getElementById('dataFiltro').value;
             if (!dataFiltro) return;
 
-            // Agrupar supervisores únicos da base
-            const supervisoresMap = {};
+            const coordsMap = {};
             Object.values(baseColaboradores).forEach(c => {
-                if (!supervisoresMap[c.super]) {
-                    supervisoresMap[c.super] = { uf: c.uf, gerente: c.gerente, coord: c.coord };
+                if (!coordsMap[c.coord]) {
+                    coordsMap[c.coord] = { uf: c.uf, gerente: c.gerente };
                 }
             });
 
-            // Ordenar por UF e Supervisor
-            const listaSeps = Object.keys(supervisoresMap).sort((a, b) => {
-                if (supervisoresMap[a].uf !== supervisoresMap[b].uf) return supervisoresMap[a].uf.localeCompare(supervisoresMap[b].uf);
+            const listaCoords = Object.keys(coordsMap).sort((a, b) => {
+                if (coordsMap[a].uf !== coordsMap[b].uf) return coordsMap[a].uf.localeCompare(coordsMap[b].uf);
                 return a.localeCompare(b);
             });
 
-            listaSeps.forEach(supNome => {
-                const info = supervisoresMap[supNome];
-                const nomesEquipe = Object.keys(baseColaboradores).filter(n => baseColaboradores[n].super === supNome);
+            listaCoords.forEach(coordNome => {
+                const info = coordsMap[coordNome];
+                const nomesEquipe = Object.keys(baseColaboradores).filter(n => baseColaboradores[n].coord === coordNome);
                 const efetivo = nomesEquipe.length;
 
                 let pr_m1 = 0, pr_w1 = 0, pr_d1 = 0, pr_dia = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0;
@@ -344,21 +335,22 @@
                     const historico = registrosBanco.filter(r => (r.colaborador || r.colab) === nome);
                     const regHoje = historico.find(r => r.data === dataFiltro);
 
-                    // PR M-1 (Mês atual até hoje)
                     pr_m1 += historico.filter(r => {
                         const d = new Date(r.data + 'T12:00:00');
-                        return d.getMonth() === dFoco.getMonth() && d.getFullYear() === dFoco.getFullYear() && r.data <= dataFiltro && r.status.toUpperCase().includes('PRESENTE');
+                        const st = r.status.toUpperCase();
+                        return d.getMonth() === dFoco.getMonth() && d.getFullYear() === dFoco.getFullYear() && r.data <= dataFiltro && (st.includes('PRESENTE') || st.includes('NOTURNO'));
                     }).length;
 
-                    // PR W-1 (Total Histórico)
-                    pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                    pr_w1 += historico.filter(r => {
+                        const st = r.status.toUpperCase();
+                        return st.includes('PRESENTE') || st.includes('NOTURNO');
+                    }).length;
 
-                    // PR D-1
-                    if (historico.find(r => r.data === ontemStr && r.status.toUpperCase().includes('PRESENTE'))) pr_d1++;
+                    if (historico.find(r => r.data === ontemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')))) pr_d1++;
 
                     if (regHoje) {
                         const st = regHoje.status.toUpperCase();
-                        if (st.includes('PRESENTE')) pr_dia++;
+                        if (st.includes('PRESENTE') || st.includes('NOTURNO')) pr_dia++;
                         else if (st.includes('FALTA') || st.includes('ATESTADO')) f++;
                         else if (st.includes('FOLGA')) fo++;
                         else if (st.includes('FERIAS') || st.includes('FÉRIAS')) fe++;
@@ -373,8 +365,7 @@
                 tr.innerHTML = `
                     <td>${info.uf}</td>
                     <td class="text-left">${info.gerente}</td>
-                    <td class="text-left">${info.coord}</td>
-                    <td class="text-left"><strong>${supNome}</strong></td>
+                    <td class="text-left"><strong>${coordNome}</strong></td>
                     <td class="col-efetivo-dado">${efetivo}</td>
                     <td>${pr_m1}</td>
                     <td>${pr_w1}</td>

@@ -216,32 +216,31 @@
 
                 dadosDataCoord.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
-                    // Compatibilidade para nomes de coluna variados
                     const nomeColab = colab.colaborador || colab.colab;
                     const historico = registros.filter(r => (r.colaborador || r.colab) === nomeColab);
                     const dataFoco = new Date(dataSelecionada + 'T12:00:00');
 
-                    // PR M-1
+                    // PR M-1 (PRESENTE ou NOTURNO)
                     const registrosMes = historico.filter(r => {
                         const d = new Date(r.data + 'T12:00:00');
                         return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                     });
-                    soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                    soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')).length;
 
-                    // PR W-1
-                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
+                    // PR W-1 (PRESENTE ou NOTURNO)
+                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))).length;
 
-                    // PR D-1
+                    // PR D-1 (PRESENTE ou NOTURNO)
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
-                    if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
+                    if (historico.find(r => r.data === dataOntemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')))) soma_pr_d1++;
 
                     // LOGICA DE STATUS CONSOLIDADA
-                    if (status.includes('PRESENTE')) {
+                    if (status.includes('PRESENTE') || status.includes('NOTURNO')) {
                         soma_pr++;
                     } else if (status.includes('INTERJORNADA') || status.includes('INTERMEDIÁRIO')) {
-                        soma_intj++; // Correlacionado ao Status em vez de campo extra
+                        soma_intj++;
                     } else if (status.includes('FALTA') || status.includes('ATESTADO')) {
                         soma_f++;
                     } else if (status.includes('FOLGA') || status === 'FO') {

@@ -80,7 +80,6 @@
             border-collapse: separate;
             border-spacing: 0;
             font-size: 11px;
-            /* Ajustado para caber mais info */
         }
 
         th {
@@ -150,6 +149,7 @@
             </div>
 
             <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+            
         </header>
 
         <div class="table-wrapper">
@@ -315,7 +315,6 @@
             const dataFiltro = document.getElementById('dataFiltro').value;
             if (!dataFiltro) return;
 
-            // Agrupar supervisores únicos da base
             const supervisoresMap = {};
             Object.values(baseColaboradores).forEach(c => {
                 if (!supervisoresMap[c.super]) {
@@ -323,7 +322,6 @@
                 }
             });
 
-            // Ordenar por UF e Supervisor
             const listaSeps = Object.keys(supervisoresMap).sort((a, b) => {
                 if (supervisoresMap[a].uf !== supervisoresMap[b].uf) return supervisoresMap[a].uf.localeCompare(supervisoresMap[b].uf);
                 return a.localeCompare(b);
@@ -344,21 +342,26 @@
                     const historico = registrosBanco.filter(r => (r.colaborador || r.colab) === nome);
                     const regHoje = historico.find(r => r.data === dataFiltro);
 
-                    // PR M-1 (Mês atual até hoje)
+                    // PR M-1 (Incluso NOTURNO)
                     pr_m1 += historico.filter(r => {
                         const d = new Date(r.data + 'T12:00:00');
-                        return d.getMonth() === dFoco.getMonth() && d.getFullYear() === dFoco.getFullYear() && r.data <= dataFiltro && r.status.toUpperCase().includes('PRESENTE');
+                        const st = r.status.toUpperCase();
+                        return d.getMonth() === dFoco.getMonth() && d.getFullYear() === dFoco.getFullYear() && r.data <= dataFiltro && (st.includes('PRESENTE') || st.includes('NOTURNO'));
                     }).length;
 
-                    // PR W-1 (Total Histórico)
-                    pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                    // PR W-1 (Incluso NOTURNO)
+                    pr_w1 += historico.filter(r => {
+                        const st = r.status.toUpperCase();
+                        return st.includes('PRESENTE') || st.includes('NOTURNO');
+                    }).length;
 
-                    // PR D-1
-                    if (historico.find(r => r.data === ontemStr && r.status.toUpperCase().includes('PRESENTE'))) pr_d1++;
+                    // PR D-1 (Incluso NOTURNO)
+                    if (historico.find(r => r.data === ontemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')))) pr_d1++;
 
                     if (regHoje) {
                         const st = regHoje.status.toUpperCase();
-                        if (st.includes('PRESENTE')) pr_dia++;
+                        // PR DIA (Incluso NOTURNO)
+                        if (st.includes('PRESENTE') || st.includes('NOTURNO')) pr_dia++;
                         else if (st.includes('FALTA') || st.includes('ATESTADO')) f++;
                         else if (st.includes('FOLGA')) fo++;
                         else if (st.includes('FERIAS') || st.includes('FÉRIAS')) fe++;

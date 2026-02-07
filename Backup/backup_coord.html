@@ -39,6 +39,24 @@
             border-bottom: 2px solid var(--light);
             padding-bottom: 20px;
             margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filtros {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .filtros input[type="date"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
         }
 
         .btn-voltar {
@@ -95,6 +113,18 @@
             color: var(--primary);
             text-align: left;
         }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .filtros {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 
@@ -103,6 +133,12 @@
     <div class="container">
         <header>
             <h1>Visão Consolidada por Supervisor</h1>
+
+            <div class="filtros">
+                <label for="dataFiltro"><strong>Data de Análise:</strong></label>
+                <input type="date" id="dataFiltro" onchange="renderizarVisaoSupervisor()">
+            </div>
+
             <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
         </header>
 
@@ -122,6 +158,7 @@
                         <th>F</th>
                         <th>FO</th>
                         <th>FE</th>
+                        <th>INSS</th>
                         <th>INTJ</th>
                         <th>ABS</th>
                     </tr>
@@ -132,31 +169,27 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
-        const SUPABASE_URL = 'https://dflefctktgxkwhiburgt.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbGVmY3RrdGd4a3doaWJ1cmd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTU2ODMsImV4cCI6MjA4NDY5MTY4M30.R2K3w3VEUiMDRzBi3th5pNPvWSfyZshJ-NuTrDJZZA8';
+        const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let registros = [];
 
         window.onload = async () => {
+            // Define a data padrão como hoje no fuso local
+            const hoje = new Date();
+            document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
             await carregarDadosDoBanco();
         };
 
         async function carregarDadosDoBanco() {
-            // Busca os dados no Supabase
-            const { data, error } = await _supabase
-                .from('registros_presenca')
-                .select('*');
-
+            const { data, error } = await _supabase.from('registros_presenca').select('*');
             if (error) {
                 console.error("Erro ao buscar dados:", error);
-                // Caso falhe, tenta ler do localStorage para não parar a aplicação
                 registros = JSON.parse(localStorage.getItem('registros_presenca')) || [];
             } else {
                 registros = data;
             }
-
             renderizarVisaoSupervisor();
         }
 
@@ -164,49 +197,60 @@
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
 
-            const hoje = new Date().toISOString().split('T')[0];
+            const dataSelecionada = document.getElementById('dataFiltro').value;
+            if (!dataSelecionada) return;
+
             const supervisoresUnicos = [...new Set(registros.map(r => r.supervisor))].sort();
 
             supervisoresUnicos.forEach(supNome => {
                 if (!supNome) return;
 
-                // Filtra os registros do dia para este supervisor
-                const dadosHojeSup = registros.filter(r => r.supervisor === supNome && r.data === hoje);
+                const dadosDataSup = registros.filter(r => r.supervisor === supNome && r.data === dataSelecionada);
+                if (dadosDataSup.length === 0) return;
 
-                if (dadosHojeSup.length === 0) return;
+                const ref = dadosDataSup[0];
+                let total_efetivo = dadosDataSup.length;
+                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_inss = 0, soma_intj = 0;
 
-                const ref = dadosHojeSup[0];
-                let total_efetivo = dadosHojeSup.length;
-                let soma_pr_m1 = 0, soma_pr_w1 = 0, soma_pr_d1 = 0, soma_pr = 0, soma_f = 0, soma_fo = 0, soma_fe = 0, soma_intj = 0;
-
-                dadosHojeSup.forEach(colab => {
+                dadosDataSup.forEach(colab => {
                     const status = (colab.status || "").toUpperCase();
-                    const historico = registros.filter(r => r.colaborador === colab.colaborador);
-                    const dataFoco = new Date(hoje);
+                    const historico = registros.filter(r => (r.colaborador || r.colab) === (colab.colaborador || colab.colab));
+                    const dataFoco = new Date(dataSelecionada + 'T12:00:00');
 
-                    // Lógica original de cálculo PR M-1
+                    // PR M-1
                     const registrosMes = historico.filter(r => {
-                        const d = new Date(r.data);
-                        return d.getUTCMonth() === dataFoco.getUTCMonth() && d.getUTCFullYear() === dataFoco.getUTCFullYear();
+                        const d = new Date(r.data + 'T12:00:00');
+                        return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
                     });
                     soma_pr_m1 += registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
 
-                    // Somatórios originais
-                    soma_pr_w1 += historico.filter(r => r.status.toUpperCase().includes('PRESENTE')).length;
+                    // PR W-1 (Acumulado)
+                    soma_pr_w1 += historico.filter(r => r.data <= dataSelecionada && r.status.toUpperCase().includes('PRESENTE')).length;
 
+                    // PR D-1
                     const ontem = new Date(dataFoco);
                     ontem.setDate(ontem.getDate() - 1);
                     const dataOntemStr = ontem.toISOString().split('T')[0];
                     if (historico.find(r => r.data === dataOntemStr && r.status.toUpperCase().includes('PRESENTE'))) soma_pr_d1++;
 
-                    if (status.includes('PRESENTE')) soma_pr++;
-                    if (status.includes('FALTA') || status.includes('ATESTADO')) soma_f++;
-                    if (status.includes('FOLGA') || status === 'FO') soma_fo++;
-                    if (status.includes('FERIAS') || status.includes('FÉRIAS')) soma_fe++;
-                    soma_intj += parseFloat(colab.intj || 0);
+                    // LÓGICA DE STATUS DO DIA
+                    if (status.includes('PRESENTE')) {
+                        soma_pr++;
+                    } else if (status.includes('INTERJORNADA') || status.includes('INTERMEDIÁRIO')) {
+                        // Se for INTERJORNADA, ele conta na coluna INTJ
+                        soma_intj++;
+                    } else if (status.includes('FALTA') || status.includes('ATESTADO')) {
+                        soma_f++;
+                    } else if (status.includes('FOLGA') || status === 'FO') {
+                        soma_fo++;
+                    } else if (status.includes('FERIAS') || status.includes('FÉRIAS')) {
+                        soma_fe++;
+                    } else if (status.includes('INSS')) {
+                        soma_inss++;
+                    }
                 });
 
-                const absEquipe = (((soma_f + soma_fo + soma_fe) / total_efetivo) * 100).toFixed(2) + "%";
+                const absEquipe = (((soma_f + soma_fo + soma_fe + soma_inss) / total_efetivo) * 100).toFixed(2) + "%";
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -215,21 +259,22 @@
                     <td>${ref.coordenador || ''}</td>
                     <td><strong>${supNome}</strong></td>
                     <td class="col-efetivo-dado">${total_efetivo}</td>
-                    <td>${soma_pr_m1.toFixed(2)}</td>
+                    <td>${soma_pr_m1}</td>
                     <td>${soma_pr_w1}</td>
                     <td>${soma_pr_d1}</td>
                     <td>${soma_pr}</td>
                     <td>${soma_f}</td>
                     <td>${soma_fo}</td>
                     <td>${soma_fe}</td>
-                    <td>${soma_intj.toFixed(2)}</td>
+                    <td>${soma_inss}</td>
+                    <td>${soma_intj}</td>
                     <td>${absEquipe}</td>
                 `;
                 corpo.appendChild(tr);
             });
 
             if (corpo.innerHTML === "") {
-                corpo.innerHTML = "<tr><td colspan='14' style='text-align:center; padding:20px;'>Nenhum registro encontrado para a data de hoje.</td></tr>";
+                corpo.innerHTML = `<tr><td colspan='15' style='text-align:center; padding:20px;'>Nenhum registro encontrado para a data ${dataSelecionada}.</td></tr>`;
             }
         }
     </script>
