@@ -140,7 +140,7 @@
 <body>
     <div class="container">
         <header>
-            <h1 style="color: var(--primary); margin:0;">Visão Consolidada</h1>
+            <h1 style="color: var(--primary); margin:0;">Visão por Supervisor Consolidada</h1>
             <div class="filtros">
                 <label for="dataFiltro"><strong>Data de Análise:</strong></label>
                 <input type="date" id="dataFiltro" onchange="renderizarTabela()">
@@ -192,10 +192,10 @@
             "GABRIEL EMANUEL DOS SANTOS TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "THALLES EDUARDO MARQUES BORGES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
-            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "IVANILDO EDUARDO DE LIMA NETO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "LUCAS OLIVEIRA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "HIAGO MARQUES RUAS": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "BRUNO DE LIMA SALLES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "FELIPE MIRANDA DE OLIVEIRA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "PEDRO PAULO CARVALHO SALEMA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
@@ -213,7 +213,6 @@
             "JONATHAN SANTOS DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "MOISES GOMES DA SILVA FILHO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "MATEUS DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
-            "MATEUS FONSECA DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "RODRIGO BANNY DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "ALLAN CESAR SILVA DE SOUZA": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "VICTOR HUGO DE SOUZA KLEN": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
@@ -314,14 +313,12 @@
             const dataFiltro = document.getElementById('dataFiltro').value;
             if (!dataFiltro) return;
 
-            // Datas para cálculos
             const dFoco = new Date(dataFiltro + 'T12:00:00');
             const dOntem = new Date(dFoco); dOntem.setDate(dOntem.getDate() - 1);
             const ontemStr = dOntem.toISOString().split('T')[0];
             const dSemana = new Date(dFoco); dSemana.setDate(dSemana.getDate() - 7);
             const semanaStr = dSemana.toISOString().split('T')[0];
 
-            // Quantidade de dias únicos registrados no mês até a data foco
             const diasRegistradosMes = [...new Set(registrosBanco
                 .filter(r => r.data.startsWith(dataFiltro.substring(0, 7)) && r.data <= dataFiltro)
                 .map(r => r.data))].length || 1;
@@ -350,11 +347,10 @@
                 nomesEquipe.forEach(nome => {
                     const historico = registrosBanco.filter(r => (r.colaborador || r.colab) === nome);
 
-                    // Hoje
                     const regHoje = historico.find(r => r.data === dataFiltro);
                     if (regHoje) {
                         const st = regHoje.status.toUpperCase();
-                        if (st.includes('PRESENTE') || st.includes('NOTURNO')) pr_dia++;
+                        if (st.includes('PRESENTE') || st.includes('NOTURNO') || st.includes('INTERMEDIÁRIO')) pr_dia++;
                         else if (st.includes('FALTA') || st.includes('ATESTADO')) f++;
                         else if (st.includes('FOLGA')) fo++;
                         else if (st.includes('FERIAS') || st.includes('FÉRIAS')) fe++;
@@ -362,29 +358,29 @@
                         else if (st.includes('INTJ') || st.includes('INTERJORNADA')) intj++;
                     }
 
-                    // Ontem (D-1)
-                    if (historico.find(r => r.data === ontemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')))) pr_d1++;
+                    if (historico.find(r => {
+                        const s = r.data === ontemStr ? r.status.toUpperCase() : "";
+                        return s.includes('PRESENTE') || s.includes('NOTURNO') || s.includes('INTERMEDIÁRIO');
+                    })) pr_d1++;
 
-                    // Soma para Médias
                     somaPresencasMes += historico.filter(r =>
                         r.data.startsWith(dataFiltro.substring(0, 7)) &&
                         r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
+                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO') || r.status.toUpperCase().includes('INTERMEDIÁRIO'))
                     ).length;
 
                     somaPresencasSemana += historico.filter(r =>
                         r.data >= semanaStr &&
                         r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
+                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO') || r.status.toUpperCase().includes('INTERMEDIÁRIO'))
                     ).length;
                 });
 
-                // Cálculo das médias (Soma de presenças / número de dias com dados)
                 const mediaM1 = (somaPresencasMes / diasRegistradosMes).toFixed(1);
                 const mediaW1 = (somaPresencasSemana / 7).toFixed(1);
 
-                // Absenteísmo: (Faltas / Efetivo) * 100
-                const absVal = efetivo > 0 ? ((f / efetivo) * 100).toFixed(2) : "0.00";
+                // CÁLCULO ATUALIZADO: (Folga + Férias + Falta) / Efetivo
+                const absVal = efetivo > 0 ? (((fo + fe + f) / efetivo) * 100).toFixed(2) : "0.00";
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `

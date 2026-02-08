@@ -191,7 +191,6 @@
             "GABRIEL EMANUEL DOS SANTOS TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "THALLES EDUARDO MARQUES BORGES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
-            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "IVANILDO EDUARDO DE LIMA NETO": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "LUCAS OLIVEIRA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "HIAGO MARQUES RUAS": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
@@ -200,6 +199,7 @@
             "PEDRO PAULO CARVALHO SALEMA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "WALLACE FERREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "WILLIAM CORDEIRO DE MOURA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "ROGERIO GOMES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "IAGO DAVI D AVILA DAMAZIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "DAVID DE OLIVEIRA CARDOSO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
@@ -313,19 +313,16 @@
             const dataFiltro = document.getElementById('dataFiltro').value;
             if (!dataFiltro) return;
 
-            // Datas para cálculos
             const dFoco = new Date(dataFiltro + 'T12:00:00');
             const dOntem = new Date(dFoco); dOntem.setDate(dOntem.getDate() - 1);
             const ontemStr = dOntem.toISOString().split('T')[0];
             const dSemana = new Date(dFoco); dSemana.setDate(dSemana.getDate() - 7);
             const semanaStr = dSemana.toISOString().split('T')[0];
 
-            // Quantidade de dias únicos registrados no mês até a data foco
             const diasRegistradosMes = [...new Set(registrosBanco
                 .filter(r => r.data.startsWith(dataFiltro.substring(0, 7)) && r.data <= dataFiltro)
                 .map(r => r.data))].length || 1;
 
-            // Agrupamento por COORDENADOR
             const coordsMap = {};
             Object.values(baseColaboradores).forEach(c => {
                 if (!coordsMap[c.coord]) {
@@ -335,7 +332,7 @@
 
             const listaCoords = Object.keys(coordsMap).sort((a, b) => {
                 if (coordsMap[a].uf !== coordsMap[b].uf) return coordsMap[a].uf.localeCompare(coordsMap[b].uf);
-                return a.compareLocale ? a.compareLocale(b) : a.localeCompare(b);
+                return a.localeCompare(b);
             });
 
             listaCoords.forEach(coordNome => {
@@ -353,7 +350,7 @@
                     const regHoje = historico.find(r => r.data === dataFiltro);
                     if (regHoje) {
                         const st = regHoje.status.toUpperCase();
-                        if (st.includes('PRESENTE') || st.includes('NOTURNO')) pr_dia++;
+                        if (st.includes('PRESENTE') || st.includes('NOTURNO') || st.includes('INTERMEDIÁRIO')) pr_dia++;
                         else if (st.includes('FALTA') || st.includes('ATESTADO')) f++;
                         else if (st.includes('FOLGA')) fo++;
                         else if (st.includes('FERIAS') || st.includes('FÉRIAS')) fe++;
@@ -361,24 +358,32 @@
                         else if (st.includes('INTJ') || st.includes('INTERJORNADA')) intj++;
                     }
 
-                    if (historico.find(r => r.data === ontemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')))) pr_d1++;
+                    const regOntem = historico.find(r => r.data === ontemStr);
+                    if (regOntem) {
+                        const stO = regOntem.status.toUpperCase();
+                        if (stO.includes('PRESENTE') || stO.includes('NOTURNO') || stO.includes('INTERMEDIÁRIO')) pr_d1++;
+                    }
 
-                    somaPresencasMes += historico.filter(r =>
-                        r.data.startsWith(dataFiltro.substring(0, 7)) &&
-                        r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
-                    ).length;
+                    somaPresencasMes += historico.filter(r => {
+                        const stM = r.status.toUpperCase();
+                        return r.data.startsWith(dataFiltro.substring(0, 7)) &&
+                            r.data <= dataFiltro &&
+                            (stM.includes('PRESENTE') || stM.includes('NOTURNO') || stM.includes('INTERMEDIÁRIO'));
+                    }).length;
 
-                    somaPresencasSemana += historico.filter(r =>
-                        r.data >= semanaStr &&
-                        r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
-                    ).length;
+                    somaPresencasSemana += historico.filter(r => {
+                        const stW = r.status.toUpperCase();
+                        return r.data >= semanaStr &&
+                            r.data <= dataFiltro &&
+                            (stW.includes('PRESENTE') || stW.includes('NOTURNO') || stW.includes('INTERMEDIÁRIO'));
+                    }).length;
                 });
 
                 const mediaM1 = (somaPresencasMes / diasRegistradosMes).toFixed(1);
                 const mediaW1 = (somaPresencasSemana / 7).toFixed(1);
-                const absVal = efetivo > 0 ? ((f / efetivo) * 100).toFixed(2) : "0.00";
+
+                // NOVA LÓGICA DE ABS %: (Falta + Folga + Férias) / Efetivo
+                const absVal = efetivo > 0 ? (((f + fo + fe) / efetivo) * 100).toFixed(2) : "0.00";
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `

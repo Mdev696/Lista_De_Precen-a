@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visão por Supervisor - Operacional</title>
+    <title>Visão Consolidada - Coordenadores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -86,7 +86,7 @@
             background: var(--primary);
             color: white;
             padding: 15px 12px;
-            text-align: left;
+            text-align: center;
             position: sticky;
             top: 0;
             z-index: 10;
@@ -140,7 +140,7 @@
 <body>
     <div class="container">
         <header>
-            <h1 style="color: var(--primary); margin:0;">Visão Consolidada</h1>
+            <h1 style="color: var(--primary); margin:0;">Visão Consolidada por Coordenador</h1>
             <div class="filtros">
                 <label for="dataFiltro"><strong>Data de Análise:</strong></label>
                 <input type="date" id="dataFiltro" onchange="renderizarTabela()">
@@ -155,7 +155,6 @@
                         <th>UF</th>
                         <th>GERENTE TLP</th>
                         <th>COORDENADOR</th>
-                        <th>SUPERVISOR</th>
                         <th>EFETIVO</th>
                         <th>MÉDIA M-1</th>
                         <th>MÉDIA W-1</th>
@@ -213,6 +212,7 @@
             "JONATHAN SANTOS DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "MOISES GOMES DA SILVA FILHO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "MATEUS DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MATEUS FONSECA DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "RODRIGO BANNY DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
             "ALLAN CESAR SILVA DE SOUZA": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
             "VICTOR HUGO DE SOUZA KLEN": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
@@ -323,21 +323,21 @@
                 .filter(r => r.data.startsWith(dataFiltro.substring(0, 7)) && r.data <= dataFiltro)
                 .map(r => r.data))].length || 1;
 
-            const supervisoresMap = {};
+            const coordsMap = {};
             Object.values(baseColaboradores).forEach(c => {
-                if (!supervisoresMap[c.super]) {
-                    supervisoresMap[c.super] = { uf: c.uf, gerente: c.gerente, coord: c.coord };
+                if (!coordsMap[c.coord]) {
+                    coordsMap[c.coord] = { uf: c.uf, gerente: c.gerente };
                 }
             });
 
-            const listaSeps = Object.keys(supervisoresMap).sort((a, b) => {
-                if (supervisoresMap[a].uf !== supervisoresMap[b].uf) return supervisoresMap[a].uf.localeCompare(supervisoresMap[b].uf);
+            const listaCoords = Object.keys(coordsMap).sort((a, b) => {
+                if (coordsMap[a].uf !== coordsMap[b].uf) return coordsMap[a].uf.localeCompare(coordsMap[b].uf);
                 return a.localeCompare(b);
             });
 
-            listaSeps.forEach(supNome => {
-                const info = supervisoresMap[supNome];
-                const nomesEquipe = Object.keys(baseColaboradores).filter(n => baseColaboradores[n].super === supNome);
+            listaCoords.forEach(coordNome => {
+                const info = coordsMap[coordNome];
+                const nomesEquipe = Object.keys(baseColaboradores).filter(n => baseColaboradores[n].coord === coordNome);
                 const efetivo = nomesEquipe.length;
 
                 let pr_dia = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0, pr_d1 = 0;
@@ -347,11 +347,10 @@
                 nomesEquipe.forEach(nome => {
                     const historico = registrosBanco.filter(r => (r.colaborador || r.colab) === nome);
 
-                    // Hoje
+                    // Lógica PR DIA (Incluindo INTERMEDIÁRIO)
                     const regHoje = historico.find(r => r.data === dataFiltro);
                     if (regHoje) {
                         const st = regHoje.status.toUpperCase();
-                        // INCLUÍDO 'INTERMEDIÁRIO' NA CONTAGEM DE PRESENTE
                         if (st.includes('PRESENTE') || st.includes('NOTURNO') || st.includes('INTERMEDIÁRIO')) pr_dia++;
                         else if (st.includes('FALTA') || st.includes('ATESTADO')) f++;
                         else if (st.includes('FOLGA')) fo++;
@@ -360,24 +359,28 @@
                         else if (st.includes('INTJ') || st.includes('INTERJORNADA')) intj++;
                     }
 
-                    // Ontem (D-1) - INCLUÍDO 'INTERMEDIÁRIO'
-                    if (historico.find(r => {
-                        const s = r.data === ontemStr ? r.status.toUpperCase() : "";
-                        return s.includes('PRESENTE') || s.includes('NOTURNO') || s.includes('INTERMEDIÁRIO');
-                    })) pr_d1++;
+                    // Lógica PR D-1 (Incluindo INTERMEDIÁRIO)
+                    const regOntem = historico.find(r => r.data === ontemStr);
+                    if (regOntem) {
+                        const stO = regOntem.status.toUpperCase();
+                        if (stO.includes('PRESENTE') || stO.includes('NOTURNO') || stO.includes('INTERMEDIÁRIO')) pr_d1++;
+                    }
 
-                    // Soma para Médias - INCLUÍDO 'INTERMEDIÁRIO'
-                    somaPresencasMes += historico.filter(r =>
-                        r.data.startsWith(dataFiltro.substring(0, 7)) &&
-                        r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO') || r.status.toUpperCase().includes('INTERMEDIÁRIO'))
-                    ).length;
+                    // Lógica Média Mês (M-1) (Incluindo INTERMEDIÁRIO)
+                    somaPresencasMes += historico.filter(r => {
+                        const stM = r.status.toUpperCase();
+                        return r.data.startsWith(dataFiltro.substring(0, 7)) &&
+                            r.data <= dataFiltro &&
+                            (stM.includes('PRESENTE') || stM.includes('NOTURNO') || stM.includes('INTERMEDIÁRIO'));
+                    }).length;
 
-                    somaPresencasSemana += historico.filter(r =>
-                        r.data >= semanaStr &&
-                        r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO') || r.status.toUpperCase().includes('INTERMEDIÁRIO'))
-                    ).length;
+                    // Lógica Média Semana (W-1) (Incluindo INTERMEDIÁRIO)
+                    somaPresencasSemana += historico.filter(r => {
+                        const stW = r.status.toUpperCase();
+                        return r.data >= semanaStr &&
+                            r.data <= dataFiltro &&
+                            (stW.includes('PRESENTE') || stW.includes('NOTURNO') || stW.includes('INTERMEDIÁRIO'));
+                    }).length;
                 });
 
                 const mediaM1 = (somaPresencasMes / diasRegistradosMes).toFixed(1);
@@ -388,8 +391,7 @@
                 tr.innerHTML = `
                     <td>${info.uf}</td>
                     <td class="text-left">${info.gerente}</td>
-                    <td class="text-left">${info.coord}</td>
-                    <td class="text-left"><strong>${supNome}</strong></td>
+                    <td class="text-left"><strong>${coordNome}</strong></td>
                     <td class="col-efetivo-dado">${efetivo}</td>
                     <td>${mediaM1}</td>
                     <td>${mediaW1}</td>
