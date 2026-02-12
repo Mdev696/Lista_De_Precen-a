@@ -14,22 +14,23 @@
             --rj-color: #2980b9;
             --es-color: #e67e22;
             --danger: #e74c3c;
+            --success: #27ae60;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
             margin: 0;
             padding: 20px;
         }
 
         .container {
-            max-width: 1300px;
+            max-width: 1400px;
             margin: auto;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
         }
 
         header {
@@ -38,139 +39,169 @@
             align-items: center;
             border-bottom: 2px solid var(--light);
             padding-bottom: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .uf-summary {
             display: flex;
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .summary-card {
             flex: 1;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 10px;
             color: white;
-            text-align: center;
+            text-align: left;
+            transition: transform 0.2s;
         }
 
         .summary-rj {
-            background: var(--rj-color);
+            background: linear-gradient(135deg, #2980b9, #3498db);
         }
 
         .summary-es {
-            background: var(--es-color);
+            background: linear-gradient(135deg, #e67e22, #f39c12);
         }
 
+        /* --- ORGANIZAÇÃO DOS FILTROS --- */
         .filter-bar {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+            align-items: flex-end;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
 
         label {
-            font-size: 11px;
-            font-weight: bold;
-            color: var(--primary);
+            font-size: 10px;
+            font-weight: 800;
+            color: #6c757d;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         select,
         input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
             font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+            background-color: white;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        /* --- TABELA E BOTÕES --- */
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            border: 1px solid #eee;
+            border-radius: 8px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         th {
-            background: var(--primary);
-            color: white;
-            padding: 12px;
+            background: #f8f9fa;
+            color: var(--primary);
+            padding: 15px;
             text-align: left;
             position: sticky;
             top: 0;
-            z-index: 5;
+            border-bottom: 2px solid #dee2e6;
+            z-index: 10;
         }
 
         td {
-            padding: 10px;
+            padding: 12px 15px;
             border-bottom: 1px solid #eee;
         }
 
         tr:hover {
-            background-color: #f1faff;
+            background-color: #f8fbff;
         }
 
         .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
             font-size: 10px;
-            background: #e0e0e0;
-            white-space: nowrap;
+            background: #e9ecef;
+            color: #495057;
+            text-transform: uppercase;
         }
 
         .btn-back {
-            background: var(--accent);
+            background: var(--primary);
             color: white;
             text-decoration: none;
             padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: bold;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
         }
 
         .btn-clear {
-            background: #95a5a6;
-            color: white;
-            border: none;
-            border-radius: 4px;
+            background: #fff;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            border-radius: 6px;
             cursor: pointer;
-            padding: 8px;
+            padding: 10px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: var(--danger);
+            color: white;
         }
 
         .btn-edit {
-            background: #f1c40f;
-            color: black;
-            border: none;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
             padding: 6px 10px;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
+            margin-right: 5px;
         }
 
         .btn-delete {
-            background: var(--danger);
-            color: white;
-            border: none;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
             padding: 6px 10px;
             border-radius: 4px;
             cursor: pointer;
-            margin-left: 5px;
         }
 
         .no-data {
             text-align: center;
-            padding: 40px;
-            color: #7f8c8d;
+            padding: 50px;
+            color: #adb5bd;
+            font-style: italic;
         }
     </style>
 </head>
@@ -179,58 +210,58 @@
 
     <div class="container">
         <header>
-            <h1>📋 Relatório Geral de Presença</h1>
-            <a href="index.html" class="btn-back">⬅ Novo Lançamento</a>
+            <h2 style="margin:0; color: var(--primary);">📋 Relatório Geral de Presença</h2>
+            <a href="index.html" class="btn-back">+ Novo Lançamento</a>
         </header>
 
         <div class="uf-summary">
             <div class="summary-card summary-rj">
-                <div style="font-size: 12px;">REGISTROS RJ</div>
-                <div id="total-rj" style="font-size: 24px; font-weight: bold;">0</div>
+                <div style="font-size: 11px; opacity: 0.9; font-weight: bold;">TOTAL RIO DE JANEIRO</div>
+                <div id="total-rj" style="font-size: 28px; font-weight: bold;">0</div>
             </div>
             <div class="summary-card summary-es">
-                <div style="font-size: 12px;">REGISTROS ES</div>
-                <div id="total-es" style="font-size: 24px; font-weight: bold;">0</div>
+                <div style="font-size: 11px; opacity: 0.9; font-weight: bold;">TOTAL ESPÍRITO SANTO</div>
+                <div id="total-es" style="font-size: 28px; font-weight: bold;">0</div>
             </div>
         </div>
 
         <div class="filter-bar">
             <div class="filter-group">
-                <label>Data:</label>
+                <label>📅 Data do Registro</label>
                 <input type="date" id="filtroData" onchange="aplicarFiltros()">
             </div>
             <div class="filter-group">
-                <label>UF:</label>
-                <select id="filtroUF" onchange="aplicarFiltros()">
+                <label>📍 Unidade Federal</label>
+                <select id="filtroUF" onchange="atualizarFiltrosCascata()">
                     <option value="">Todas as UFs</option>
-                    <option value="RJ">RJ</option>
-                    <option value="ES">ES</option>
+                    <option value="RJ">Rio de Janeiro</option>
+                    <option value="ES">Espírito Santo</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label>Supervisor:</label>
+                <label>👤 Supervisor</label>
                 <select id="filtroSuper" onchange="aplicarFiltros()">
-                    <option value="">Todos os Supervisores</option>
+                    <option value="">Todos</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label>Micro Área:</label>
+                <label>🏗️ Micro Área</label>
                 <select id="filtroMicro" onchange="aplicarFiltros()">
-                    <option value="">Todas as Áreas</option>
+                    <option value="">Todas</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label>Status:</label>
+                <label>🚥 Status</label>
                 <select id="filtroStatus" onchange="aplicarFiltros()">
                     <option value="">Todos os Status</option>
                 </select>
             </div>
-            <div class="filter-group" style="justify-content: flex-end;">
+            <div class="filter-group">
                 <button class="btn-clear" onclick="limparFiltros()">Limpar Filtros</button>
             </div>
         </div>
 
-        <div style="overflow-x:auto; max-height: 550px; border: 1px solid #eee;">
+        <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
@@ -247,7 +278,7 @@
                 <tbody id="corpoTabelaMain"></tbody>
             </table>
             <div id="mensagemVazia" class="no-data" style="display: none;">
-                Nenhum registro encontrado.
+                Nenhum registro encontrado para os filtros selecionados.
             </div>
         </div>
     </div>
@@ -285,22 +316,36 @@
             aplicarFiltros();
         }
 
-        function popularFiltrosDinamicos() {
+        // Função para filtrar as opções de Supervisor e Micro Área baseado na UF escolhida
+        function atualizarFiltrosCascata() {
+            const fUF = document.getElementById('filtroUF').value;
+            const dadosFiltradosParaSelects = fUF === ""
+                ? todosOsRegistros
+                : todosOsRegistros.filter(r => (r.uf || "").toUpperCase() === fUF);
+
+            popularFiltrosDinamicos(dadosFiltradosParaSelects, false);
+            aplicarFiltros();
+        }
+
+        function popularFiltrosDinamicos(lista = todosOsRegistros, resetStatus = true) {
             const selectSuper = document.getElementById('filtroSuper');
             const selectMicro = document.getElementById('filtroMicro');
             const selectStatus = document.getElementById('filtroStatus');
 
-            const supers = [...new Set(todosOsRegistros.map(r => r.supervisor || r.super))].filter(Boolean).sort();
-            const micros = [...new Set(todosOsRegistros.map(r => r.micro_area || r.micro))].filter(Boolean).sort();
-            const stats = [...new Set(todosOsRegistros.map(r => r.status))].filter(Boolean).sort();
+            const supers = [...new Set(lista.map(r => r.supervisor || r.super))].filter(Boolean).sort();
+            const micros = [...new Set(lista.map(r => r.micro_area || r.micro))].filter(Boolean).sort();
 
-            selectSuper.innerHTML = '<option value="">Todos os Supervisores</option>';
-            selectMicro.innerHTML = '<option value="">Todas as Áreas</option>';
-            selectStatus.innerHTML = '<option value="">Todos os Status</option>';
+            selectSuper.innerHTML = '<option value="">Todos</option>';
+            selectMicro.innerHTML = '<option value="">Todas</option>';
 
             supers.forEach(s => selectSuper.add(new Option(s, s)));
             micros.forEach(m => selectMicro.add(new Option(m, m)));
-            stats.forEach(st => selectStatus.add(new Option(st, st)));
+
+            if (resetStatus) {
+                const stats = [...new Set(todosOsRegistros.map(r => r.status))].filter(Boolean).sort();
+                selectStatus.innerHTML = '<option value="">Todos os Status</option>';
+                stats.forEach(st => selectStatus.add(new Option(st, st)));
+            }
         }
 
         function aplicarFiltros() {
@@ -328,8 +373,8 @@
         }
 
         function atualizarResumo(listaParaSomar) {
-            const contagemRJ = listaParaSomar.filter(r => (r.uf || "").toString().trim().toUpperCase() === 'RJ').length;
-            const contagemES = listaParaSomar.filter(r => (r.uf || "").toString().trim().toUpperCase() === 'ES').length;
+            const contagemRJ = listaParaSomar.filter(r => (r.uf || "").trim().toUpperCase() === 'RJ').length;
+            const contagemES = listaParaSomar.filter(r => (r.uf || "").trim().toUpperCase() === 'ES').length;
             document.getElementById('total-rj').innerText = contagemRJ;
             document.getElementById('total-es').innerText = contagemES;
         }
@@ -360,8 +405,8 @@
                     <td>${r.empresa || ''}</td>
                     <td><span class="status-badge">${r.status || ''}</span></td>
                     <td style="text-align:center;">
-                        <button class="btn-edit" onclick="editarRegistro('${r.id}')">✏️</button>
-                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${r.colaborador || r.colab}')">🗑️</button>
+                        <button class="btn-edit" onclick="editarRegistro('${r.id}')" title="Editar">✏️</button>
+                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${r.colaborador || r.colab}')" title="Excluir">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -404,6 +449,7 @@
             document.getElementById('filtroSuper').value = "";
             document.getElementById('filtroMicro').value = "";
             document.getElementById('filtroStatus').value = "";
+            popularFiltrosDinamicos();
             aplicarFiltros();
         }
     </script>
