@@ -113,7 +113,15 @@ const baseDados = {
     "FABIANO OLIVEIRA DA SILVA (1)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
     "EDSON VANDER PAIXAO (2)": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
     "FABIANO DE SANTANA ANDRADE": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
-    "FABIANO OLIVEIRA DA SILVA (2)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "MATEUS BATISTA DA CUNHA (2)": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "FABIO RODRIGO SAIEGH DUARTE (2)": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "STEFANO EDUARDO AGUIAR SILVA (2)": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "FABIANO OLIVEIRA DA SILVA (2)": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "MARCELO LUIZ LEITE (2)": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "RAMON PEREIRA VIANA": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "WILLIAM CESAR NASCIMENTO SILVA": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "FABIO EUGENIO GONCALVES": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+    "ITALO MARTINS DA GRAÇA": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
 
     // --- DADOS ATUALIZADOS ESPÍRITO SANTO (ES) ---
     "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
