@@ -106,8 +106,6 @@
             color: #576574;
         }
 
-        /* Cor neutra para o INSS */
-
         .txt-abs {
             color: #8e44ad;
             font-size: 22px;
@@ -132,78 +130,6 @@
             border-left: 5px solid var(--warning);
             font-size: 13px;
         }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                padding: 15px;
-                border-radius: 10px;
-            }
-
-            header {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-
-            header h1 {
-                font-size: 1.5rem;
-                margin-bottom: 10px;
-            }
-
-            .btn-voltar {
-                display: block;
-                width: 100%;
-                box-sizing: border-box;
-                margin-bottom: 5px;
-                text-align: center;
-            }
-
-            .filtro-box {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-                padding: 15px;
-            }
-
-            input[type="date"] {
-                width: 100%;
-            }
-
-            .table-container {
-                margin-top: 10px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-            }
-
-            table {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-
-            th {
-                padding: 10px 15px;
-                font-size: 10px;
-            }
-
-            td {
-                padding: 15px;
-                font-size: 16px;
-            }
-
-            .txt-abs {
-                font-size: 18px;
-            }
-
-            .legenda {
-                font-size: 12px;
-                padding: 10px;
-            }
-        }
     </style>
 </head>
 
@@ -211,10 +137,12 @@
     <div class="container">
         <header>
             <h1>📊 Analítico de Indicadores KPI</h1>
-            <a href="index.html" class="btn-voltar">⬅ Voltar ao Lançamento</a>
-            <a href="Colab.html" class="btn-voltar">Colaborador</a>
-            <a href="console.html" class="btn-voltar">Supervisor</a>
-            <a href="gerconsole.html" class="btn-voltar">Coordenador</a>
+            <div style="display: flex; gap: 10px;">
+                <a href="index.html" class="btn-voltar">⬅ Voltar</a>
+                <a href="Colab.html" class="btn-voltar">Colaborador</a>
+                <a href="console.html" class="btn-voltar">Supervisor</a>
+                <a href="gerconsole.html" class="btn-voltar">Coordenador</a>
+            </div>
         </header>
 
         <div class="filtro-box">
@@ -235,7 +163,7 @@
                         <th>FE (Férias)</th>
                         <th>INSS</th>
                         <th>INTJ</th>
-                        <th>ABS (Absenteísmo)</th>
+                        <th>ABS</th>
                     </tr>
                 </thead>
                 <tbody id="corpoTabela"></tbody>
@@ -243,9 +171,10 @@
         </div>
 
         <div class="legenda">
-            <strong>Lógica de Correlação ABS:</strong><br>
-            O cálculo é a soma direta de <b>(Falta + Folga + Férias) / Total de Lançamentos</b>.<br>
-            Isso garante que qualquer ausência impacte negativamente o indicador.
+            <strong>Lógica de Absenteísmo aplicada:</strong><br>
+            • <b>Numerador:</b> Soma de Falta + Atestado + Desligado + Folga + Férias + INSS (do dia selecionado).<br>
+            • <b>Denominador:</b> Média de lançamentos diários do mês corrente (Efetivo Médio).<br>
+            • <b>Fórmula:</b> (Total Ausências / Efetivo Médio Mensal) * 100.
         </div>
     </div>
 
@@ -262,63 +191,65 @@
 
         async function gerarAnalise() {
             const dataSelecionada = document.getElementById('dataFiltro').value;
+            const mesPrefixo = dataSelecionada.substring(0, 7);
             const corpo = document.getElementById('corpoTabela');
+            corpo.innerHTML = "<tr><td colspan='10'>Sincronizando com calendário...</td></tr>";
 
-            const { data: registros, error } = await _supabase
-                .from('registros_presenca')
-                .select('*');
+            const { data: registros, error } = await _supabase.from('registros_presenca').select('*');
+            if (error) return;
 
-            if (error) {
-                console.error("Erro ao carregar dados:", error);
-                return;
-            }
+            // 1. CÁLCULO DO EFETIVO MÉDIO DO MÊS (Denominador do ABS)
+            const registrosDoMes = registros.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
+            const diasUnicos = [...new Set(registrosDoMes.map(r => r.data))];
+            const totalDiasComDados = diasUnicos.length || 1;
+            const mediaLancamentosMes = registrosDoMes.length / totalDiasComDados;
 
-            let kpi = {
-                pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0,
-                prD1: 0, prW1: 0, prM1: 0, totalDia: 0
-            };
+            // 2. INDICADORES DO DIA E MÉDIAS DE PRESENÇA
+            let kpi = { pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0, prD1: 0, somaPR_W1: 0, somaPR_M1: 0 };
 
-            const dataAlvoObj = new Date(dataSelecionada + "T12:00:00");
-            const dataOntemStr = new Date(dataAlvoObj.getTime() - 86400000).toISOString().split('T')[0];
-            const dataSemanaObj = new Date(dataAlvoObj.getTime() - (7 * 86400000));
+            const d1_str = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - 86400000).toISOString().split('T')[0];
+            const w_limite = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - (7 * 86400000));
 
             registros.forEach(r => {
-                const status = r.status.trim().toUpperCase();
+                const status = r.status ? r.status.trim().toUpperCase() : "";
                 const rData = r.data;
                 const rDataObj = new Date(rData + "T12:00:00");
 
-                const ehPresenca = status.includes("PRESENTE") || status.includes("NOTURNO");
-                // Correlação original mantida para o ABS (Falta + Atestado + INSS entram em F)
-                const ehFalta = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("INSS");
-                const ehFolga = status.includes("FOLGA") || status === "FO";
-                const ehFerias = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
-
-                // Variável isolada apenas para exibição na tabela
-                const ehSomenteINSS = status === "INSS";
+                const ehPR = status.includes("PRESENTE") || status.includes("NOTURNO");
+                const ehFO = status.includes("FOLGA") || status === "FO";
+                const ehFE = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
+                const ehINSS = status.includes("INSS");
+                // Falta engloba: FALTA, ATESTADO e DESLIGADO
+                const ehFaltaOuAtestado = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DESLIGADO");
 
                 if (rData === dataSelecionada) {
-                    kpi.totalDia++;
-                    if (ehPresenca) kpi.pr++;
-                    if (ehFalta) kpi.f++;
-                    if (ehFolga) kpi.fo++;
-                    if (ehFerias) kpi.fe++;
-                    if (ehSomenteINSS) kpi.inss++; // Incrementa a nova variável
+                    if (ehPR) kpi.pr++;
+                    if (ehFaltaOuAtestado) kpi.f++;
+                    if (ehFO) kpi.fo++;
+                    if (ehFE) kpi.fe++;
+                    if (ehINSS) kpi.inss++;
                     if (status.includes("INTERJORNADA")) kpi.intj++;
                 }
 
-                if (rData === dataOntemStr && ehPresenca) kpi.prD1++;
-                if (rDataObj >= dataSemanaObj && rDataObj <= dataAlvoObj && ehPresenca) kpi.prW1++;
-                if (rData.substring(0, 7) === dataSelecionada.substring(0, 7) && ehPresenca) kpi.prM1++;
+                if (rData === d1_str && ehPR) kpi.prD1++;
+                if (rDataObj > w_limite && rDataObj <= new Date(dataSelecionada + "T12:00:00") && ehPR) kpi.somaPR_W1++;
+                if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada && ehPR) kpi.somaPR_M1++;
             });
 
-            const somaAusencias = kpi.f + kpi.fo + kpi.fe;
-            const valorABS = kpi.totalDia > 0 ? ((somaAusencias / kpi.totalDia) * 100).toFixed(2) : "0.00";
-            const valorM1 = (kpi.prM1 / 22).toFixed(2);
+            // 3. CÁLCULO FINAL DO ABS USANDO A MÉDIA MENSAL COMO DIVISOR
+            const valorM1 = (kpi.somaPR_M1 / totalDiasComDados).toFixed(1);
+            const valorW1 = (kpi.somaPR_W1 / 7).toFixed(1);
+
+            // Soma de todas as ausências conforme sua solicitação
+            const somaAusenciasDia = kpi.f + kpi.fo + kpi.fe + kpi.inss;
+            const valorABS = mediaLancamentosMes > 0
+                ? ((somaAusenciasDia / mediaLancamentosMes) * 100).toFixed(2)
+                : "0.00";
 
             corpo.innerHTML = `
                 <tr>
                     <td>${valorM1}</td>
-                    <td>${kpi.prW1}</td>
+                    <td>${valorW1}</td>
                     <td>${kpi.prD1}</td>
                     <td class="txt-pr">${kpi.pr}</td>
                     <td class="txt-f">${kpi.f}</td>
@@ -326,7 +257,7 @@
                     <td class="txt-fe">${kpi.fe}</td>
                     <td class="txt-inss">${kpi.inss}</td>
                     <td>${kpi.intj}</td>
-                    <td class="txt-abs">${valorABS}%</td>
+                    <td><span class="txt-abs">${valorABS}%</span></td>
                 </tr>
             `;
         }
