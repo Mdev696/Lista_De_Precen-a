@@ -154,6 +154,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>Efetivo</th>
                         <th>PR Σx M-1</th>
                         <th>PR Σx W-1</th>
                         <th>PR D-1</th>
@@ -193,7 +194,7 @@
             const dataSelecionada = document.getElementById('dataFiltro').value;
             const mesPrefixo = dataSelecionada.substring(0, 7);
             const corpo = document.getElementById('corpoTabela');
-            corpo.innerHTML = "<tr><td colspan='10'>Sincronizando com calendário...</td></tr>";
+            corpo.innerHTML = "<tr><td colspan='11'>Sincronizando com calendário...</td></tr>";
 
             const { data: registros, error } = await _supabase.from('registros_presenca').select('*');
             if (error) return;
@@ -205,7 +206,7 @@
             const mediaLancamentosMes = registrosDoMes.length / totalDiasComDados;
 
             // 2. INDICADORES DO DIA E MÉDIAS DE PRESENÇA
-            let kpi = { pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0, prD1: 0, somaPR_W1: 0, somaPR_M1: 0 };
+            let kpi = { pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0, prD1: 0, somaPR_W1: 0, somaPR_M1: 0, totalDia: 0 };
 
             const d1_str = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - 86400000).toISOString().split('T')[0];
             const w_limite = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - (7 * 86400000));
@@ -219,10 +220,10 @@
                 const ehFO = status.includes("FOLGA") || status === "FO";
                 const ehFE = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
                 const ehINSS = status.includes("INSS");
-                // Falta engloba: FALTA, ATESTADO e DESLIGADO
                 const ehFaltaOuAtestado = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DESLIGADO");
 
                 if (rData === dataSelecionada) {
+                    kpi.totalDia++; // Contador para o Efetivo Total do dia
                     if (ehPR) kpi.pr++;
                     if (ehFaltaOuAtestado) kpi.f++;
                     if (ehFO) kpi.fo++;
@@ -236,11 +237,10 @@
                 if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada && ehPR) kpi.somaPR_M1++;
             });
 
-            // 3. CÁLCULO FINAL DO ABS USANDO A MÉDIA MENSAL COMO DIVISOR
+            // 3. CÁLCULO FINAL
             const valorM1 = (kpi.somaPR_M1 / totalDiasComDados).toFixed(1);
             const valorW1 = (kpi.somaPR_W1 / 7).toFixed(1);
 
-            // Soma de todas as ausências conforme sua solicitação
             const somaAusenciasDia = kpi.f + kpi.fo + kpi.fe + kpi.inss;
             const valorABS = mediaLancamentosMes > 0
                 ? ((somaAusenciasDia / mediaLancamentosMes) * 100).toFixed(2)
@@ -248,6 +248,7 @@
 
             corpo.innerHTML = `
                 <tr>
+                    <td>${kpi.totalDia}</td>
                     <td>${valorM1}</td>
                     <td>${valorW1}</td>
                     <td>${kpi.prD1}</td>
