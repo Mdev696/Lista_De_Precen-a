@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analítico Operacional - Dashboard</title>
+    <title>Analítico Operacional - Dashboard KPI</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -27,7 +27,7 @@
         }
 
         .container {
-            max-width: 1300px;
+            max-width: 1400px;
             margin: auto;
             background: white;
             padding: 30px;
@@ -133,14 +133,6 @@
             border-radius: 6px;
             font-weight: bold;
         }
-
-        .legenda {
-            margin-top: 30px;
-            padding: 15px;
-            background: #fffdf0;
-            border-left: 5px solid var(--warning);
-            font-size: 13px;
-        }
     </style>
 </head>
 
@@ -185,29 +177,23 @@
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
-
         <div class="legenda">
-            <strong>Lógica de Absenteísmo aplicada por UF:</strong><br>
-            • Análise com <b>Efetivo Fixo</b>: RJ (66) e ES (26).<br>
-            • <b>Fórmula:</b> (Total Ausências da UF / Efetivo Fixo da UF) * 100[cite: 34].
+            <strong>Lógica de Absenteísmo aplicada:</strong><br>
+            • <b>Numerador:</b> Soma de Falta + Atestado + Desligado + Folga + Férias + INSS (INTJ não entra como
+            ausência).<br>
+            • <b>Denominador:</b> Média de lançamentos diários do mês corrente (Efetivo Médio).<br>
+            • <b>Fórmula:</b> (Total Ausências / Efetivo Médio Mensal) * 100.
         </div>
     </div>
+
+
 
     <script>
         const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const efetivoFixoUF = {
-            'RJ': 66,
-            'ES': 26
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('dataFiltro').value = hoje;
-            gerarAnalise();
-        });
+        const efetivoFixoUF = { 'RJ': 66, 'ES': 26 };
 
         async function gerarAnalise() {
             const dataSelecionada = document.getElementById('dataFiltro').value;
@@ -229,7 +215,8 @@
                 const diasUnicosUF = [...new Set(registrosDoMesUF.map(r => r.data))];
                 const totalDiasUF = diasUnicosUF.length || 1;
 
-                let kpi = { pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0, prD1: 0, somaPR_W1: 0, somaPR_M1: 0, desl: 0 };
+                let kpi = { pr_visual: 0, f: 0, fo: 0, fe: 0, intj_visual: 0, inss: 0, desl: 0, prD1: 0, sw1: 0, sm1: 0 };
+
                 const d1_str = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - 86400000).toISOString().split('T')[0];
                 const w_limite = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - (7 * 86400000));
 
@@ -238,61 +225,71 @@
                     const rData = r.data;
                     const rDataObj = new Date(rData + "T12:00:00");
 
-                    const ehPR = status.includes("PRESENTE") || status.includes("NOTURNO");
+                    const ehINTJ = status.includes("INTERJORNADA") || status === "INTJ";
+                    const ehPR_Puro = status.includes("PRESENTE") || status.includes("NOTURNO") || status.includes("INTERMEDIARIO") || status.includes("INTERMEDIÁRIO");
+
+                    // Para o cálculo do ABS, a INTERJORNADA deve ser considerada trabalho para NÃO entrar na soma de ausências
+                    const contaComoTrabalhoParaABS = ehPR_Puro || ehINTJ;
+
+                    const ehDesl = status.includes("DESLIGADO");
+                    const ehFalta = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DUPLADO");
                     const ehFO = status.includes("FOLGA") || status === "FO";
                     const ehFE = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
                     const ehINSS = status.includes("INSS");
-                    const ehDesligado = status.includes("DESLIGADO");
-
-                    // Lógica de Falta incluindo DUPLADO e DESLIGADO [cite: 47, 49]
-                    const ehFaltaOuAtestado = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DUPLADO") || ehDesligado;
 
                     if (rData === dataSelecionada) {
-                        if (ehPR) kpi.pr++;
-                        if (ehFaltaOuAtestado) kpi.f++;
+                        if (ehPR_Puro) kpi.pr_visual++;
+                        if (ehINTJ) kpi.intj_visual++;
+
+                        if (ehDesl) kpi.desl++;
+                        if (ehFalta) kpi.f++;
                         if (ehFO) kpi.fo++;
                         if (ehFE) kpi.fe++;
                         if (ehINSS) kpi.inss++;
-                        if (ehDesligado) kpi.desl++;
-                        if (status.includes("INTERJORNADA")) kpi.intj++;
                     }
 
-                    if (rData === d1_str && ehPR) kpi.prD1++;
-                    if (rDataObj > w_limite && rDataObj <= new Date(dataSelecionada + "T12:00:00") && ehPR) kpi.somaPR_W1++;
-                    if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada && ehPR) kpi.somaPR_M1++;
+                    // Histórico (M-1, W-1, D-1) também considera quem trabalhou (PR ou INTJ)
+                    if (contaComoTrabalhoParaABS) {
+                        if (rData === d1_str) kpi.prD1++;
+                        if (rDataObj > w_limite && rDataObj <= new Date(dataSelecionada + "T12:00:00")) kpi.sw1++;
+                        if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) kpi.sm1++;
+                    }
                 });
 
-                // --- LÓGICA DA COLUNA N/A ---
                 const registrosNoDia = registrosUF.filter(r => r.data === dataSelecionada).length;
                 const naoLancados = Math.max(0, efetivoFixo - registrosNoDia);
 
-                const valorM1 = (kpi.somaPR_M1 / totalDiasUF).toFixed(1);
-                const valorW1 = (kpi.somaPR_W1 / 7).toFixed(1);
-                const somaAusenciasDia = kpi.f + kpi.fo + kpi.fe + kpi.inss;
-                const valorABS = ((somaAusenciasDia / efetivoFixo) * 100).toFixed(2);
-                const ufClass = uf === 'RJ' ? 'header-rj' : 'header-es';
+                // ABS FINAL: Apenas as faltas e ausências reais divididas pelo efetivo. 
+                // A Interjornada NÃO entra nesta soma (ehINTJ não está aqui).
+                const somaAusencias = kpi.f + kpi.desl + kpi.fo + kpi.fe + kpi.inss;
+                const valorABS = ((somaAusencias / efetivoFixo) * 100).toFixed(2);
 
                 htmlFinal += `
-                <tr>
-                    <td class="${ufClass}" style="color:white; font-size: 20px;">${uf}</td>
-                    <td>${efetivoFixo}</td>
-                    <td style="color: var(--danger);">${kpi.desl}</td>
-                    <td>${valorM1}</td>
-                    <td>${valorW1}</td>
-                    <td>${kpi.prD1}</td>
-                    <td style="color: #7f8c8d; font-weight: bold;">${naoLancados}</td> <td class="txt-pr">${kpi.pr}</td>
-                    <td class="txt-f">${kpi.f}</td>
-                    <td class="txt-fo">${kpi.fo}</td>
-                    <td class="txt-fe">${kpi.fe}</td>
-                    <td class="txt-inss">${kpi.inss}</td>
-                    <td>${kpi.intj}</td>
-                    <td><span class="txt-abs">${valorABS}%</span></td>
-                </tr>
-            `;
+                    <tr>
+                        <td class="${uf === 'RJ' ? 'header-rj' : 'header-es'}" style="color:white; font-size: 20px;">${uf}</td>
+                        <td>${efetivoFixo}</td>
+                        <td style="color: var(--danger);">${kpi.desl}</td>
+                        <td>${(kpi.sm1 / totalDiasUF).toFixed(1)}</td>
+                        <td>${(kpi.sw1 / 7).toFixed(1)}</td>
+                        <td>${kpi.prD1}</td>
+                        <td style="color: #7f8c8d;">${naoLancados}</td>
+                        <td class="txt-pr">${kpi.pr_visual}</td>
+                        <td class="txt-f">${kpi.f}</td>
+                        <td class="txt-fo">${kpi.fo}</td>
+                        <td class="txt-fe">${kpi.fe}</td>
+                        <td class="txt-inss">${kpi.inss}</td>
+                        <td>${kpi.intj_visual}</td>
+                        <td><span class="txt-abs">${valorABS}%</span></td>
+                    </tr>
+                `;
             });
-
             corpo.innerHTML = htmlFinal;
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
+            gerarAnalise();
+        });
     </script>
 </body>
 

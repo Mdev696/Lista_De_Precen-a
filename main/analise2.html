@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analítico Operacional - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .filtro-box {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #dcdde1;
+        }
+
+        input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .txt-pr {
+            color: var(--success);
+        }
+
+        .txt-f {
+            color: var(--danger);
+        }
+
+        .txt-fo {
+            color: var(--warning);
+        }
+
+        .txt-fe {
+            color: var(--accent);
+        }
+
+        .txt-inss {
+            color: #576574;
+        }
+
+        .txt-abs {
+            color: #8e44ad;
+            font-size: 22px;
+            background: #f8f0fb;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .btn-voltar {
+            background: var(--secondary);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .legenda {
+            margin-top: 30px;
+            padding: 15px;
+            background: #fffdf0;
+            border-left: 5px solid var(--warning);
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Analítico de Indicadores KPI</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="index.html" class="btn-voltar">⬅ Voltar</a>
+                <a href="Colab.html" class="btn-voltar">Colaborador</a>
+                <a href="console.html" class="btn-voltar">Supervisor</a>
+                <a href="gerconsole.html" class="btn-voltar">Coordenador</a>
+            </div>
+        </header>
+
+        <div class="filtro-box">
+            <strong>Data de Referência:</strong>
+            <input type="date" id="dataFiltro" onchange="gerarAnalise()">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Efetivo</th>
+                        <th>PR Σx M-1</th>
+                        <th>PR Σx W-1</th>
+                        <th>PR D-1</th>
+                        <th>PR (Presença)</th>
+                        <th>F (Falta)</th>
+                        <th>FO (Folga)</th>
+                        <th>FE (Férias)</th>
+                        <th>INSS</th>
+                        <th>INTJ</th>
+                        <th>ABS</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
+        </div>
+
+        <div class="legenda">
+            <strong>Lógica de Absenteísmo aplicada:</strong><br>
+            • <b>Numerador:</b> Soma de Falta + Atestado + Desligado + Folga + Férias + INSS (INTJ não entra como
+            ausência).<br>
+            • <b>Denominador:</b> Média de lançamentos diários do mês corrente (Efetivo Médio).<br>
+            • <b>Fórmula:</b> (Total Ausências / Efetivo Médio Mensal) * 100.
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataFiltro').value = hoje;
+            gerarAnalise();
+        });
+
+        async function gerarAnalise() {
+            const dataSelecionada = document.getElementById('dataFiltro').value;
+            const mesPrefixo = dataSelecionada.substring(0, 7);
+            const corpo = document.getElementById('corpoTabela');
+            corpo.innerHTML = "<tr><td colspan='11'>Sincronizando com calendário...</td></tr>";
+
+            const { data: registros, error } = await _supabase.from('registros_presenca').select('*');
+            if (error) return;
+
+            const registrosDoMes = registros.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
+            const diasUnicos = [...new Set(registrosDoMes.map(r => r.data))];
+            const totalDiasComDados = diasUnicos.length || 1;
+            const mediaLancamentosMes = registrosDoMes.length / totalDiasComDados;
+
+            let kpi = { pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0, prD1: 0, somaPR_W1: 0, somaPR_M1: 0, totalDia: 0 };
+
+            const d1_str = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - 86400000).toISOString().split('T')[0];
+            const w_limite = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - (7 * 86400000));
+
+            registros.forEach(r => {
+                const status = r.status ? r.status.trim().toUpperCase() : "";
+                const rData = r.data;
+                const rDataObj = new Date(rData + "T12:00:00");
+
+                const ehINTJ = status.includes("INTERJORNADA") || status === "INTJ";
+                const ehPR_Puro = status.includes("PRESENTE") || status.includes("NOTURNO") || status.includes("INTERMEDIARIO") || status.includes("INTERMEDIÁRIO");
+
+                // Ambos contam como trabalho para as médias e para NÃO subir o ABS
+                const contaComoTrabalho = ehPR_Puro || ehINTJ;
+
+                const ehFO = status.includes("FOLGA") || status === "FO";
+                const ehFE = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
+                const ehINSS = status.includes("INSS");
+                const ehFaltaOuAtestado = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DESLIGADO");
+
+                if (rData === dataSelecionada) {
+                    kpi.totalDia++;
+                    if (ehPR_Puro) kpi.pr++;
+                    if (ehINTJ) kpi.intj++;
+                    if (ehFaltaOuAtestado) kpi.f++;
+                    if (ehFO) kpi.fo++;
+                    if (ehFE) kpi.fe++;
+                    if (ehINSS) kpi.inss++;
+                }
+
+                // Médias históricas usam a soma de quem trabalhou (PR + INTJ)
+                if (contaComoTrabalho) {
+                    if (rData === d1_str) kpi.prD1++;
+                    if (rDataObj > w_limite && rDataObj <= new Date(dataSelecionada + "T12:00:00")) kpi.somaPR_W1++;
+                    if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) kpi.somaPR_M1++;
+                }
+            });
+
+            const valorM1 = (kpi.somaPR_M1 / totalDiasComDados).toFixed(1);
+            const valorW1 = (kpi.somaPR_W1 / 7).toFixed(1);
+
+            // Cálculo do ABS: INTJ é considerado trabalho, então não entra nesta soma de ausências
+            const somaAusenciasDia = kpi.f + kpi.fo + kpi.fe + kpi.inss;
+            const valorABS = mediaLancamentosMes > 0
+                ? ((somaAusenciasDia / mediaLancamentosMes) * 100).toFixed(2)
+                : "0.00";
+
+            corpo.innerHTML = `
+                <tr>
+                    <td>${kpi.totalDia}</td>
+                    <td>${valorM1}</td>
+                    <td>${valorW1}</td>
+                    <td>${kpi.prD1}</td>
+                    <td class="txt-pr">${kpi.pr}</td>
+                    <td class="txt-f">${kpi.f}</td>
+                    <td class="txt-fo">${kpi.fo}</td>
+                    <td class="txt-fe">${kpi.fe}</td>
+                    <td class="txt-inss">${kpi.inss}</td>
+                    <td>${kpi.intj}</td>
+                    <td><span class="txt-abs">${valorABS}%</span></td>
+                </tr>
+            `;
+        }
+    </script>
+</body>
+
+</html>
