@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visão por Supervisor - Operacional</title>
+    <title>Visão Consolidada por Coordenador</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -109,8 +109,15 @@
             background-color: #fafbfc;
         }
 
-        tr:hover {
-            background-color: #f1f7ff;
+        /* Estilo para a linha divisória de UF */
+        .uf-header {
+            background-color: #f8f9fa !important;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: left !important;
+            font-size: 13px;
+            padding: 10px 15px;
+            border-left: 5px solid var(--accent);
         }
 
         .col-efetivo-dado {
@@ -128,10 +135,10 @@
 <body>
     <div class="container">
         <header>
-            <h1 style="color: var(--primary); margin:0;">Visão por Supervisor Consolidada</h1>
+            <h1 style="color: var(--primary); margin:0;">Visão Consolidada por Coordenador</h1>
             <div class="filtros">
                 <label for="dataFiltro"><strong>Data de Análise:</strong></label>
-                <input type="date" id="dataFiltro" onchange="renderizarTabela()">
+                <input type="date" id="dateFiltro" onchange="renderizarTabela()">
             </div>
             <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
         </header>
@@ -143,8 +150,8 @@
                         <th>UF</th>
                         <th>GERENTE TLP</th>
                         <th>COORDENADOR</th>
-                        <th>SUPERVISOR</th>
                         <th>EFETIVO</th>
+                        <th>DESLIGADO</th>
                         <th>MÉDIA M-1</th>
                         <th>MÉDIA W-1</th>
                         <th>PR D-1</th>
@@ -169,10 +176,14 @@
 
         let registrosBanco = [];
 
-        // Base de dados original (utilizada para manter a hierarquia fixa)
+        // Efetivo fixo conforme sua solicitação
+        const efetivoFixoPorCoordenador = {
+            "IVSON PEREIRA COELHO JUNIOR": 26,
+            "MARCELO ROCHA BATISTA": 35,
+            "LUCAS PERES": 26
+        };
+
         const baseDados = {
-            // DADOS RIO DE JANEIRO (RJ) - HIGIENIZADOS (SEM SOBREPOSIÇÃO)
-            // DADOS RIO DE JANEIRO (RJ) - HIGIENIZADOS (SEM SOBREPOSIÇÃO)
             "RODOLPHO JOSE TAVARES": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
             "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
             "MAX EMILIANO INACIO DA ROCHA": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
@@ -195,6 +206,7 @@
             "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
             "IAN MACIEL ALVES DA SILVA (2)": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "NOTURNO" },
             "IVANILDO EDUARDO DE LIMA NETO (1)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
+            "ALEX COSTA PEREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
             "LUCAS OLIVEIRA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - BAIXADA" },
             "HIAGO MARQUES RUAS (1)": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
             "BRUNO DE LIMA SALLES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AMARELA" },
@@ -206,6 +218,7 @@
             "WALLACE FERREIRA (2)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
             "RAMON PEREIRA VIANA (2)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
             "ROGERIO GOMES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
+            "WILIAN COUTINHO TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - CAXIAS" },
             "IAGO DAVI D AVILA DAMAZIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERMELHA - INTERIOR" },
             "DAVID DE OLIVEIRA CARDOSO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERDE" },
             "THALLES ROCHA CASTELIANO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "VERDE" },
@@ -228,12 +241,12 @@
             "MARIO CESAR RODRIGUES DOS SANTOS (2)": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - BARRA/JPA" },
             "LUCAS CONTES MOREIRA (2)": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - SUL" },
             "FELIPE SILVA DE LIMA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
-            "WILLIAM CESAR NASCIMENTO SILVA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "WILLIAM CESAR NASCIMENTO SILVA (2)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "MARCELO LUIZ LEITE": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "LEANDRO ALBERTO CORREA BERREDO": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "ALEX SANTOS PEREIRA DA CRUZ": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "MATEUS BATISTA DA CUNHA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-            "FABIO EUGENIO GONCALVES": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
+            "FABIO EUGENIO GONCALVES (2)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "RAMON PEREIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "WALLACE DA CONCEICAO PEREIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
             "CLEYSON ALVES DOS SANTOS (1)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
@@ -246,40 +259,6 @@
             "REGINALDO AVELINO SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
             "ATILA VICTORIO MOCO": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
             "CARLOS EDUARDO LACERDA DE OLIVEIRA (2)": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - OESTE" },
-            "ANDRE FRANÇA VIEIRA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "BRUNO NOGUEIRA GONTIJO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "FELIPE DA SILVA FREIRE": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "GABRIEL ZULU MARQUES DE OLIVIERA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "GERSON HENRIQUE ALVES CUSTODIO": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "GUSTAVO DOS SANTOS FERREIRA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "IAGO VENÂNCIO DA SILVA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "JOEL SEBASTIÃO DE LIMA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "LEONARDO FERREIRA": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - BRZ SYS", micro: "B2B" },
-            "CLEYSON ALVES DOS SANTOS (2)": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
-            "MATHEUS FELIPPE PONCE DE OLIVEIRA": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNIOR": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "RUAN PEREIRA RIBEIRO": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "EDUARDO OSÓRIO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "TIAGO ALVEZ": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "LEONARDO FERREIRA DOS REIS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - BRZ SYS", micro: "B2B" },
-            "ALEXANDRE ROBERTO LOPES": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "EDUARDO AUGUSTO BENTO": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "LEANDRO SANTOS DE ALMEIDA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "ALEXSSANDRO PEDRO ARAUJO DE FREITAS (2)": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "ARCHIMEDES DA COSTA NUNES LOPES": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "EDUARDO VIEGAS OSORIO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "FABIO MORAIS ": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "IGOR DE MORAES VENTURA NERI": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "RICARDO CRISTIANO FERREIRA MOTTA": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "EDSON VANDER PAIXAO (1)": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "FABIO MORAES RAMOS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "LUAN VITOR CANDIDO DOS SANTOS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "YGOR DE MORAIS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
-            "RODRIGO GOMEZ AZEVEDO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
-            "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - BRZ SYS", micro: "B2B" },
-            "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
             "FABIO RODRIGO SAIEGH DUARTE": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "WAGNER FERNANDES DOS SANTOS": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - GRAN.TIJUCA" },
             "MARCIO DE OLIVEIRA DA SILVA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
@@ -298,8 +277,7 @@
             "MAURICIO DE FREITAS VICENTE": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "FABIO EUGENIO GONCALVES": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "ITALO MARTINS DA GRAÇA": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
-
-            // --- DADOS ATUALIZADOS ESPÍRITO SANTO (ES) ---
+            "MARCIO DE OLIVEIRA DA SILVA": { uf: "RJ", super: "WELLIGTON MORENO", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - NORTE" },
             "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
             "JOAIS SANTOS DE OLIVEIRA (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
             "DEILSON DOS SANTOS SOUZA (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
@@ -311,9 +289,9 @@
             "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
             "JONATAS SANTOS DOS ANJOS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
             "PATRICK HENRIQUE ALVES DE OLIVEIRA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
-            "JOAIS SANTOS DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "JOAIS SANTOS DE OLIVEIRA": { uf: "ES", super: "ITALO COELHO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
             "DAVID COSTA MIRANDA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
-            "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
             "RAFAEL GUASTI MARTINS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "BRENO NICOLAU VALASCO DA SILVA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "IGOR MAGNO MARTINS LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
@@ -321,27 +299,27 @@
             "DOUGLAS NUNES DA COSTA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "RAYAN SILVEIRA SCHAIDER (1)": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "DIOSE ALENCAR DE SOUZA (1)": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "DEILSON DOS SANTOS SOUZA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "WDSON NASCIMENTO DO CARMO": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
-            "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
+            "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "DEILSON DOS SANTOS SOUZA": { uf: "ES", super: "ITALO COELHO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "WDSON NASCIMENTO DO CARMO": { uf: "ES", super: "ITALO COELHO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
             "EMANUEL MARTINS DE MORAES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "PEDRO IVO DA SILVA DIAS ": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "RONEY MELO SANTOS (1)": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "RAFAEL GUASTI MARTINS (1)": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
             "IGOR MAGNO MARTINS LEITE (1)": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
-            "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
-            "CARLOS EDUARDO MENDONÇA": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
-            "EMANUEL FREITAS OTT": { uf: "ES", super: "ITALO COELHO", coord: "THIAGO JACOB", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VIANA" },
+            "LUCAS SANTOS DE ALMEIDA": { uf: "ES", super: "ITALO COELHO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "CARLOS EDUARDO MENDONÇA": { uf: "ES", super: "ITALO COELHO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
+            "EMANUEL FREITAS OTT": { uf: "ES", super: "ITALO COELHO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VIANA" },
             "LORRAN PEREIRA DA SILVA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" }
         };
 
         window.onload = async () => {
             const hoje = new Date();
-            document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
+            document.getElementById('dateFiltro').value = hoje.toISOString().split('T')[0];
             await carregarDadosDoBanco();
         };
 
@@ -350,12 +328,10 @@
                 .from('registros_presenca')
                 .select('*')
                 .order('data', { ascending: false });
-
             registrosBanco = error ? [] : data;
             renderizarTabela();
         }
 
-        // Função para remover ramificações (2), (3) etc. para o cálculo de médias e PR D-1
         function limparNome(nome) {
             if (!nome) return "";
             return nome.split('(')[0].trim().toUpperCase();
@@ -364,7 +340,7 @@
         function renderizarTabela() {
             const corpo = document.getElementById('tabelaCorpo');
             corpo.innerHTML = "";
-            const dataFiltro = document.getElementById('dataFiltro').value;
+            const dataFiltro = document.getElementById('dateFiltro').value;
             if (!dataFiltro) return;
 
             const dFoco = new Date(dataFiltro + 'T12:00:00');
@@ -373,99 +349,100 @@
             const dSemana = new Date(dFoco); dSemana.setDate(dSemana.getDate() - 7);
             const semanaStr = dSemana.toISOString().split('T')[0];
 
-            // 1. Extrair os supervisores únicos da base fixa para garantir a estrutura imutável
-            const supervisoresSet = new Set(Object.values(baseDados).map(c => c.super));
-            const listaSeps = Array.from(supervisoresSet).sort();
+            // Agrupar Coordenadores por UF
+            const ufs = ["RJ", "ES"];
 
-            listaSeps.forEach(supNome => {
-                const infoFixo = Object.values(baseDados).find(c => c.super === supNome);
+            ufs.forEach(ufAtual => {
+                // Filtra coordenadores que pertencem à UF atual
+                const coordenadoresUF = [...new Set(
+                    Object.values(baseDados)
+                        .filter(item => item.uf === ufAtual)
+                        .map(item => item.coord)
+                )].sort();
 
-                // 2. Filtrar todos os registros do banco para este supervisor HOJE
-                // Isso captura inclusive as ramificações (2), (3) etc.
-                const registrosSupHoje = registrosBanco.filter(r =>
-                    r.data === dataFiltro &&
-                    r.supervisor &&
-                    r.supervisor.toUpperCase() === supNome.toUpperCase()
-                );
+                if (coordenadoresUF.length > 0) {
+                    // Insere linha de cabeçalho da UF
+                    const trUF = document.createElement('tr');
+                    trUF.innerHTML = `<td colspan="15" class="uf-header">ESTADO: ${ufAtual}</td>`;
+                    corpo.appendChild(trUF);
 
-                const efetivo = registrosSupHoje.length;
+                    coordenadoresUF.forEach(coordNome => {
+                        const infoExemplo = Object.values(baseDados).find(c => c.coord === coordNome);
+                        const nomesEquipe = Object.keys(baseDados).filter(nome => baseDados[nome].coord === coordNome);
 
-                let pr_dia = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0, pr_d1 = 0;
-                let somaPresencasMes = 0;
-                let somaPresencasSemana = 0;
+                        // EFETIVO FIXO
+                        const efetivo = efetivoFixoPorCoordenador[coordNome.toUpperCase()] || 0;
 
-                registrosSupHoje.forEach(regHoje => {
-                    const nomeLimpo = limparNome(regHoje.colaborador || regHoje.colab);
-                    const st = regHoje.status.toUpperCase();
+                        let pr_dia = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0, pr_d1 = 0, desl = 0;
+                        let somaPresencasMes = 0;
+                        let somaPresencasSemana = 0;
 
-                    // Status de Hoje
-                    if (st.includes('PRESENTE') || st.includes('NOTURNO') || st.includes('INTERMEDIÁRIO')) {
-                        pr_dia++;
-                    }
-                    else if (st.includes('FALTA') || st.includes('ATESTADO') || st.includes('DESLIGADO')) {
-                        f++;
-                    }
-                    else if (st.includes('FOLGA')) {
-                        fo++;
-                    }
-                    else if (st.indexOf('FERIA') !== -1 || st.indexOf('FÉRIA') !== -1) {
-                        fe++;
-                    }
-                    else if (st.includes('INSS')) {
-                        inss++;
-                    }
-                    else if (st.includes('INTJ') || st.includes('INTERJORNADA')) {
-                        intj++;
-                    }
+                        nomesEquipe.forEach(nomeColab => {
+                            const nomeLimpo = limparNome(nomeColab);
+                            const regHoje = registrosBanco.find(r => r.data === dataFiltro && limparNome(r.colaborador || r.colab) === nomeLimpo);
 
-                    // Cálculo de médias e PR D-1 para este colaborador (usando nome limpo para cruzar histórico)
-                    const historicoColab = registrosBanco.filter(r => limparNome(r.colaborador || r.colab) === nomeLimpo);
+                            if (regHoje) {
+                                const st = regHoje.status.toUpperCase();
+                                if (st.includes('PRESENTE') || st.includes('NOTURNO') || st.includes('INTERMEDIÁRIO')) pr_dia++;
+                                else if (st.includes('DESLIGADO')) { desl++; f++; }
+                                else if (st.includes('FALTA') || st.includes('ATESTADO')) f++;
+                                else if (st.includes('FOLGA')) fo++;
+                                else if (st.indexOf('FERIA') !== -1 || st.indexOf('FÉRIA') !== -1) fe++;
+                                else if (st.includes('INSS')) inss++;
+                                else if (st.includes('INTJ') || st.includes('INTERJORNADA')) intj++;
+                            }
 
-                    if (historicoColab.find(r => {
-                        const s = r.data === ontemStr ? r.status.toUpperCase() : "";
-                        return s.includes('PRESENTE') || s.includes('NOTURNO') || s.includes('INTERMEDIÁRIO');
-                    })) pr_d1++;
+                            const historicoColab = registrosBanco.filter(r => limparNome(r.colaborador || r.colab) === nomeLimpo);
 
-                    somaPresencasMes += historicoColab.filter(r =>
-                        r.data.startsWith(dataFiltro.substring(0, 7)) &&
-                        r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
-                    ).length;
+                            if (historicoColab.find(r => {
+                                const s = (r.data === ontemStr && r.status) ? r.status.toUpperCase() : "";
+                                return s.includes('PRESENTE') || s.includes('NOTURNO') || s.includes('INTERMEDIÁRIO');
+                            })) pr_d1++;
 
-                    somaPresencasSemana += historicoColab.filter(r =>
-                        r.data >= semanaStr &&
-                        r.data <= dataFiltro &&
-                        (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
-                    ).length;
-                });
+                            somaPresencasMes += historicoColab.filter(r =>
+                                r.data.startsWith(dataFiltro.substring(0, 7)) &&
+                                r.data <= dataFiltro &&
+                                r.status && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
+                            ).length;
 
-                const diasRegistradosMes = [...new Set(registrosBanco
-                    .filter(r => r.data.startsWith(dataFiltro.substring(0, 7)) && r.data <= dataFiltro)
-                    .map(r => r.data))].length || 1;
+                            somaPresencasSemana += historicoColab.filter(r =>
+                                r.data >= semanaStr &&
+                                r.data <= dataFiltro &&
+                                r.status && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
+                            ).length;
+                        });
 
-                const mediaM1 = (somaPresencasMes / diasRegistradosMes).toFixed(1);
-                const mediaW1 = (somaPresencasSemana / 7).toFixed(1);
-                const absVal = efetivo > 0 ? (((fo + fe + f) / efetivo) * 100).toFixed(2) : "0.00";
+                        const diasRegistradosMes = [...new Set(registrosBanco
+                            .filter(r => r.data.startsWith(dataFiltro.substring(0, 7)) && r.data <= dataFiltro)
+                            .map(r => r.data))].length || 1;
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${infoFixo.uf}</td>
-                    <td class="text-left">${infoFixo.gerente}</td>
-                    <td class="text-left">${infoFixo.coord}</td>
-                    <td class="text-left"><strong>${supNome}</strong></td>
-                    <td class="col-efetivo-dado">${efetivo}</td>
-                    <td>${mediaM1}</td>
-                    <td>${mediaW1}</td>
-                    <td>${pr_d1}</td>
-                    <td style="font-weight:bold; color:var(--accent)">${pr_dia}</td>
-                    <td>${f}</td>
-                    <td>${fo}</td>
-                    <td>${fe}</td>
-                    <td>${inss}</td>
-                    <td>${intj}</td>
-                    <td class="${parseFloat(absVal) > 10 ? 'abs-critico' : ''}">${absVal}%</td>
-                `;
-                corpo.appendChild(tr);
+                        const mediaM1 = (somaPresencasMes / diasRegistradosMes).toFixed(1);
+                        const mediaW1 = (somaPresencasSemana / 7).toFixed(1);
+
+                        const absVal = efetivo > 0 ?
+                            (((fo + fe + f) / efetivo) * 100).toFixed(2) : "0.00";
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${infoExemplo.uf}</td>
+                            <td class="text-left">${infoExemplo.gerente}</td>
+                            <td class="text-left"><strong>${coordNome}</strong></td>
+                            <td class="col-efetivo-dado">${efetivo}</td>
+                            <td>${desl}</td> 
+                            <td>${mediaM1}</td>
+                            <td>${mediaW1}</td>
+                            <td>${pr_d1}</td>
+                            <td style="font-weight:bold; color:var(--accent)">${pr_dia}</td>
+                            <td>${f}</td>
+                            <td>${fo}</td>
+                            <td>${fe}</td>
+                            <td>${inss}</td>
+                            <td>${intj}</td>
+                            <td class="${parseFloat(absVal) > 10 ? 'abs-critico' : ''}">${absVal}%</td>
+                        `;
+                        corpo.appendChild(tr);
+                    });
+                }
             });
         }
     </script>

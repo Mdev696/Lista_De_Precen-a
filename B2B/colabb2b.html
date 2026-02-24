@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Presença - Operacional B2B</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --light: #ecf0f1;
+            --border-color: #dcdde1;
+            --b2b-purple: #8e44ad;
+            /* Cor para identificar B2B */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 98%;
+            margin: 15px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--b2b-purple);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .btn-voltar {
+            background-color: var(--secondary);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .filtros {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 650px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #edf0f2;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 10px;
+            min-width: 80px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .bg-presente {
+            background: #e6ffed;
+            color: #1e7e34;
+            border: 1px solid #b7ebc6;
+        }
+
+        .bg-falta {
+            background: #fff1f0;
+            color: #cf1322;
+            border: 1px solid #ffa39e;
+        }
+
+        .col-correlacao {
+            white-space: normal;
+            min-width: 200px;
+            color: #2c3e50;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .texto-nota {
+            color: #2980b9;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .filtros {
+                flex-direction: column;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Relatório de Presença - <span style="color: var(--b2b-purple);">Segmento B2B</span></h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="b2b.html" class="btn-voltar" style="background: var(--b2b-purple);">📊 Painel B2B</a>
+                <a href="index.html" class="btn-voltar">⬅ Home</a>
+            </div>
+        </header>
+
+        <div class="filtros">
+            <div>
+                <label>Data de Análise:</label>
+                <input type="date" id="filtroData" onchange="renderizarAnalise()">
+            </div>
+            <div>
+                <label>Supervisor B2B:</label>
+                <select id="filtroSuper" onchange="renderizarAnalise()">
+                    <option value="TODOS">TODOS OS SUPERVISORES</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>Gerente TLP</th>
+                        <th>Coordenador</th>
+                        <th>Supervisor</th>
+                        <th>Colaborador</th>
+                        <th>Ações / Notas</th>
+                        <th>Status</th>
+                        <th>PR Σx M-1</th>
+                        <th>PR Σx W-1</th>
+                        <th>PR D-1</th>
+                        <th>PR</th>
+                        <th>F</th>
+                        <th>FO</th>
+                        <th>FE</th>
+                        <th>INSS</th>
+                        <th>INTJ</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let registros = [];
+
+        window.onload = async () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('filtroData').value = hoje;
+            await carregarDadosDoBanco();
+        };
+
+        async function carregarDadosDoBanco() {
+            // Buscamos todos os dados, mas aplicamos o filtro B2B logo na entrada
+            const { data, error } = await _supabase.from('registros_presenca').select('*');
+
+            if (error) {
+                console.error("Erro ao carregar dados:", error);
+                registros = [];
+            } else {
+                // FILTRO CRUCIAL: Mantém apenas o que for B2B na lista geral da página
+                registros = data.filter(r =>
+                    (r.micro_area || r.micro || "").toUpperCase().includes("B2B")
+                );
+            }
+            preencherFiltroSupervisores();
+            renderizarAnalise();
+        }
+
+        function preencherFiltroSupervisores() {
+            const select = document.getElementById('filtroSuper');
+            const supervisores = [...new Set(registros.map(r => r.supervisor))].sort();
+            select.innerHTML = '<option value="TODOS">TODOS OS SUPERVISORES B2B</option>';
+            supervisores.forEach(sup => {
+                if (sup) {
+                    const opt = document.createElement('option');
+                    opt.value = sup; opt.innerText = sup; select.appendChild(opt);
+                }
+            });
+        }
+
+        function renderizarAnalise() {
+            const dataSel = document.getElementById('filtroData').value;
+            const superSel = document.getElementById('filtroSuper').value;
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = "";
+
+            if (!dataSel) return;
+
+            // Filtra pela data e pelo supervisor (já dentro do universo B2B)
+            const dadosFiltrados = registros.filter(r => (r.data === dataSel && (superSel === "TODOS" || r.supervisor === superSel)));
+
+            dadosFiltrados.forEach(reg => {
+                const tr = document.createElement('tr');
+                const statusNormalizado = (reg.status || "").toUpperCase();
+
+                const classeStatus = (statusNormalizado.includes('PRESENTE') || statusNormalizado.includes('NOTURNO')) ? 'bg-presente' : 'bg-falta';
+
+                const historicoColab = registros.filter(r => (r.colaborador || r.colab) === (reg.colaborador || reg.colab));
+                const dataFoco = new Date(dataSel + 'T12:00:00');
+
+                const registrosMes = historicoColab.filter(r => {
+                    const d = new Date(r.data + 'T12:00:00');
+                    return d.getMonth() === dataFoco.getMonth() && d.getFullYear() === dataFoco.getFullYear();
+                });
+
+                const pr_m1 = registrosMes.filter(r => r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO')).length;
+                const pr_w1 = historicoColab.filter(r => r.data <= dataSel && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))).length;
+
+                const ontem = new Date(dataFoco);
+                ontem.setDate(ontem.getDate() - 1);
+                const dataOntemStr = ontem.toISOString().split('T')[0];
+                const pr_d1 = historicoColab.find(r => r.data === dataOntemStr && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))) ? 1 : 0;
+
+                let pr = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0;
+
+                if (statusNormalizado.includes('PRESENTE') || statusNormalizado.includes('NOTURNO')) pr = 1;
+                else if (statusNormalizado.includes('INTRA') || statusNormalizado.includes('INTER')) intj = 1;
+                else if (statusNormalizado.includes('FALTA') || statusNormalizado.includes('ATESTADO')) f = 1;
+                else if (statusNormalizado.includes('FOLGA') || statusNormalizado === 'FO') fo = 1;
+                else if (statusNormalizado.includes('FERIAS') || statusNormalizado.includes('FÉRIAS')) fe = 1;
+                else if (statusNormalizado.includes('INSS')) inss = 1;
+
+                const acao = reg['Ações'] || reg['acoes'] || "";
+                const nota = reg['Notas'] || reg['nota'] || reg['observacao'] || "";
+
+                let correlacaoFinal = "";
+                if (acao && nota) {
+                    correlacaoFinal = `${acao} <br> <span class="texto-nota">Nota: ${nota}</span>`;
+                } else {
+                    correlacaoFinal = acao || (nota ? `<span class="texto-nota">Nota: ${nota}</span>` : "-");
+                }
+
+                tr.innerHTML = `
+                    <td>${reg.uf || ''}</td>
+                    <td>${reg.gerente_tlp || reg.gerente || ''}</td>
+                    <td>${reg.coordenador || ''}</td>
+                    <td>${reg.supervisor || ''}</td>
+                    <td><strong>${reg.colaborador || ''}</strong></td>
+                    <td class="col-correlacao">${correlacaoFinal}</td>
+                    <td><span class="status-badge ${classeStatus}">${reg.status || ''}</span></td>
+                    <td>${pr_m1}</td> 
+                    <td>${pr_w1}</td>
+                    <td>${pr_d1}</td>
+                    <td>${pr}</td>
+                    <td>${f}</td>
+                    <td>${fo}</td>
+                    <td>${fe}</td>
+                    <td>${inss}</td>
+                    <td>${intj}</td>
+                `;
+                corpo.appendChild(tr);
+            });
+
+            if (dadosFiltrados.length === 0) {
+                corpo.innerHTML = `<tr><td colspan='16' style='text-align:center; padding:30px;'>Nenhum registro B2B encontrado para a data ${dataSel}.</td></tr>`;
+            }
+        }
+    </script>
+</body>
+
+</html>

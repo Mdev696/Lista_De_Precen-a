@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visão Consolidada por Coordenador</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --light: #ecf0f1;
+            --border-color: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 98%;
+            margin: 15px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filtros {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .filtros input[type="date"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+        }
+
+        .btn-voltar {
+            background-color: var(--secondary);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 650px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 11px;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #edf0f2;
+            white-space: nowrap;
+            color: var(--secondary);
+            text-align: center;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+
+        tr:hover {
+            background-color: #f1f7ff;
+        }
+
+        .col-efetivo-dado {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .abs-critico {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1 style="color: var(--primary); margin:0;">Visão Consolidada por Coordenador</h1>
+            <div class="filtros">
+                <label for="dataFiltro"><strong>Data de Análise:</strong></label>
+                <input type="date" id="dateFiltro" onchange="renderizarTabela()">
+            </div>
+            <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+        </header>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>GERENTE TLP</th>
+                        <th>COORDENADOR</th>
+                        <th>EFETIVO</th>
+                        <th>MÉDIA M-1</th>
+                        <th>MÉDIA W-1</th>
+                        <th>PR D-1</th>
+                        <th>PR DIA</th>
+                        <th>F</th>
+                        <th>FO</th>
+                        <th>FE</th>
+                        <th>INSS</th>
+                        <th>INTJ</th>
+                        <th>ABS %</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let registrosBanco = [];
+
+        // Base de dados conforme seu script.txt
+        const baseDados = {
+            // DADOS RIO DE JANEIRO (RJ) - HIGIENIZADOS (SEM SOBREPOSIÇÃO)
+            "ANDRE FRANÇA VIEIRA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "BRUNO NOGUEIRA GONTIJO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "FELIPE DA SILVA FREIRE": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "GABRIEL ZULU MARQUES DE OLIVIERA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "GERSON HENRIQUE ALVES CUSTODIO": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "GUSTAVO DOS SANTOS FERREIRA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "IAGO VENÂNCIO DA SILVA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "JOEL SEBASTIÃO DE LIMA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "LEONARDO FERREIRA": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - BRZ SYS", micro: "B2B" },
+            "CLEYSON ALVES DOS SANTOS (2)": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "AZUL - CENTRO" },
+            "MATHEUS FELIPPE PONCE DE OLIVEIRA": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "PAULO DANIEL DE OLIVEIRA FREIRE": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "RENATO DA CONÇEIÇÃO DE PAULA ARAUJO JUNIOR": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "RUAN PEREIRA RIBEIRO": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "EDUARDO OSÓRIO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "TIAGO ALVEZ": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "LEONARDO FERREIRA DOS REIS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - BRZ SYS", micro: "B2B" },
+            "ALEXANDRE ROBERTO LOPES": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "EDUARDO AUGUSTO BENTO": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "LEANDRO SANTOS DE ALMEIDA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "ALEXSSANDRO PEDRO ARAUJO DE FREITAS (2)": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "ARCHIMEDES DA COSTA NUNES LOPES": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "EDUARDO VIEGAS OSORIO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "FABIO MORAIS ": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "IGOR DE MORAES VENTURA NERI": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "RICARDO CRISTIANO FERREIRA MOTTA": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "EDSON VANDER PAIXAO (1)": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "FABIO MORAES RAMOS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "LUAN VITOR CANDIDO DOS SANTOS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "YGOR DE MORAIS": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "TLP SERVIÇOS", micro: "B2B" },
+            "RODRIGO GOMEZ AZEVEDO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "VITOR EDUARDO ROCHA SILVA": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+            "LEANDRO MACEDO DO COUTO": { uf: "RJ", super: "CARLOS HENRIQUE DE PAULA BATISTA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - BRZ SYS", micro: "B2B" },
+            "TIAGO DE ARAUJO MARTINS": { uf: "RJ", super: "RENATO COSTA MOREIRA", coord: "ALEXSANDRO MALAQUIAS", gerente: "FABRICIO LEAL", empresa: "SUB - LUZ TELECOM", micro: "B2B" },
+
+
+        };
+
+        window.onload = async () => {
+            const hoje = new Date();
+            document.getElementById('dateFiltro').value = hoje.toISOString().split('T')[0];
+            await carregarDadosDoBanco();
+        };
+
+        async function carregarDadosDoBanco() {
+            const { data, error } = await _supabase
+                .from('registros_presenca')
+                .select('*')
+                .order('data', { ascending: false });
+            registrosBanco = error ? [] : data;
+            renderizarTabela();
+        }
+
+        function limparNome(nome) {
+            if (!nome) return "";
+            return nome.split('(')[0].trim().toUpperCase();
+        }
+
+        function renderizarTabela() {
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = "";
+            const dataFiltro = document.getElementById('dateFiltro').value;
+            if (!dataFiltro) return;
+
+            const dFoco = new Date(dataFiltro + 'T12:00:00');
+            const dOntem = new Date(dFoco); dOntem.setDate(dOntem.getDate() - 1);
+            const ontemStr = dOntem.toISOString().split('T')[0];
+            const dSemana = new Date(dFoco); dSemana.setDate(dSemana.getDate() - 7);
+            const semanaStr = dSemana.toISOString().split('T')[0];
+
+            // AGRUPAMENTO POR COORDENADOR
+            const coordenadoresUnicos = [...new Set(Object.values(baseDados).map(c => c.coord))].sort();
+
+            coordenadoresUnicos.forEach(coordNome => {
+                const infoExemplo = Object.values(baseDados).find(c => c.coord === coordNome);
+                const nomesEquipe = Object.keys(baseDados).filter(nome => baseDados[nome].coord === coordNome);
+
+                const efetivo = nomesEquipe.length;
+                let pr_dia = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0, pr_d1 = 0;
+                let somaPresencasMes = 0;
+                let somaPresencasSemana = 0;
+
+                nomesEquipe.forEach(nomeColab => {
+                    const nomeLimpo = limparNome(nomeColab);
+                    const regHoje = registrosBanco.find(r => r.data === dataFiltro && limparNome(r.colaborador || r.colab) === nomeLimpo);
+
+                    if (regHoje) {
+                        const st = regHoje.status.toUpperCase();
+                        // Lógica de contagem conforme script referência
+                        if (st.includes('PRESENTE') || st.includes('NOTURNO') || st.includes('INTERMEDIÁRIO')) pr_dia++;
+                        else if (st.includes('FALTA') || st.includes('ATESTADO') || st.includes('DESLIGADO')) f++;
+                        else if (st.includes('FOLGA')) fo++;
+                        else if (st.indexOf('FERIA') !== -1 || st.indexOf('FÉRIA') !== -1) fe++;
+                        else if (st.includes('INSS')) inss++;
+                        else if (st.includes('INTJ') || st.includes('INTERJORNADA')) intj++;
+                    }
+
+                    const historicoColab = registrosBanco.filter(r => limparNome(r.colaborador || r.colab) === nomeLimpo);
+
+                    // PR D-1
+                    if (historicoColab.find(r => {
+                        const s = (r.data === ontemStr && r.status) ? r.status.toUpperCase() : "";
+                        return s.includes('PRESENTE') || s.includes('NOTURNO') || s.includes('INTERMEDIÁRIO');
+                    })) pr_d1++;
+
+                    // Média M-1 (Mensal)
+                    somaPresencasMes += historicoColab.filter(r =>
+                        r.data.startsWith(dataFiltro.substring(0, 7)) &&
+                        r.data <= dataFiltro &&
+                        r.status && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
+                    ).length;
+
+                    // Média W-1 (Semanal)
+                    somaPresencasSemana += historicoColab.filter(r =>
+                        r.data >= semanaStr &&
+                        r.data <= dataFiltro &&
+                        r.status && (r.status.toUpperCase().includes('PRESENTE') || r.status.toUpperCase().includes('NOTURNO'))
+                    ).length;
+                });
+
+                const diasRegistradosMes = [...new Set(registrosBanco
+                    .filter(r => r.data.startsWith(dataFiltro.substring(0, 7)) && r.data <= dataFiltro)
+                    .map(r => r.data))].length || 1;
+
+                const mediaM1 = (somaPresencasMes / diasRegistradosMes).toFixed(1);
+                const mediaW1 = (somaPresencasSemana / 7).toFixed(1);
+
+                // Lógica ABS exata do script.txt: (((fo + fe + f) / efetivo) * 100)
+                const absVal = efetivo > 0 ? (((fo + fe + f) / efetivo) * 100).toFixed(2) : "0.00";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${infoExemplo.uf}</td>
+                    <td class="text-left">${infoExemplo.gerente}</td>
+                    <td class="text-left"><strong>${coordNome}</strong></td>
+                    <td class="col-efetivo-dado">${efetivo}</td>
+                    <td>${mediaM1}</td>
+                    <td>${mediaW1}</td>
+                    <td>${pr_d1}</td>
+                    <td style="font-weight:bold; color:var(--accent)">${pr_dia}</td>
+                    <td>${f}</td>
+                    <td>${fo}</td>
+                    <td>${fe}</td>
+                    <td>${inss}</td>
+                    <td>${intj}</td>
+                    <td class="${parseFloat(absVal) > 10 ? 'abs-critico' : ''}">${absVal}%</td>
+                `;
+                corpo.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+
+</html>
