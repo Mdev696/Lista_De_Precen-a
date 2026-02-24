@@ -153,6 +153,7 @@
                 <a href="Colab.html" class="btn-voltar">Colaborador</a>
                 <a href="console.html" class="btn-voltar">Supervisor</a>
                 <a href="gerconsole.html" class="btn-voltar">Coordenador</a>
+                <a href="/B2B/index.html" class="btn-voltar">B2B</a>
             </div>
         </header>
 
@@ -171,6 +172,7 @@
                         <th>PR Σx M-1</th>
                         <th>PR Σx W-1</th>
                         <th>PR D-1</th>
+                        <th>N/A</th>
                         <th>PR (Presença)</th>
                         <th>F (Falta)</th>
                         <th>FO (Folga)</th>
@@ -186,7 +188,7 @@
 
         <div class="legenda">
             <strong>Lógica de Absenteísmo aplicada por UF:</strong><br>
-            • Análise com <b>Efetivo Fixo</b>: RJ (61) e ES (26).<br>
+            • Análise com <b>Efetivo Fixo</b>: RJ (66) e ES (26).<br>
             • <b>Fórmula:</b> (Total Ausências da UF / Efetivo Fixo da UF) * 100[cite: 34].
         </div>
     </div>
@@ -196,9 +198,8 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Definição do Efetivo Fixo solicitado
         const efetivoFixoUF = {
-            'RJ': 61,
+            'RJ': 66,
             'ES': 26
         };
 
@@ -212,7 +213,7 @@
             const dataSelecionada = document.getElementById('dataFiltro').value;
             const mesPrefixo = dataSelecionada.substring(0, 7);
             const corpo = document.getElementById('corpoTabela');
-            corpo.innerHTML = "<tr><td colspan='13'>Sincronizando dados regionais...</td></tr>";
+            corpo.innerHTML = "<tr><td colspan='14'>Sincronizando dados regionais...</td></tr>";
 
             const { data: registros, error } = await _supabase.from('registros_presenca').select('*');
             if (error) return;
@@ -224,7 +225,6 @@
                 const registrosUF = registros.filter(r => (r.uf || "").trim().toUpperCase() === uf);
                 const efetivoFixo = efetivoFixoUF[uf];
 
-                // Contagem de dias úteis no mês para médias
                 const registrosDoMesUF = registrosUF.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
                 const diasUnicosUF = [...new Set(registrosDoMesUF.map(r => r.data))];
                 const totalDiasUF = diasUnicosUF.length || 1;
@@ -243,7 +243,9 @@
                     const ehFE = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
                     const ehINSS = status.includes("INSS");
                     const ehDesligado = status.includes("DESLIGADO");
-                    const ehFaltaOuAtestado = status.includes("FALTA") || status.includes("ATESTADO") || ehDesligado;
+
+                    // Lógica de Falta incluindo DUPLADO e DESLIGADO [cite: 47, 49]
+                    const ehFaltaOuAtestado = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DUPLADO") || ehDesligado;
 
                     if (rData === dataSelecionada) {
                         if (ehPR) kpi.pr++;
@@ -260,31 +262,33 @@
                     if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada && ehPR) kpi.somaPR_M1++;
                 });
 
+                // --- LÓGICA DA COLUNA N/A ---
+                const registrosNoDia = registrosUF.filter(r => r.data === dataSelecionada).length;
+                const naoLancados = Math.max(0, efetivoFixo - registrosNoDia);
+
                 const valorM1 = (kpi.somaPR_M1 / totalDiasUF).toFixed(1);
                 const valorW1 = (kpi.somaPR_W1 / 7).toFixed(1);
                 const somaAusenciasDia = kpi.f + kpi.fo + kpi.fe + kpi.inss;
-
-                // ABS calculado sobre o Efetivo Fixo solicitado
                 const valorABS = ((somaAusenciasDia / efetivoFixo) * 100).toFixed(2);
                 const ufClass = uf === 'RJ' ? 'header-rj' : 'header-es';
 
                 htmlFinal += `
-                    <tr>
-                        <td class="${ufClass}" style="color:white; font-size: 20px;">${uf}</td>
-                        <td>${efetivoFixo}</td>
-                        <td style="color: var(--danger);">${kpi.desl}</td>
-                        <td>${valorM1}</td>
-                        <td>${valorW1}</td>
-                        <td>${kpi.prD1}</td>
-                        <td class="txt-pr">${kpi.pr}</td>
-                        <td class="txt-f">${kpi.f}</td>
-                        <td class="txt-fo">${kpi.fo}</td>
-                        <td class="txt-fe">${kpi.fe}</td>
-                        <td class="txt-inss">${kpi.inss}</td>
-                        <td>${kpi.intj}</td>
-                        <td><span class="txt-abs">${valorABS}%</span></td>
-                    </tr>
-                `;
+                <tr>
+                    <td class="${ufClass}" style="color:white; font-size: 20px;">${uf}</td>
+                    <td>${efetivoFixo}</td>
+                    <td style="color: var(--danger);">${kpi.desl}</td>
+                    <td>${valorM1}</td>
+                    <td>${valorW1}</td>
+                    <td>${kpi.prD1}</td>
+                    <td style="color: #7f8c8d; font-weight: bold;">${naoLancados}</td> <td class="txt-pr">${kpi.pr}</td>
+                    <td class="txt-f">${kpi.f}</td>
+                    <td class="txt-fo">${kpi.fo}</td>
+                    <td class="txt-fe">${kpi.fe}</td>
+                    <td class="txt-inss">${kpi.inss}</td>
+                    <td>${kpi.intj}</td>
+                    <td><span class="txt-abs">${valorABS}%</span></td>
+                </tr>
+            `;
             });
 
             corpo.innerHTML = htmlFinal;
