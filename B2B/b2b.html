@@ -147,10 +147,9 @@
             <h1>📊 Analítico KPI: Segmento B2B</h1>
             <div style="display: flex; gap: 10px;">
                 <a href="index.html" class="btn-voltar">⬅ Voltar</a>
-                <a href="Colabb2b.html" class="btn-voltar">Colaborador</a>  
+                <a href="Colabb2b.html" class="btn-voltar">Colaborador</a>
                 <a href="super.html" class="btn-voltar">Supervisor</a>
                 <a href="coord.html" class="btn-voltar">Coordenador</a>
-                
             </div>
         </header>
 
@@ -185,7 +184,8 @@
             <strong>Critério de Filtro B2B:</strong><br>
             • Esta página exibe apenas registros vinculados à Micro Área ou Região que contenha o termo
             <b>"B2B"</b>.<br>
-            • A lógica de cálculo de absenteísmo e médias segue o padrão operacional da empresa.
+            • <b>Lógica de INTJ:</b> Lançamentos de Interjornada contam como presença para o ABS, mas são exibidos em
+            coluna separada da PR.
         </div>
     </div>
 
@@ -209,19 +209,16 @@
             const { data: registros, error } = await _supabase.from('registros_presenca').select('*');
             if (error) return;
 
-            // FILTRO EXCLUSIVO B2B
             const registrosB2B = registros.filter(r =>
                 (r.micro_area || r.micro || "").toUpperCase().includes("B2B")
             );
 
-            // 1. CÁLCULO MÉDIA MENSAL (B2B)
             const registrosDoMes = registrosB2B.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
             const diasUnicos = [...new Set(registrosDoMes.map(r => r.data))];
             const totalDias = diasUnicos.length || 1;
             const mediaLancamentosMes = registrosDoMes.length / totalDias;
 
-            // 2. KPIs DO DIA
-            let kpi = { pr: 0, f: 0, fo: 0, fe: 0, intj: 0, inss: 0, prD1: 0, somaPR_W1: 0, somaPR_M1: 0, totalDia: 0 };
+            let kpi = { pr_visual: 0, f: 0, fo: 0, fe: 0, intj_visual: 0, inss: 0, prD1: 0, somaPR_W1: 0, somaPR_M1: 0, totalDia: 0 };
             const d1_str = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - 86400000).toISOString().split('T')[0];
             const w_limite = new Date(new Date(dataSelecionada + "T12:00:00").getTime() - (7 * 86400000));
 
@@ -230,7 +227,12 @@
                 const rData = r.data;
                 const rDataObj = new Date(rData + "T12:00:00");
 
-                const ehPR = status.includes("PRESENTE") || status.includes("NOTURNO");
+                const ehINTJ = status.includes("INTERJORNADA") || status === "INTJ";
+                const ehPR_Puro = status.includes("PRESENTE") || status.includes("NOTURNO") || status.includes("INTERMEDIARIO");
+
+                // Lógica central: Ambos contam como trabalho para o cálculo
+                const contaComoTrabalho = ehPR_Puro || ehINTJ;
+
                 const ehFO = status.includes("FOLGA") || status === "FO";
                 const ehFE = status.includes("FÉRIAS") || status === "FE";
                 const ehINSS = status.includes("INSS");
@@ -238,21 +240,28 @@
 
                 if (rData === dataSelecionada) {
                     kpi.totalDia++;
-                    if (ehPR) kpi.pr++;
+                    if (ehPR_Puro) kpi.pr_visual++;
+                    if (ehINTJ) kpi.intj_visual++;
                     if (ehFaltaAtestado) kpi.f++;
                     if (ehFO) kpi.fo++;
                     if (ehFE) kpi.fe++;
                     if (ehINSS) kpi.inss++;
-                    if (status.includes("INTERJORNADA")) kpi.intj++;
                 }
-                if (rData === d1_str && ehPR) kpi.prD1++;
-                if (rDataObj > w_limite && rDataObj <= new Date(dataSelecionada + "T12:00:00") && ehPR) kpi.somaPR_W1++;
-                if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada && ehPR) kpi.somaPR_M1++;
+
+                // Médias históricas consideram quem trabalhou (PR ou INTJ)
+                if (contaComoTrabalho) {
+                    if (rData === d1_str) kpi.prD1++;
+                    if (rDataObj > w_limite && rDataObj <= new Date(dataSelecionada + "T12:00:00")) kpi.somaPR_W1++;
+                    if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) kpi.somaPR_M1++;
+                }
             });
 
             const valorM1 = (kpi.somaPR_M1 / totalDias).toFixed(1);
             const valorW1 = (kpi.somaPR_W1 / 7).toFixed(1);
-            const valorABS = mediaLancamentosMes > 0 ? (((kpi.f + kpi.fo + kpi.fe + kpi.inss) / mediaLancamentosMes) * 100).toFixed(2) : "0.00";
+
+            // O ABS soma apenas ausências. Como o INTJ não está nesta lista, o ABS não sobe.
+            const somaAusenciasDia = kpi.f + kpi.fo + kpi.fe + kpi.inss;
+            const valorABS = mediaLancamentosMes > 0 ? ((somaAusenciasDia / mediaLancamentosMes) * 100).toFixed(2) : "0.00";
 
             corpo.innerHTML = `
                 <tr>
@@ -261,12 +270,12 @@
                     <td>${valorM1}</td>
                     <td>${valorW1}</td>
                     <td>${kpi.prD1}</td>
-                    <td class="txt-pr">${kpi.pr}</td>
+                    <td class="txt-pr">${kpi.pr_visual}</td>
                     <td class="txt-f">${kpi.f}</td>
                     <td class="txt-fo">${kpi.fo}</td>
                     <td class="txt-fe">${kpi.fe}</td>
                     <td class="txt-inss">${kpi.inss}</td>
-                    <td>${kpi.intj}</td>
+                    <td>${kpi.intj_visual}</td>
                     <td><span class="txt-abs">${valorABS}%</span></td>
                 </tr>
             `;

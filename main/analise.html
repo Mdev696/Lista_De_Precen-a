@@ -177,13 +177,10 @@
                 <tbody id="corpoTabela"></tbody>
             </table>
         </div>
-        <div class="legenda">
-            <strong>Lógica de Absenteísmo aplicada:</strong><br>
-            • <b>Numerador:</b> Soma de Falta + Atestado + Desligado + Folga + Férias + INSS (INTJ não entra como
-            ausência).<br>
-            • <b>Denominador:</b> Média de lançamentos diários do mês corrente (Efetivo Médio).<br>
-            • <b>Fórmula:</b> (Total Ausências / Efetivo Médio Mensal) * 100.
-        </div>
+
+      
+
+
     </div>
 
 
@@ -232,7 +229,7 @@
                     const contaComoTrabalhoParaABS = ehPR_Puro || ehINTJ;
 
                     const ehDesl = status.includes("DESLIGADO");
-                    const ehFalta = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DUPLADO");
+                    const ehFalta = status.includes("FALTA") || status.includes("ATESTADO") || status.includes("DUPLADO") || status.includes("FROTA");
                     const ehFO = status.includes("FOLGA") || status === "FO";
                     const ehFE = status.includes("FÉRIAS") || status.includes("FERIAS") || status === "FE";
                     const ehINSS = status.includes("INSS");
