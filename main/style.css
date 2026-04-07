@@ -1,9 +1,7 @@
-/* PALETA DE CORES VIVO TELEFÔNICA */
+/* PALETA VIVO TELEFÔNICA */
 :root {
     --primary: #660099;
     /* Roxo Vivo */
-    --secondary: #333333;
-    /* Cinza Escuro Texto */
     --accent: #9933CC;
     /* Roxo Médio */
     --success: #00B451;
@@ -14,25 +12,25 @@
     /* Amarelo Vivo */
     --light: #F2F2F2;
     /* Cinza fundo */
+    --text: #333333;
     --white: #FFFFFF;
 }
 
 body {
-    font-family: 'Vivo Type', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background: #F4F4F7;
     margin: 0;
-    padding: 20px;
-    color: var(--secondary);
+    padding: 0;
+    color: var(--text);
 }
 
-/* LOGIN VIEW */
+/* 1. SISTEMA DE LOGIN (FIX) */
 #login-view {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    /* Degradê característico da Vivo */
     background: linear-gradient(135deg, #660099 0%, #4B006E 100%);
     display: flex;
     justify-content: center;
@@ -40,35 +38,34 @@ body {
     z-index: 9999;
 }
 
+/* Regra Crítica para o Supabase funcionar: */
+#dashboard-view.hidden,
+#login-view.hidden {
+    display: none !important;
+}
+
 .login-card {
     background: var(--white);
-    padding: 50px 40px;
+    padding: 40px;
     border-radius: 16px;
-    /* Mais arredondado */
     width: 90%;
-    max-width: 380px;
+    max-width: 350px;
     text-align: center;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
 }
 
 .login-logo {
     max-width: 120px;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
 }
 
 .login-card input {
     width: 100%;
-    padding: 14px;
-    margin: 12px 0;
-    border: 1.5px solid #E2E2E2;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #DDD;
     border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s;
-}
-
-.login-card input:focus {
-    outline: none;
-    border-color: var(--primary);
+    box-sizing: border-box;
 }
 
 .btn-entrar {
@@ -76,190 +73,171 @@ body {
     background: var(--primary);
     color: white;
     border: none;
-    padding: 15px;
-    font-size: 16px;
-    font-weight: 600;
+    padding: 14px;
+    font-weight: bold;
     cursor: pointer;
-    border-radius: 30px;
-    /* Estilo pílula */
+    border-radius: 25px;
     margin-top: 15px;
-    transition: transform 0.2s, background 0.3s;
+    transition: 0.3s;
 }
 
 .btn-entrar:hover {
     background: var(--accent);
-    transform: translateY(-2px);
 }
 
-/* CONTAINER PRINCIPAL */
+/* 2. CONTAINER E HEADER */
 .container {
     max-width: 1300px;
-    margin: auto;
+    margin: 20px auto;
     background: var(--white);
-    padding: 30px;
+    padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #F0F0F0;
-    padding-bottom: 25px;
-    margin-bottom: 25px;
+    border-bottom: 2px solid var(--light);
+    padding-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 header h1 {
     color: var(--primary);
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 22px;
+    margin: 0;
 }
 
-/* DASHBOARD CARDS */
+/* 3. DASHBOARD CARDS */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 20px;
-    margin-bottom: 35px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
 .db-card {
     background: var(--white);
-    padding: 20px;
-    border-radius: 12px;
+    padding: 15px;
+    border-radius: 10px;
     text-align: center;
-    border: 1px solid #EDEDED;
-    border-top: 5px solid var(--primary);
-    /* Destaque superior em roxo */
-    transition: scale 0.3s;
-}
-
-.db-card:hover {
-    scale: 1.03;
-    box-shadow: 0 10px 20px rgba(102, 0, 153, 0.1);
+    border: 1px solid #EEE;
+    border-top: 4px solid var(--primary);
 }
 
 .db-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 12px;
+    margin: 0;
+    font-size: 11px;
     color: #666;
-    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .db-card .value {
-    font-size: 26px;
-    font-weight: 800;
+    font-size: 24px;
+    font-weight: bold;
     color: var(--primary);
 }
 
-/* FORMULÁRIO E BUSCA */
+/* 4. ÁREA DE LANÇAMENTO */
 .add-box {
     background: #F9F7FA;
-    /* Fundo levemente arroxeado */
-    padding: 25px;
-    border-radius: 12px;
+    padding: 20px;
+    border-radius: 10px;
     border: 1px solid #E6DDEB;
+    margin-bottom: 20px;
 }
 
-.search-box input {
-    border-radius: 25px;
-    padding-left: 45px;
-    border: 2px solid #E6DDEB;
-    transition: 0.3s;
+.section-header {
+    background: #E6DDEB;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--primary);
+    margin-top: 10px;
 }
 
-.search-box input:focus {
-    border-color: var(--primary);
-    outline: none;
-    box-shadow: 0 0 8px rgba(102, 0, 153, 0.2);
+.list-container {
+    background: #FFF;
+    padding: 15px;
+    border: 1px solid #E6DDEB;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
 }
 
-/* TABELAS */
+/* 5. TABELA */
 table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin-top: 25px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #EEE;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 15px;
 }
 
 th {
     background: var(--primary);
     color: white;
-    padding: 15px;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 12px;
+    padding: 12px;
+    text-align: left;
 }
 
 td {
-    padding: 14px;
-    border-bottom: 1px solid #F0F0F0;
-    font-size: 13px;
+    padding: 10px;
+    border-bottom: 1px solid #EEE;
 }
 
 tr:hover td {
-    background-color: #F7F0FF;
-    /* Hover sutil roxo nas linhas */
+    background: #F7F0FF;
 }
 
-/* BOTÕES GERAIS */
-button {
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    font-family: inherit;
-}
-
+/* 6. BOTÕES E BUSCA */
 .btn-lancar {
     background: var(--success);
     color: white;
-    font-size: 16px;
+    width: 100%;
+    margin-top: 15px;
     padding: 15px;
+    font-size: 16px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    border-radius: 8px;
 }
 
-.btn-lancar:hover {
-    background: #009643;
-    box-shadow: 0 4px 12px rgba(0, 180, 81, 0.3);
+.search-box input {
+    border: 2px solid #E6DDEB;
+    border-radius: 25px;
+    padding: 10px 15px;
+}
+
+.botao-analise {
+    background: var(--accent);
+    color: white;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
 }
 
 .btn-logout {
-    background: transparent;
-    color: var(--danger);
-    border: 1px solid var(--danger);
-    padding: 6px 12px;
-    border-radius: 20px;
-}
-
-.btn-logout:hover {
     background: var(--danger);
     color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
 }
 
 /* MODAL */
 .modal-content {
-    border-radius: 16px;
-    padding: 30px;
+    border-radius: 15px;
     border: none;
 }
 
-.section-header {
-    background: #E6DDEB;
-    color: var(--primary);
+#notaTexto {
+    border: 1px solid #DDD;
     border-radius: 8px;
-    padding: 12px 15px;
-}
-
-/* CUSTOM SCROLLBAR (Para navegadores modernos) */
-.list-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.list-container::-webkit-scrollbar-thumb {
-    background: var(--accent);
-    border-radius: 10px;
+    margin-top: 10px;
 }
