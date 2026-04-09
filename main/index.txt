@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
     <div id="login-view">
         <div class="login-card">
@@ -25,10 +23,7 @@
     <div id="dashboard-view" class="hidden">
         <div class="container">
             <header>
-                <div>
-                    <h2 id="boas-vindas" style="color: var(--primary); margin: 0; font-size: 18px;">Olá, bem-vindo!</h2>
-                    <h1>Painel de Presença Operacional</h1>
-                </div>
+                <h1>Painel de Presença Operacional</h1>
                 <div>
                     <label>📅 Data: </label>
                     <input type="date" id="dataSelecionada" onchange="atualizarTabela()" style="width: auto;">
@@ -38,66 +33,19 @@
             </header>
 
             <div class="dashboard-grid">
-                <div class="db-card">
-                    <h3>UF</h3><span class="value" id="count-uf">0</span>
-                </div>
-                <div class="db-card">
-                    <h3>Empresa</h3><span class="value" id="count-empresa">0</span>
-                </div>
-                <div class="db-card">
-                    <h3>Colab.</h3><span class="value" id="count-colab">0</span>
-                </div>
-                <div class="db-card">
-                    <h3>Superv.</h3><span class="value" id="count-super">0</span>
-                </div>
-                <div class="db-card">
-                    <h3>Gerente TLP</h3><span class="value" id="count-gerente">0</span>
-                </div>
+                <div class="db-card"><h3>UF</h3><span class="value" id="count-uf">0</span></div>
+                <div class="db-card"><h3>Empresa</h3><span class="value" id="count-empresa">0</span></div>
+                <div class="db-card"><h3>Colab.</h3><span class="value" id="count-colab">0</span></div>
+                <div class="db-card"><h3>Superv.</h3><span class="value" id="count-super">0</span></div>
+                <div class="db-card"><h3>Gerente TLP</h3><span class="value" id="count-gerente">0</span></div>
             </div>
 
             <div class="add-box">
-                <div class="grid-cadastro-novo">
-                    <div
-                        style="grid-column: 1 / -1; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px;">
-                        🆕 Cadastrar Novo Colaborador na Base
-                    </div>
-                    <div>
-                        <label>UF</label>
-                        <select id="new-uf">
-                            <option value="RJ">RJ</option>
-                            <option value="ES">ES</option>
-                        </select>
-                    </div>
-                    <div><label>Empresa</label><input type="text" id="new-empresa" placeholder="Ex: TLP"></div>
-                    <div><label>Micro Área</label><input type="text" id="new-micro" placeholder="Área"></div>
-                    <div><label>Colaborador</label><input type="text" id="new-nome" placeholder="Nome Completo"></div>
-
-                    <div>
-                        <label>Supervisor</label>
-                        <input type="text" id="new-super" list="list-supers" placeholder="Supervisor">
-                        <datalist id="list-supers"></datalist>
-                    </div>
-                    <div>
-                        <label>Coordenador</label>
-                        <input type="text" id="new-coord" list="list-coords" placeholder="Coordenador">
-                        <datalist id="list-coords"></datalist>
-                    </div>
-                    <div>
-                        <label>Gerente</label>
-                        <input type="text" id="new-gerente" list="list-gerentes" placeholder="Gerente TLP">
-                        <datalist id="list-gerentes"></datalist>
-                    </div>
-
-                    <div><label>Ação</label><button class="btn-add-grid"
-                            onclick="cadastrarNovoNaBase()">Cadastrar</button></div>
-                </div>
-
                 <select id="uf" onchange="filtrarSupervisores()">
                     <option disabled selected value="">1º Selecione a UF</option>
                     <option value="RJ">RJ - Rio de Janeiro</option>
                     <option value="ES">ES - Espírito Santo</option>
                 </select>
-
                 <select id="supervisorTLP" onchange="filtrarColaboradores()">
                     <option disabled selected value="">2º Selecione o Supervisor</option>
                 </select>
@@ -113,46 +61,34 @@
                     <span>4º Selecione o Status</span><span class="arrow">▼</span>
                 </div>
                 <div id="statusSection" class="list-container">
-                    <div id="statusRadios" class="status-radio-group" style="display: contents;"></div>
+                    <div id="statusRadios" class="status-radio-group"></div>
                 </div>
 
                 <div class="section-header" onclick="toggleSection('importSection', this)">
                     <span>5º Importar via Excel (XLSX)</span><span class="arrow">▼</span>
                 </div>
                 <div id="importSection" class="list-container" style="display: block;">
-                    <input type="file" id="importExcel" accept=".xlsx, .xls" onchange="importarPlanilha(event)"
-                        style="padding: 5px;">
-                    <p style="font-size: 10px; color: #666; margin-top: 5px;">* Colunas necessárias: <b>Colaborador</b>
-                        e <b>Status</b></p>
+                    <input type="file" id="importExcel" accept=".xlsx, .xls" onchange="importarPlanilha(event)" style="padding: 5px;">
+                    <p style="font-size: 10px; color: #666; margin-top: 5px;">* Colunas: <b>Colaborador</b> e <b>Status</b></p>
                 </div>
             </div>
 
             <div class="search-box">
-                <input type="text" id="inputBusca" onkeyup="filtrarTabela()"
-                    placeholder="Buscar por Colaborador ou UF...">
+                <input type="text" id="inputBusca" onkeyup="filtrarTabela()" placeholder="Buscar por Colaborador ou UF...">
             </div>
 
             <div style="overflow-x:auto;">
                 <table id="tabelaPresenca">
                     <thead>
                         <tr>
-                            <th>UF</th>
-                            <th>Empresa</th>
-                            <th>Micro Área</th>
-                            <th>Colaborador</th>
-                            <th>Supervisor</th>
-                            <th>Coordenador</th>
-                            <th>Gerente TLP</th>
-                            <th>Status</th>
-                            <th>Ações</th>
+                            <th>UF</th><th>Empresa</th><th>Micro Área</th><th>Colaborador</th>
+                            <th>Supervisor</th><th>Coordenador</th><th>Gerente TLP</th>
+                            <th>Status</th><th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="lista"></tbody>
                 </table>
             </div>
-
-            <div id="paginacao-controles" style="text-align: center; margin-top: 20px; padding: 10px;"></div>
-
             <button class="btn-lancar" onclick="salvarPresenca()">Salvar Presença Manual</button>
         </div>
     </div>
@@ -174,5 +110,4 @@
 
     <script src="script.js"></script>
 </body>
-
 </html>
