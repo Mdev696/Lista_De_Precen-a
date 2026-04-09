@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visão por Supervisor - Operacional</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --light: #ecf0f1;
+            --border-color: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 98%;
+            margin: 15px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filtros {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--light);
+            padding: 10px 15px;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filtros select,
+        .filtros input[type="date"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+        }
+
+        .btn-voltar {
+            background-color: var(--secondary);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 650px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 11px;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #edf0f2;
+            white-space: nowrap;
+            color: var(--secondary);
+            text-align: center;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+
+        tr:hover {
+            background-color: #f1f7ff;
+        }
+
+        .col-efetivo-dado {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .abs-critico {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .spacer-row {
+            height: 30px;
+            background: #f0f2f5 !important;
+            border: none !important;
+        }
+
+        .sub-header th {
+            background: var(--primary) !important;
+            color: white !important;
+            position: static !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1 style="color: var(--primary); margin:0;">Visão por Supervisor Consolidada</h1>
+            <div class="filtros">
+                <label><strong>Data:</strong></label>
+                <input type="date" id="dataFiltro" onchange="renderizarTabela()">
+
+                <label><strong>UF:</strong></label>
+                <select id="filtroUF" onchange="atualizarFiltrosCascata(); renderizarTabela();">
+                    <option value="TODOS">Todas</option>
+                    <option value="RJ">RJ</option>
+                    <option value="ES">ES</option>
+                </select>
+
+                <label><strong>Coordenador:</strong></label>
+                <select id="filtroCoord" onchange="atualizarFiltrosCascata(); renderizarTabela();">
+                    <option value="TODOS">Todos</option>
+                </select>
+
+                <label><strong>Supervisor:</strong></label>
+                <select id="filtroSup" onchange="renderizarTabela()">
+                    <option value="TODOS">Todos</option>
+                </select>
+            </div>
+            <a href="analise.html" class="btn-voltar">⬅ Voltar ao Painel</a>
+        </header>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>GERENTE TLP</th>
+                        <th>COORDENADOR</th>
+                        <th>SUPERVISOR</th>
+                        <th>EFETIVO</th>
+                        <th>DESLIGADO</th>
+                        <th>MÉDIA M-1</th>
+                        <th>MÉDIA W-1</th>
+                        <th>PR D-1</th>
+                        <th>PR DIA</th>
+                        <th>F</th>
+                        <th>FO</th>
+                        <th>FE</th>
+                        <th>INSS</th>
+                        <th>INTJ</th>
+                        <th>ABS %</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let registrosBanco = [];
+        const efetivosFixos = {
+            "BRUNO ALCANTARA": 7, "ITALO COELHO": 0, "LIVIO MOREIRA": 9, "PABLO BATISTA": 6,
+            "RENAN ALVARINTO": 7, "ADRIANO TEIXEIRA PINHEIRO": 5, "BRENO BEZERRA CORREA": 8,
+            "CLOVIS BATISTA TORRES JUNIOR": 6, "DIEGO CARDOSO": 6,
+            "HAROLDO SANT ANNA DA CUNHA": 8, "LEANDRO MARTINS ABBUD": 5, "LUCIANO INACIO DA SILVA": 8,
+            "RICARDO LUIZ SANTA ROSA": 2, "RAFAEL FAGNER SANTOS DA SILVA": 1, "RODRIGO CUNHA DE LIMA": 8, "ROMULO E SILVA CABRAL": 6,
+            "WELLIGTON MORENO": 8
+        };
+
+        const baseDados = {
+            "CLEYSON ALVES DOS SANTOS (4)": { uf: "RJ", super: "RAFAEL FAGNER SANTOS DA SILVA", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "RODOLPHO JOSE TAVARES": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ALAN PETRILHO HONORIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MAX EMILIANO INACIO DA ROCHA": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "VAUSLEY DA SILVA COUTINHO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "IAN MACIEL ALVES DA SILVA (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "VICTOR HUGO DE SOUZA KLEN (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "THIAGO DE OLIVEIRA FONSECA (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ALLAN CESAR SILVA DE SOUZA (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MARIO CESAR RODRIGUES DOS SANTOS (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ROMEU DO NASCIMENTO VALENTE (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "CARLOS EDUARDO LACERDA DE OLIVEIRA (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "JEAN CARLOS SILVA DO NASCIMENTO (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LUCAS CONTES MOREIRA (1)": { uf: "RJ", super: "RODRIGO CUNHA DE LIMA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILLAN TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GABRIEL RODRIGUES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GABRIEL EMANUEL DOS SANTOS TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILLIAN COUTINHO TORRESS": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "THALLES EDUARDO MARQUES BORGES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MIGUEL PEREIRA GIMENES JUNIOR": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "CHRISTIANO SUZANO BARCELOS": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "IAN MACIEL ALVES DA SILVA (2)": { uf: "RJ", super: "RICARDO LUIZ SANTA ROSA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "IVANILDO EDUARDO DE LIMA NETO (1)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ALEX COSTA PEREIRA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LUCAS OLIVEIRA NUNES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "HIAGO MARQUES RUAS (1)": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "BRUNO DE LIMA SALLES": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "FELIPE MIRANDA DE OLIVEIRA (1)": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "PEDRO PAULO CARVALHO SALEMA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "WALLACE FERREIRA (1)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "BRENO OLIVEIRA DA SILVA VILELA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "FABIANO DE SANTANA ANDRADE (1)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILLILLIAN CORDEIRO DE MOURA": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "FELIPE MIRANDA DE OLIVEIRA (2)": { uf: "RJ", super: "DIEGO CARDOSO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "WALLACE FERREIRA (2)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RAMON PEREIRA VIANA (2)": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ROGERIO GOMES DA SILVA": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILIAN COUTINHO TORRES": { uf: "RJ", super: "LUCIANO INACIO DA SILVA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "IAGO DAVI D AVILA DAMAZIO": { uf: "RJ", super: "LEANDRO MARTINS ABBUD", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "DAVID DE OLIVEIRA CARDOSO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "THALLES ROCHA CASTELIANO": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "IVANILDO EDUARDO DE LIMA NETO (2)": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "LUCAS PEREIRA BONFIM": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "HIAGO MARQUES RUAS (2)": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MATHEUS DA SILVA TORRES (1)": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MATHEUS DA SILVA TORRES (2)": { uf: "RJ", super: "CLOVIS BATISTA TORRES JUNIOR", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "THIAGO PINTO EUGENIO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "GABRIEL DA SILVA COSTA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MAX WILLIANFURTADO DE JESUS": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "JONATHAN SANTOS DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MOISES GOMES DA SILVA FILHO": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MATEUS DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MATEUS FONSECA DINIZ": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RODRIGO BANNY DA SILVA": { uf: "RJ", super: "BRENO BEZERRA CORREA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ALLAN CESAR SILVA DE SOUZA (2)": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "VICTOR HUGO DE SOUZA KLEN (2)": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "JEAN CARLOS SILVA DO NASCIMENTO (2)": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "MARIO CESAR RODRIGUES DOS SANTOS (2)": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "LUCAS CONTES MOREIRA (2)": { uf: "RJ", super: "ADRIANO TEIXEIRA PINHEIRO", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "FELIPE SILVA DE LIMA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WILLIAM CESAR NASCIMENTO SILVA (2)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "MARCELO LUIZ LEITE": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LEANDRO ALBERTO CORREA BERREDO": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "ALEX SANTOS PEREIRA DA CRUZ": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "FABIO EUGENIO GONCALVES (2)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RAMON PEREIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "WALLACE DA CONCEICAO PEREIRA": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "CLEYSON ALVES DOS SANTOS (1)": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "LEANDERSON MARCOS VIEIRA DA SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ALESSANDER SANTOS DOMINGOS": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ROMEU DO NASCIMENTO VALENTE (2)": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ALEXSSANDRO PEDRO ARAUJO DE FREITAS (1)": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "THIAGO DE OLIVEIRA FONSECA (2)": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "NILTON VIEIRA DA SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "REGINALDO AVELINO SILVA": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "ATILA VICTORIO MOCO": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "CARLOS EDUARDO LACERDA DE OLIVEIRA (2)": { uf: "RJ", super: "ROMULO E SILVA CABRAL", coord: "IVSON PEREIRA COELHO JUNIOR", gerente: "FABRICIO LEAL" },
+            "WAGNER FERNANDES DOS SANTOS": { uf: "RJ", super: "HAROLDO SANT ANNA DA CUNHA", coord: "MARCELO ROCHA BATISTA", gerente: "FABRICIO LEAL" },
+            "RAYAN SILVEIRA SCHAIDER": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "MAURICIO AMARAL DE SOUZA": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "COLATINA" },
+            "JOAIS SANTOS DE OLIVEIRA (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "DEILSON DOS SANTOS SOUZA (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "WDSON NASCIMENTO DO CARMO (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "LUCAS SANTOS DE ALMEIDA (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "CARLOS EDUARDO MENDONÇA (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "EMANUEL  FREITAS OTT": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CACHOEIRO" },
+            "RONEY MELO SANTOS": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "DIOSE ALENCAR DE SOUZA (1)": { uf: "ES", super: "RENAN ALVARINTO", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "JONATAS SANTOS DOS ANJOS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "PATRICK HENRIQUE ALVES DE OLIVEIRA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "GUARAPARI" },
+            "FRANCISCO FAGNER ALENCAR": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "DAVID COSTA MIRANDA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "MARCELO PEREIRA DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "VILA VELHA" },
+            "UILLIAN BERNADINO DE ALMEIDA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "RAFAEL GUASTI MARTINS": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "BRENO NICOLAU VALASCO DA SILVA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "IGOR MAGNO MARTINS LEITE": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "WARLEY CARVALHO BERNADES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "DOUGLAS NUNES DA COSTA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "RAYAN SILVEIRA SCHAIDER (1)": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "DIOSE ALENCAR DE SOUZA": { uf: "ES", super: "PABLO BATISTA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "KAIQUE DE MELO DE SOUZA": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "PABLO DOS SANTOS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "ANDRE DOS SANTOS FUKS": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SERRA" },
+            "WETHYLLEY DO CARMO NETO": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "SÃO MATEUS" },
+            "VALDECI DOS REIS ANTUNES": { uf: "ES", super: "BRUNO ALCANTARA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "LINHARES" },
+            "EMANUEL MARTINS DE MORAES": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "PEDRO IVO DA SILVA DIAS ": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "RONEY MELO SANTOS (1)": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "ICONHA" },
+            "RAFAEL GUASTI MARTINS (1)": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "IGOR MAGNO MARTINS LEITE (1)": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" },
+            "LORRAN PEREIRA DA SILVA": { uf: "ES", super: "LIVIO MOREIRA", coord: "LUCAS PERES", gerente: "PAULO RADAELLI", empresa: "TLP SERVIÇOS", micro: "CARIACICA" }
+
+        };
+
+        window.onload = async () => {
+            const hoje = new Date();
+            document.getElementById('dataFiltro').value = hoje.toISOString().split('T')[0];
+            atualizarFiltrosCascata();
+            await carregarDadosDoBanco();
+        };
+
+        function atualizarFiltrosCascata() {
+            const ufSel = document.getElementById('filtroUF').value;
+            const coordSel = document.getElementById('filtroCoord').value;
+
+            const selCoord = document.getElementById('filtroCoord');
+            const selSup = document.getElementById('filtroSup');
+
+            const valCoordAntes = selCoord.value;
+            const valSupAntes = selSup.value;
+            const coords = new Set();
+            const supers = new Set();
+
+            Object.values(baseDados).forEach(c => {
+                const matchUF = (ufSel === "TODOS" || c.uf === ufSel);
+                if (matchUF) coords.add(c.coord.toUpperCase());
+
+                const matchCoord = (coordSel === "TODOS" || c.coord.toUpperCase() === coordSel);
+                if (matchUF && matchCoord) supers.add(c.super.toUpperCase());
+            });
+
+            selCoord.innerHTML = '<option value="TODOS">Todos</option>';
+            Array.from(coords).sort().forEach(item => selCoord.add(new Option(item, item)));
+            if ([...selCoord.options].some(o => o.value === valCoordAntes)) selCoord.value = valCoordAntes;
+
+            selSup.innerHTML = '<option value="TODOS">Todos</option>';
+            Array.from(supers).sort().forEach(item => selSup.add(new Option(item, item)));
+            if ([...selSup.options].some(o => o.value === valSupAntes)) selSup.value = valSupAntes;
+        }
+
+        async function carregarDadosDoBanco() {
+            const { data, error } = await _supabase.from('registros_presenca').select('*');
+            registrosBanco = error ? [] : data;
+            renderizarTabela();
+        }
+
+        function limparNome(n) { return n ? n.split('(')[0].trim().toUpperCase() : ""; }
+
+        function renderizarTabela() {
+            const corpo = document.getElementById('tabelaCorpo');
+            corpo.innerHTML = "";
+            const dataF = document.getElementById('dataFiltro').value;
+            const ufF = document.getElementById('filtroUF').value;
+            const coordF = document.getElementById('filtroCoord').value;
+            const supF = document.getElementById('filtroSup').value;
+
+            if (!dataF) return;
+
+            const dataObj = new Date(dataF + 'T12:00:00');
+            const ontemStr = new Date(new Date(dataObj).setDate(dataObj.getDate() - 1)).toISOString().split('T')[0];
+            const semStr = new Date(new Date(dataObj).setDate(dataObj.getDate() - 7)).toISOString().split('T')[0];
+
+            ["RJ", "ES"].filter(u => ufF === "TODOS" || u === ufF).forEach((uf, idx) => {
+                if (idx > 0) {
+                    corpo.innerHTML += `<tr class="spacer-row"><td colspan="16"></td></tr><tr class="sub-header"><th>UF</th><th>GERENTE TLP</th><th>COORDENADOR</th><th>SUPERVISOR</th><th>EFETIVO</th><th>DESLIGADO</th><th>MÉDIA M-1</th><th>MÉDIA W-1</th><th>PR D-1</th><th>PR DIA</th><th>F</th><th>FO</th><th>FE</th><th>INSS</th><th>INTJ</th><th>ABS %</th></tr>`;
+                }
+
+                const sups = [...new Set(Object.values(baseDados).filter(c =>
+                    c.uf === uf &&
+                    (coordF === "TODOS" || c.coord.toUpperCase() === coordF) &&
+                    (supF === "TODOS" || c.super.toUpperCase() === supF)
+                ).map(c => c.super))].sort();
+
+                sups.forEach(sNome => {
+                    const base = Object.values(baseDados).find(c => c.super === sNome);
+                    const regsDia = registrosBanco.filter(r => r.data === dataF && r.supervisor?.toUpperCase() === sNome.toUpperCase());
+                    const efetivo = efetivosFixos[sNome.toUpperCase()] || 0;
+
+                    let pr_dia = 0, f = 0, fo = 0, fe = 0, inss = 0, intj = 0, pr_d1 = 0, desl = 0;
+                    let sMes = 0, sSem = 0;
+
+                    regsDia.forEach(r => {
+                        const st = r.status.toUpperCase();
+
+                        // INTJ: Exclusivo coluna INTJ
+                        if (st.includes('INTERJORNADA')) {
+                            intj++;
+                        }
+                        // PR DIA: Presentes (exceto INTJ)
+                        else if (st.includes('PRESENTE') || st.includes('NOTURNO') || st.includes('CONJUNTA') ||
+                            st.includes('FORMATAÇÃO') || st.includes('PREVENTIVA') || st.includes('INTERMEDIÁRIO')) {
+                            pr_dia++;
+                        }
+
+                        // F: Falta, Atestado, Duplado, Frota, Logística (NÃO entra desligado aqui agora)
+                        if (st.includes('FALTA') || st.includes('ATESTADO') || st.includes('DUPLADO') ||
+                            st.includes('FROTA') || st.includes('LOGISTICA')) {
+                            f++;
+                        }
+
+                        // DESLIGADO: Exclusivo coluna Desligado
+                        if (st.includes('DESLIGADO')) {
+                            desl++;
+                        }
+
+                        // STATUS INDIVIDUAIS
+                        if (st.includes('FOLGA')) fo++;
+                        else if (st.includes('FERIA') || st.includes('FÉRIA')) fe++;
+                        else if (st.includes('INSS')) inss++;
+
+                        // Histórico e Médias
+                        const hist = registrosBanco.filter(h => limparNome(h.colaborador || h.colab) === limparNome(r.colaborador || r.colab));
+                        const isAtivoPresencial = (s) => {
+                            const u = s.toUpperCase();
+                            return u.includes('PRESENTE') || u.includes('NOTURNO') || u.includes('INTERJORNADA') ||
+                                u.includes('CONJUNTA') || u.includes('FORMATAÇÃO') || u.includes('PREVENTIVA') || u.includes('INTERMEDIÁRIO');
+                        };
+
+                        if (hist.some(h => h.data === ontemStr && isAtivoPresencial(h.status))) pr_d1++;
+                        sMes += hist.filter(h => h.data.startsWith(dataF.substring(0, 7)) && h.data <= dataF && isAtivoPresencial(h.status)).length;
+                        sSem += hist.filter(h => h.data >= semStr && h.data <= dataF && isAtivoPresencial(h.status)).length;
+                    });
+
+                    const dMes = [...new Set(registrosBanco.filter(r => r.data.startsWith(dataF.substring(0, 7)) && r.data <= dataF).map(r => r.data))].length || 1;
+
+                    // ABS %: (Soma da Folga + Férias + Falta + Desligado + Frota + Logistica + atestado + inss + Duplado) / efetivo
+                    // Agora f representa as ausências operacionais e desl os desligados.
+                    const abs = efetivo > 0 ? (((fo + fe + f + inss + desl) / efetivo) * 100).toFixed(2) : "0.00";
+
+                    corpo.innerHTML += `
+                        <tr>
+                            <td>${base.uf}</td><td class="text-left">${base.gerente}</td><td class="text-left">${base.coord}</td><td class="text-left"><strong>${sNome}</strong></td>
+                            <td class="col-efetivo-dado">${efetivo}</td><td>${desl}</td><td>${(sMes / dMes).toFixed(1)}</td><td>${(sSem / 7).toFixed(1)}</td>
+                            <td>${pr_d1}</td><td style="font-weight:bold; color:var(--accent)">${pr_dia}</td><td>${f}</td><td>${fo}</td><td>${fe}</td><td>${inss}</td><td>${intj}</td>
+                            <td class="${parseFloat(abs) > 10 ? 'abs-critico' : ''}">${abs}%</td>
+                        </tr>`;
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

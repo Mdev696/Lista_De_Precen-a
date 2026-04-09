@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Presença - Operacional</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="login-view">
+        <div class="login-card">
+            <img src="tlp.png" alt="Logo TLP" class="login-logo">
+            <h2 style="color: var(--primary); margin-bottom: 20px;">Acesso Restrito</h2>
+            <input type="email" id="login-email" placeholder="E-mail">
+            <input type="password" id="login-pass" placeholder="Senha">
+            <button class="btn-entrar" onclick="realizarLogin()">ENTRAR</button>
+            <p id="login-erro" style="color:red; font-size: 12px; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="hidden">
+        <div class="container">
+            <header>
+                <div>
+                    <h2 id="boas-vindas" style="color: var(--primary); margin: 0; font-size: 18px;">Olá, bem-vindo!</h2>
+                    <h1>Painel de Presença Operacional</h1>
+                </div>
+                <div>
+                    <label>📅 Data: </label>
+                    <input type="date" id="dataSelecionada" onchange="atualizarTabela()" style="width: auto;">
+                    <button class="btn-logout" onclick="realizarLogout()">Sair</button>
+                </div>
+                <a href="analise.html" class="botao-analise">Sight Management</a>
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="db-card">
+                    <h3>UF</h3><span class="value" id="count-uf">0</span>
+                </div>
+                <div class="db-card">
+                    <h3>Empresa</h3><span class="value" id="count-empresa">0</span>
+                </div>
+                <div class="db-card">
+                    <h3>Colab.</h3><span class="value" id="count-colab">0</span>
+                </div>
+                <div class="db-card">
+                    <h3>Superv.</h3><span class="value" id="count-super">0</span>
+                </div>
+                <div class="db-card">
+                    <h3>Gerente TLP</h3><span class="value" id="count-gerente">0</span>
+                </div>
+            </div>
+
+            <div class="add-box">
+                <div class="grid-cadastro-novo">
+                    <div
+                        style="grid-column: 1 / -1; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px;">
+                        🆕 Cadastrar Novo Colaborador na Base
+                    </div>
+                    <div>
+                        <label>UF</label>
+                        <select id="new-uf">
+                            <option value="RJ">RJ</option>
+                            <option value="ES">ES</option>
+                        </select>
+                    </div>
+                    <div><label>Empresa</label><input type="text" id="new-empresa" placeholder="Ex: TLP"></div>
+                    <div><label>Micro Área</label><input type="text" id="new-micro" placeholder="Área"></div>
+                    <div><label>Colaborador</label><input type="text" id="new-nome" placeholder="Nome Completo"></div>
+
+                    <div>
+                        <label>Supervisor</label>
+                        <input type="text" id="new-super" list="list-supers" placeholder="Supervisor">
+                        <datalist id="list-supers"></datalist>
+                    </div>
+                    <div>
+                        <label>Coordenador</label>
+                        <input type="text" id="new-coord" list="list-coords" placeholder="Coordenador">
+                        <datalist id="list-coords"></datalist>
+                    </div>
+                    <div>
+                        <label>Gerente</label>
+                        <input type="text" id="new-gerente" list="list-gerentes" placeholder="Gerente TLP">
+                        <datalist id="list-gerentes"></datalist>
+                    </div>
+
+                    <div><label>Ação</label><button class="btn-add-grid"
+                            onclick="cadastrarNovoNaBase()">Cadastrar</button></div>
+                </div>
+
+                <select id="uf" onchange="filtrarSupervisores()">
+                    <option disabled selected value="">1º Selecione a UF</option>
+                    <option value="RJ">RJ - Rio de Janeiro</option>
+                    <option value="ES">ES - Espírito Santo</option>
+                </select>
+
+                <select id="supervisorTLP" onchange="filtrarColaboradores()">
+                    <option disabled selected value="">2º Selecione o Supervisor</option>
+                </select>
+
+                <div class="section-header" onclick="toggleSection('colabSection', this)">
+                    <span>3º Selecione os Colaboradores</span><span class="arrow">▼</span>
+                </div>
+                <div id="colabSection" class="list-container">
+                    <div id="colaboradoresCheckboxes" style="display: contents;"></div>
+                </div>
+
+                <div class="section-header" onclick="toggleSection('statusSection', this)">
+                    <span>4º Selecione o Status</span><span class="arrow">▼</span>
+                </div>
+                <div id="statusSection" class="list-container">
+                    <div id="statusRadios" class="status-radio-group" style="display: contents;"></div>
+                </div>
+
+                <div class="section-header" onclick="toggleSection('importSection', this)">
+                    <span>5º Importar via Excel (XLSX)</span><span class="arrow">▼</span>
+                </div>
+                <div id="importSection" class="list-container" style="display: block;">
+                    <input type="file" id="importExcel" accept=".xlsx, .xls" onchange="importarPlanilha(event)"
+                        style="padding: 5px;">
+                    <p style="font-size: 10px; color: #666; margin-top: 5px;">* Colunas necessárias: <b>Colaborador</b>
+                        e <b>Status</b></p>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="inputBusca" onkeyup="filtrarTabela()"
+                    placeholder="Buscar por Colaborador ou UF...">
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table id="tabelaPresenca">
+                    <thead>
+                        <tr>
+                            <th>UF</th>
+                            <th>Empresa</th>
+                            <th>Micro Área</th>
+                            <th>Colaborador</th>
+                            <th>Supervisor</th>
+                            <th>Coordenador</th>
+                            <th>Gerente TLP</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista"></tbody>
+                </table>
+            </div>
+
+            <div id="paginacao-controles" style="text-align: center; margin-top: 20px; padding: 10px;"></div>
+
+            <button class="btn-lancar" onclick="salvarPresenca()">Salvar Presença Manual</button>
+        </div>
+    </div>
+
+    <div id="modalNotas" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin:0;">📝 Bloco de Notas</h2>
+                <small>ID: <span id="modalId"></span></small>
+            </div>
+            <label><b>Observação / Notas:</b></label>
+            <textarea id="notaTexto" placeholder="Digite aqui as observações..."></textarea>
+            <div class="modal-footer">
+                <button onclick="fecharModal()" style="background: #eee;">Cancelar</button>
+                <button onclick="salvarNotaBD()" style="background: #27ae60; color:white;">💾 Salvar Nota</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
