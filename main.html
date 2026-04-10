@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório Geral - Presença</title>
+    <title>Relatório Geral - Presença TLP</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -14,11 +14,10 @@
             --rj-color: #2980b9;
             --es-color: #e67e22;
             --danger: #e74c3c;
-            --success: #27ae60;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: #f0f2f5;
             margin: 0;
             padding: 20px;
@@ -53,8 +52,6 @@
             padding: 20px;
             border-radius: 10px;
             color: white;
-            text-align: left;
-            transition: transform 0.2s;
         }
 
         .summary-rj {
@@ -88,7 +85,6 @@
             font-weight: 800;
             color: #6c757d;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         select,
@@ -97,14 +93,6 @@
             border: 1px solid #ced4da;
             border-radius: 6px;
             font-size: 13px;
-            outline: none;
-            transition: border-color 0.2s;
-            background-color: white;
-        }
-
-        select:focus,
-        input:focus {
-            border-color: var(--accent);
         }
 
         .table-wrapper {
@@ -136,18 +124,32 @@
             border-bottom: 1px solid #eee;
         }
 
-        tr:hover {
-            background-color: #f8fbff;
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #eee;
         }
 
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 10px;
-            background: #e9ecef;
-            color: #495057;
-            text-transform: uppercase;
+        .btn-action {
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background: white;
+        }
+
+        .btn-edit {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeeba;
+        }
+
+        .btn-delete {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
         }
 
         .btn-back {
@@ -157,49 +159,6 @@
             padding: 10px 20px;
             border-radius: 6px;
             font-weight: 600;
-            font-size: 14px;
-        }
-
-        .btn-clear {
-            background: #fff;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            border-radius: 6px;
-            cursor: pointer;
-            padding: 10px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .btn-clear:hover {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-edit {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-
-        .btn-delete {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 50px;
-            color: #adb5bd;
-            font-style: italic;
         }
     </style>
 </head>
@@ -208,54 +167,45 @@
 
     <div class="container">
         <header>
-            <h2 style="margin:0; color: var(--primary);">📋 Relatório Geral de Presença</h2>
-            <a href="index.html" class="btn-back">+ Novo Lançamento</a>
+            <h2 style="margin:0; color: var(--primary);">📋 Painel de Controle de Presença</h2>
+            <a href="index.html" class="btn-back">⬅ Voltar ao Lançamento</a>
         </header>
 
         <div class="uf-summary">
             <div class="summary-card summary-rj">
-                <div style="font-size: 11px; opacity: 0.9; font-weight: bold;">TOTAL RIO DE JANEIRO</div>
+                <div style="font-size: 11px; font-weight: bold;">TÉCNICOS RJ</div>
                 <div id="total-rj" style="font-size: 28px; font-weight: bold;">0</div>
             </div>
             <div class="summary-card summary-es">
-                <div style="font-size: 11px; opacity: 0.9; font-weight: bold;">TOTAL ESPÍRITO SANTO</div>
+                <div style="font-size: 11px; font-weight: bold;">TÉCNICOS ES</div>
                 <div id="total-es" style="font-size: 28px; font-weight: bold;">0</div>
             </div>
         </div>
 
         <div class="filter-bar">
             <div class="filter-group">
-                <label>📅 Data do Registro</label>
-                <input type="date" id="filtroData" onchange="aplicarFiltros()">
+                <label>📅 Data</label>
+                <input type="date" id="filtroData" onchange="carregarDados()">
             </div>
             <div class="filter-group">
-                <label>📍 Unidade Federal</label>
-                <select id="filtroUF" onchange="atualizarFiltrosCascata()">
-                    <option value="">Todas as UFs</option>
-                    <option value="RJ">Rio de Janeiro</option>
-                    <option value="ES">Espírito Santo</option>
+                <label>📍 UF</label>
+                <select id="filtroUF" onchange="atualizarFiltrosDependentes()">
+                    <option value="">Todas</option>
+                    <option value="RJ">RJ</option>
+                    <option value="ES">ES</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label>👤 Supervisor</label>
-                <select id="filtroSuper" onchange="aplicarFiltros()">
+                <select id="filtroSuper" onchange="aplicarFiltrosLocais()">
                     <option value="">Todos</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label>🏗️ Micro Área</label>
-                <select id="filtroMicro" onchange="aplicarFiltros()">
+                <select id="filtroMicro" onchange="aplicarFiltrosLocais()">
                     <option value="">Todas</option>
                 </select>
-            </div>
-            <div class="filter-group">
-                <label>🚥 Status</label>
-                <select id="filtroStatus" onchange="aplicarFiltros()">
-                    <option value="">Todos os Status</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <button class="btn-clear" onclick="limparFiltros()">Limpar Filtros</button>
             </div>
         </div>
 
@@ -263,31 +213,25 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Data</th>
                         <th>UF</th>
-                        <th>Colaborador</th>
+                        <th>Técnico</th>
                         <th>Supervisor</th>
                         <th>Micro Área</th>
-                        <th>Empresa</th>
                         <th>Status</th>
                         <th style="text-align:center;">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="corpoTabelaMain"></tbody>
+                <tbody id="corpoTabela"></tbody>
             </table>
-            <div id="mensagemVazia" class="no-data" style="display: none;">
-                Nenhum registro encontrado para os filtros selecionados.
-            </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://ftouwpfhjwfoupvhsnth.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0b3V3cGZoandmb3VwdmhzbnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNTk5MzIsImV4cCI6MjA4NTkzNTkzMn0.roTjDn8MWoHVqlGWeZ3s1SqzGv-wxlapZqzfzeJJBCQ';
+        const SUPABASE_URL = 'https://sdcelpvagtanvheasvsd.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkY2VscHZhZ3RhbnZoZWFzdnNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzY5MzcsImV4cCI6MjA5MDExMjkzN30.FJ1joIyiyssd9IS6H9gFKRVRHJzSHnjCK7QRCODZWPQ';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let todosOsRegistros = [];
-
+        // --- MAPAS DE DADOS (SUA ESTRUTURA) ---
         const listaStatusMap = {
             "1": "PRESENTE", "2": "PRESENTE - CONJUNTA (SWAP/N1)", "3": "PRESENTE - FORMATAÇÃO",
             "4": "PRESENTE - PREVENTIVA", "5": "INTERJORNADA(10h)", "6": "INTERMEDIÁRIO (13h)",
@@ -297,12 +241,7 @@
 
         const supervisoresPorUF = {
             "ES": ["BRUNO ALCANTARA", "ITALO COELHO", "LIVIO MOREIRA", "PABLO BATISTA", "RENAN ALVARINTO"],
-            "RJ": [
-                "ADRIANO TEIXEIRA PINHEIRO", "BRENO BEZERRA CORREA", "CARLOS HENRIQUE DE PAULA BATISTA",
-                "CLOVIS BATISTA TORRES JUNIOR", "DIEGO CARDOSO", "HAROLDO SANT ANNA DA CUNHA",
-                "LEANDRO MARTINS ABBUD", "LUCIANO INACIO DA SILVA", "RENATO COSTA MOREIRA",
-                "RICARDO LUIZ SANTA ROSA", "RODRIGO CUNHA DE LIMA", "ROMULO E SILVA CABRAL", "WELLIGTON MORENO"
-            ]
+            "RJ": ["ADRIANO TEIXEIRA PINHEIRO", "BRENO BEZERRA CORREA", "CARLOS HENRIQUE DE PAULA BATISTA", "CLOVIS BATISTA TORRES JUNIOR", "DIEGO CARDOSO", "HAROLDO SANT ANNA DA CUNHA", "LEANDRO MARTINS ABBUD", "LUCIANO INACIO DA SILVA", "RENATO COSTA MOREIRA", "RICARDO LUIZ SANTA ROSA", "RODRIGO CUNHA DE LIMA", "ROMULO E SILVA CABRAL", "WELLIGTON MORENO"]
         };
 
         const microsPorUF = {
@@ -310,185 +249,121 @@
             "RJ": ["AMARELA", "AZUL - BARRA/JPA", "AZUL - CENTRO", "AZUL - GRAN.TIJUCA", "AZUL - NORTE", "AZUL - OEST", "AZUL - SUL", "B2B", "NOTURNO", "VERDE", "VERMELHA - BAIXADA", "VERMELHA - CAXIAS", "VERMELHA - INTERIOR"]
         };
 
-        window.onload = async () => { await carregarDados(); };
+        let registrosDataAtual = [];
+
+        window.onload = () => {
+            document.getElementById('filtroData').value = new Date().toISOString().split('T')[0];
+            carregarDados();
+        };
 
         async function carregarDados() {
-            const { data, error } = await _supabase
-                .from('registros_presenca')
-                .select('*')
-                .limit(5000)
-                .order('data', { ascending: false });
-
-            if (error) {
-                console.error("Erro Supabase:", error);
-                return;
+            const dataSel = document.getElementById('filtroData').value;
+            const { data, error } = await _supabase.from('presencas').select('*').eq('data', dataSel).order('tecnico', { ascending: true });
+            if (!error) {
+                registrosDataAtual = data || [];
+                aplicarFiltrosLocais();
             }
-
-            todosOsRegistros = data || [];
-            popularFiltrosDinamicos();
-            aplicarFiltros();
         }
 
-        function atualizarFiltrosCascata() {
-            const fUF = document.getElementById('filtroUF').value;
-            const dadosFiltradosParaSelects = fUF === ""
-                ? todosOsRegistros
-                : todosOsRegistros.filter(r => (r.uf || "").toUpperCase() === fUF);
-
-            popularFiltrosDinamicos(dadosFiltradosParaSelects, false);
-            aplicarFiltros();
-        }
-
-        function popularFiltrosDinamicos(lista = todosOsRegistros, resetStatus = true) {
+        function atualizarFiltrosDependentes() {
+            const uf = document.getElementById('filtroUF').value;
             const selectSuper = document.getElementById('filtroSuper');
             const selectMicro = document.getElementById('filtroMicro');
-            const selectStatus = document.getElementById('filtroStatus');
-
-            const supers = [...new Set(lista.map(r => r.supervisor || r.super))].filter(Boolean).sort();
-            const micros = [...new Set(lista.map(r => r.micro_area || r.micro))].filter(Boolean).sort();
 
             selectSuper.innerHTML = '<option value="">Todos</option>';
             selectMicro.innerHTML = '<option value="">Todas</option>';
 
-            supers.forEach(s => selectSuper.add(new Option(s, s)));
-            micros.forEach(m => selectMicro.add(new Option(m, m)));
-
-            if (resetStatus) {
-                const stats = [...new Set(todosOsRegistros.map(r => r.status))].filter(Boolean).sort();
-                selectStatus.innerHTML = '<option value="">Todos os Status</option>';
-                stats.forEach(st => selectStatus.add(new Option(st, st)));
+            if (uf && supervisoresPorUF[uf]) {
+                supervisoresPorUF[uf].sort().forEach(s => selectSuper.add(new Option(s, s)));
+                microsPorUF[uf].sort().forEach(m => selectMicro.add(new Option(m, m)));
             }
+            aplicarFiltrosLocais();
         }
 
-        function aplicarFiltros() {
-            const fData = document.getElementById('filtroData').value;
+        function aplicarFiltrosLocais() {
             const fUF = document.getElementById('filtroUF').value;
             const fSuper = document.getElementById('filtroSuper').value;
             const fMicro = document.getElementById('filtroMicro').value;
-            const fStatus = document.getElementById('filtroStatus').value;
 
-            const filtrados = todosOsRegistros.filter(r => {
-                const rSuper = (r.supervisor || r.super || "").toString();
-                const rUF = (r.uf || "").toString().trim().toUpperCase();
-                const rStatus = (r.status || "").toString();
-                const rMicro = (r.micro_area || r.micro || "").toString();
-
-                return (fData === "" || r.data === fData) &&
-                    (fUF === "" || rUF === fUF) &&
-                    (fSuper === "" || rSuper === fSuper) &&
-                    (fMicro === "" || rMicro === fMicro) &&
-                    (fStatus === "" || rStatus === fStatus);
+            const filtrados = registrosDataAtual.filter(r => {
+                const matchUF = fUF === "" || r.uf === fUF;
+                const matchSuper = fSuper === "" || r.supervisor === fSuper;
+                const matchMicro = fMicro === "" || r.cluster === fMicro;
+                return matchUF && matchSuper && matchMicro;
             });
 
-            atualizarResumo(filtrados);
-            exibirTabela(filtrados);
-        }
+            document.getElementById('total-rj').innerText = filtrados.filter(r => r.uf === 'RJ').length;
+            document.getElementById('total-es').innerText = filtrados.filter(r => r.uf === 'ES').length;
 
-        function atualizarResumo(listaParaSomar) {
-            const contagemRJ = listaParaSomar.filter(r => (r.uf || "").trim().toUpperCase() === 'RJ').length;
-            const contagemES = listaParaSomar.filter(r => (r.uf || "").trim().toUpperCase() === 'ES').length;
-            document.getElementById('total-rj').innerText = contagemRJ;
-            document.getElementById('total-es').innerText = contagemES;
-        }
-
-        function exibirTabela(lista) {
-            const tbody = document.getElementById('corpoTabelaMain');
-            const msgVazia = document.getElementById('mensagemVazia');
-            tbody.innerHTML = "";
-
-            if (lista.length === 0) {
-                msgVazia.style.display = "block";
-                return;
-            }
-
-            msgVazia.style.display = "none";
-            lista.forEach((r) => {
-                const dataBR = r.data ? r.data.split('-').reverse().join('/') : "---";
-                const rUF = (r.uf || "").toString().trim().toUpperCase();
-                const corUF = rUF === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${dataBR}</td>
-                    <td><b style="color: ${corUF}">${rUF}</b></td>
-                    <td><strong>${r.colaborador || r.colab || "N/A"}</strong></td>
-                    <td>${r.supervisor || r.super || "N/A"}</td>
-                    <td>${r.micro_area || r.micro || ''}</td>
-                    <td>${r.empresa || ''}</td>
-                    <td><span class="status-badge">${r.status || ''}</span></td>
+            const tbody = document.getElementById('corpoTabela');
+            tbody.innerHTML = filtrados.map(r => `
+                <tr>
+                    <td><b style="color: ${r.uf === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)'}">${r.uf}</b></td>
+                    <td><strong>${r.tecnico}</strong></td>
+                    <td>${r.supervisor}</td>
+                    <td>${r.cluster || '---'}</td>
+                    <td><span class="status-badge">${r.status}</span></td>
                     <td style="text-align:center;">
-                        <button class="btn-edit" onclick="editarRegistro('${r.id}')" title="Editar">✏️</button>
-                        <button class="btn-delete" onclick="excluirRegistro('${r.id}', '${r.colaborador || r.colab}')" title="Excluir">🗑️</button>
+                        <button class="btn-action btn-edit" onclick="menuEdicao('${r.id}', '${r.tecnico}', '${r.uf}')">✏️</button>
+                        <button class="btn-action btn-delete" onclick="deletarRegistro('${r.id}', '${r.tecnico}')">🗑️</button>
                     </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                </tr>
+            `).join('');
         }
 
-        async function editarRegistro(id) {
-            const reg = todosOsRegistros.find(r => r.id == id);
-            if (!reg) return;
+        // --- NOVA LÓGICA DE EDIÇÃO MULTIPLA ---
+        async function menuEdicao(id, nome, uf) {
+            const menu = prompt(`EDITAR REGISTRO: ${nome}\n\nO que deseja alterar?\n1 - Status\n2 - Micro Área (Cluster)\n3 - Supervisor\n\nDigite o número:`);
 
-            const opcao = prompt(`Editar ${reg.colaborador || reg.colab}:\n1. Status\n2. Supervisor\n3. Micro Área`);
+            let colunaBD = "";
+            let novoValor = "";
 
-            if (opcao === "1") {
-                let msg = "Escolha o Status:\n";
-                for (let k in listaStatusMap) msg += `${k}. ${listaStatusMap[k]}\n`;
-                const esc = prompt(msg);
-                if (esc) {
-                    const statusFinal = listaStatusMap[esc] || esc.toUpperCase().trim();
-                    await _supabase.from('registros_presenca').update({ status: statusFinal }).eq('id', id);
-                    await carregarDados();
+            if (menu === "1") { // Editar Status
+                let msgStatus = `ESCOLHA O NOVO STATUS PARA ${nome}:\n\n`;
+                for (let k in listaStatusMap) msgStatus += `${k} - ${listaStatusMap[k]}\n`;
+                const cod = prompt(msgStatus);
+                if (cod && listaStatusMap[cod]) {
+                    colunaBD = "status";
+                    novoValor = listaStatusMap[cod];
                 }
-            } else if (opcao === "2") {
-                const ufRegistro = (reg.uf || "").trim().toUpperCase();
-                const listaSupers = supervisoresPorUF[ufRegistro] || [];
-                await processarEdicaoLista(id, reg, "Supervisor", listaSupers, ('supervisor' in reg ? 'supervisor' : 'super'));
-            } else if (opcao === "3") {
-                const ufRegistro = (reg.uf || "").trim().toUpperCase();
-                const listaMicros = microsPorUF[ufRegistro] || [];
-                await processarEdicaoLista(id, reg, "Micro Área", listaMicros, ('micro_area' in reg ? 'micro_area' : 'micro'));
+            }
+            else if (menu === "2") { // Editar Micro Área
+                const listaMicro = microsPorUF[uf] || [];
+                let msgMicro = `ESCOLHA A NOVA MICRO ÁREA (${uf}):\n\n`;
+                listaMicro.forEach((m, i) => msgMicro += `${i + 1} - ${m}\n`);
+                const cod = prompt(msgMicro);
+                if (cod && listaMicro[parseInt(cod) - 1]) {
+                    colunaBD = "cluster";
+                    novoValor = listaMicro[parseInt(cod) - 1];
+                }
+            }
+            else if (menu === "3") { // Editar Supervisor
+                const listaSuper = supervisoresPorUF[uf] || [];
+                let msgSuper = `ESCOLHA O NOVO SUPERVISOR (${uf}):\n\n`;
+                listaSuper.forEach((s, i) => msgSuper += `${i + 1} - ${s}\n`);
+                const cod = prompt(msgSuper);
+                if (cod && listaSuper[parseInt(cod) - 1]) {
+                    colunaBD = "supervisor";
+                    novoValor = listaSuper[parseInt(cod) - 1];
+                }
+            }
+
+            if (colunaBD && novoValor) {
+                const { error } = await _supabase.from('presencas').update({ [colunaBD]: novoValor }).eq('id', id);
+                if (!error) {
+                    alert(`${colunaBD.toUpperCase()} atualizado com sucesso!`);
+                    carregarDados();
+                } else {
+                    alert("Erro ao atualizar banco.");
+                }
             }
         }
 
-        async function processarEdicaoLista(id, reg, rotulo, lista, campoBanco) {
-            if (lista.length === 0) {
-                const novoValor = prompt(`Novo ${rotulo}:`, reg[campoBanco]);
-                if (novoValor) await salvarCampo(id, campoBanco, novoValor);
-                return;
+        async function deletarRegistro(id, nome) {
+            if (confirm(`Excluir presença de ${nome}?`)) {
+                const { error } = await _supabase.from('presencas').delete().eq('id', id);
+                if (!error) carregarDados();
             }
-
-            let msg = `Escolha ${rotulo} (${reg.uf}):\n`;
-            lista.forEach((item, idx) => msg += `${idx + 1}. ${item}\n`);
-
-            const esc = prompt(msg);
-            if (esc) {
-                const idx = parseInt(esc) - 1;
-                const valorFinal = lista[idx] || esc.toUpperCase().trim();
-                await salvarCampo(id, campoBanco, valorFinal);
-            }
-        }
-
-        async function salvarCampo(id, campo, valor) {
-            await _supabase.from('registros_presenca').update({ [campo]: valor.toUpperCase().trim() }).eq('id', id);
-            await carregarDados();
-        }
-
-        async function excluirRegistro(id, nome) {
-            if (confirm(`Excluir registro de ${nome}?`)) {
-                await _supabase.from('registros_presenca').delete().eq('id', id);
-                await carregarDados();
-            }
-        }
-
-        function limparFiltros() {
-            document.getElementById('filtroData').value = "";
-            document.getElementById('filtroUF').value = "";
-            document.getElementById('filtroSuper').value = "";
-            document.getElementById('filtroMicro').value = "";
-            document.getElementById('filtroStatus').value = "";
-            popularFiltrosDinamicos();
-            aplicarFiltros();
         }
     </script>
 </body>

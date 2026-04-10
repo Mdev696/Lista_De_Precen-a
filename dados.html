@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Cadastro - TLP</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --rj-color: #2980b9;
+            --es-color: #e67e22;
+            --light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            flex: 1;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        }
+
+        .card-rj {
+            background: linear-gradient(135deg, var(--rj-color), #3498db);
+        }
+
+        .card-es {
+            background: linear-gradient(135deg, var(--es-color), #f39c12);
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+        }
+
+        /* Formulário de Adição */
+        .add-box {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .add-box h3 {
+            grid-column: 1 / -1;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        input,
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-add {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-back {
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            padding: 8px 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: var(--primary);
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #eee;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tag-uf {
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h2 style="margin:0;">👥 Gestão de Colaboradores</h2>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="logout()" class="btn" style="background:#ddd">Sair</button>
+                <a href="index.html" class="btn-back">⬅ Voltar</a>
+            </div>
+        </header>
+
+        <div class="dashboard-cards">
+            <div class="card card-rj">
+                <span style="font-size: 11px;">TÉCNICOS RJ</span>
+                <span id="total-rj" class="card-value">0</span>
+            </div>
+            <div class="card card-es">
+                <span style="font-size: 11px;">TÉCNICOS ES</span>
+                <span id="total-es" class="card-value">0</span>
+            </div>
+        </div>
+
+        <div class="add-box">
+            <h3>➕ Cadastrar Novo Técnico</h3>
+            <div class="input-group">
+                <label>Nome do Técnico</label>
+                <input type="text" id="novoNome" placeholder="NOME COMPLETO">
+            </div>
+            <div class="input-group">
+                <label>UF</label>
+                <select id="novoUF" onchange="popularGestores()">
+                    <option value="">Selecione</option>
+                    <option value="RJ">RJ</option>
+                    <option value="ES">ES</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Micro Área / Cluster</label>
+                <select id="novoMicro">
+                    <option value="">-</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Supervisor</label>
+                <select id="novoSuper">
+                    <option value="">-</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Coordenador</label>
+                <select id="novoCoord">
+                    <option value="">-</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Gerente</label>
+                <select id="novoGerente">
+                    <option value="">-</option>
+                </select>
+            </div>
+            <button class="btn btn-add" onclick="adicionarTecnico()">Salvar</button>
+        </div>
+
+        <input type="text" id="inputBusca"
+            style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd;"
+            placeholder="🔍 Filtrar base por nome..." oninput="filtrarTabela()">
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>Nome</th>
+                        <th>Micro Área</th>
+                        <th>Supervisor</th>
+                        <th>Coordenador</th>
+                        <th>Gerente</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://sdcelpvagtanvheasvsd.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkY2VscHZhZ3RhbnZoZWFzdnNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzY5MzcsImV4cCI6MjA5MDExMjkzN30.FJ1joIyiyssd9IS6H9gFKRVRHJzSHnjCK7QRCODZWPQ';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Dados extraídos da sua lista
+        const opcoesPorUF = {
+            "RJ": {
+                supervisores: ["ADRIANO TEIXEIRA PINHEIRO", "BRENO BEZERRA CORREA", "CLOVIS BATISTA TORRES JUNIOR", "DIEGO CARDOSO", "HAROLDO SANT ANNA DA CUNHA", "LEANDRO MARTINS ABBUD", "LUCIANO INACIO DA SILVA", "RICARDO LUIZ SANTA ROSA", "RODRIGO CUNHA DE LIMA", "ROMULO E SILVA CABRAL", "WELLIGTON MORENO"],
+                coordenadores: ["IVSON PEREIRA COELHO JUNIOR", "MARCELO ROCHA BATISTA"],
+                gerentes: ["FABRICIO LEAL"],
+                micros: ["AMARELA", "AZUL - BARRA/JPA", "AZUL - CENTRO", "AZUL - GRAN.TIJUCA", "AZUL - NORTE", "AZUL - OESTE", "AZUL - SUL", "NOTURNO", "VERDE", "VERMELHA - BAIXADA", "VERMELHA - CAXIAS", "VERMELHA - INTERIOR"]
+            },
+            "ES": {
+                supervisores: ["BRUNO ALCANTARA", "LIVIO MOREIRA", "PABLO BATISTA", "RENAN ALVARINTO"],
+                coordenadores: ["LUCAS PERES"],
+                gerentes: ["PAULO RADAELLI"],
+                micros: ["CACHOEIRO", "CARIACICA", "COLATINA", "GUARAPARI", "ICONHA", "LINHARES", "SERRA", "SÃO MATEUS", "VIANA", "VILA VELHA"]
+            }
+        };
+
+        let todosTecnicos = [];
+
+        function popularGestores() {
+            const uf = document.getElementById('novoUF').value;
+            const campos = {
+                'novoSuper': 'supervisores',
+                'novoCoord': 'coordenadores',
+                'novoGerente': 'gerentes',
+                'novoMicro': 'micros'
+            };
+
+            for (let id in campos) {
+                const select = document.getElementById(id);
+                select.innerHTML = '<option value="">Selecione</option>';
+                if (uf) {
+                    opcoesPorUF[uf][campos[id]].sort().forEach(opt => {
+                        select.add(new Option(opt, opt));
+                    });
+                }
+            }
+        }
+
+        async function carregarTecnicos() {
+            const { data, error } = await _supabase.from('tecnicos').select('*').order('nome', { ascending: true });
+            if (!error) {
+                todosTecnicos = data;
+                renderizarTabela(data);
+            }
+        }
+
+        function renderizarTabela(lista) {
+            document.getElementById('total-rj').innerText = todosTecnicos.filter(t => t.uf === 'RJ').length;
+            document.getElementById('total-es').innerText = todosTecnicos.filter(t => t.uf === 'ES').length;
+
+            const tbody = document.getElementById('corpoTabela');
+            tbody.innerHTML = lista.map(t => `
+                <tr>
+                    <td><span class="tag-uf" style="background:${t.uf === 'RJ' ? 'var(--rj-color)' : 'var(--es-color)'}">${t.uf}</span></td>
+                    <td><strong>${t.nome}</strong></td>
+                    <td>${t.micro_area || t.cluster || '-'}</td>
+                    <td>${t.supervisor || '-'}</td>
+                    <td>${t.coordenador || '-'}</td>
+                    <td>${t.gerente || '-'}</td>
+                    <td>
+                        <button onclick="removerTecnico('${t.id}', '${t.nome}')" style="border:none; background:none; cursor:pointer;">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function adicionarTecnico() {
+            const dados = {
+                nome: document.getElementById('novoNome').value.toUpperCase().trim(),
+                uf: document.getElementById('novoUF').value,
+                supervisor: document.getElementById('novoSuper').value,
+                coordenador: document.getElementById('novoCoord').value,
+                gerente: document.getElementById('novoGerente').value,
+                micro_area: document.getElementById('novoMicro').value
+            };
+
+            if (!dados.nome || !dados.uf) return alert("Nome e UF são obrigatórios!");
+
+            const { error } = await _supabase.from('tecnicos').insert([dados]);
+            if (!error) {
+                alert("Cadastrado!");
+                document.getElementById('novoNome').value = "";
+                carregarTecnicos();
+            }
+        }
+
+        async function removerTecnico(id, nome) {
+            if (confirm(`Remover ${nome}?`)) {
+                await _supabase.from('tecnicos').delete().eq('id', id);
+                carregarTecnicos();
+            }
+        }
+
+        function filtrarTabela() {
+            const termo = document.getElementById('inputBusca').value.toUpperCase();
+            renderizarTabela(todosTecnicos.filter(t => t.nome.includes(termo)));
+        }
+
+        async function logout() { await _supabase.auth.signOut(); location.reload(); }
+
+        window.onload = carregarTecnicos;
+    </script>
+</body>
+
+</html>
