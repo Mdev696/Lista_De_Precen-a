@@ -203,7 +203,6 @@
                 const registrosUF = registros.filter(r => (r.uf || "").trim().toUpperCase() === uf);
                 const efetivoFixo = efetivoFixoUF[uf];
 
-                // Datas históricas
                 const d1_date = new Date(dataSelecionada + "T12:00:00");
                 d1_date.setDate(d1_date.getDate() - 1);
                 const d1_str = d1_date.toISOString().split('T')[0];
@@ -211,49 +210,42 @@
                 const w_limite = new Date(dataSelecionada + "T12:00:00");
                 w_limite.setDate(w_limite.getDate() - 7);
 
-                // Contadores
                 let k = { pr_dia: 0, f_dia: 0, fo_dia: 0, fe_dia: 0, inss_dia: 0, intj_dia: 0, desl_dia: 0, prD1: 0, sm1: 0, sw1: 0, abs_total: 0 };
 
-                // Dias úteis para as médias
+                // Variável para capturar nomes únicos e corrigir o N/A
+                let nomesLancadosHoje = new Set();
+
                 const registrosMes = registrosUF.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
                 const diasMes = [...new Set(registrosMes.map(r => r.data))].length || 1;
                 const diasSemana = [...new Set(registrosMes.filter(r => new Date(r.data + "T12:00:00") > w_limite).map(r => r.data))].length || 1;
-
-                // Variável para contar colaboradores únicos no dia selecionado (Correção N/A)
-                const colaboradoresNoDia = new Set();
 
                 registrosUF.forEach(r => {
                     const status = (r.status || "").trim().toUpperCase();
                     const rData = r.data;
                     const rDateObj = new Date(rData + "T12:00:00");
 
-                    // Definição de Presença para Médias e D-1
                     const ehTrabalho = status.includes("PRESENTE") || status.includes("FORMATAÇÃO") ||
                         status.includes("PREVENTIVA") || status.includes("INTERMEDIÁRIO") ||
                         status.includes("NOTURNO") || status.includes("INTJ") || status.includes("INTERJORNADA");
 
-                    // Lógica Histórica
                     if (ehTrabalho) {
                         if (rData === d1_str) k.prD1++;
                         if (rDateObj > w_limite && rDateObj <= new Date(dataSelecionada + "T12:00:00")) k.sw1++;
                         if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) k.sm1++;
                     }
 
-                    // Lógica do Dia Selecionado
                     if (rData === dataSelecionada) {
-                        // Adiciona o nome/colaborador ao Set para contar lançamentos únicos
-                        if (r.nome) colaboradoresNoDia.add(r.nome);
+                        // Captura o identificador do colaborador (ajustado para ser flexível caso 'nome' mude)
+                        const idColaborador = r.nome || r.colaborador || r.id;
+                        if (idColaborador) nomesLancadosHoje.add(idColaborador);
 
-                        // PR DIA (Conforme sua lista específica)
                         if (status.includes("PRESENTE") || status.includes("FORMATAÇÃO") || status.includes("PREVENTIVA") ||
                             status.includes("INTERMEDIÁRIO") || status.includes("NOTURNO")) {
                             k.pr_dia++;
                         }
-                        // INTJ
                         else if (status.includes("INTJ") || status.includes("INTERJORNADA")) {
                             k.intj_dia++;
                         }
-                        // F (Falta + Duplado + Frota + Logistica + Atestado)
                         else if (status.includes("FALTA") || status.includes("DUPLADO") || status.includes("FROTA") ||
                             status.includes("LOGISTICA") || status.includes("ATESTADO")) {
                             k.f_dia++;
@@ -263,7 +255,6 @@
                         else if (status.includes("FERIAS") || status.includes("FÉRIAS")) k.fe_dia++;
                         else if (status.includes("INSS")) k.inss_dia++;
 
-                        // Cálculo do ABS: Soma de tudo o que é ausência
                         const ehAusenciaABS = status.includes("FOLGA") || status === "FO" || status.includes("FÉRIAS") ||
                             status.includes("FERIAS") || status.includes("FALTA") || status.includes("DESLIGADO") ||
                             status.includes("FROTA") || status.includes("LOGISTICA") || status.includes("ATESTADO") ||
@@ -273,8 +264,8 @@
                     }
                 });
 
-                // Cálculo do N/A baseado em quem NÃO está no Set de colaboradores lançados
-                const naoLancados = Math.max(0, efetivoFixo - colaboradoresNoDia.size);
+                // CORREÇÃO DO N/A: Efetivo Fixo menos a quantidade de nomes únicos encontrados hoje
+                const naoLancados = Math.max(0, efetivoFixo - nomesLancadosHoje.size);
 
                 htmlFinal += `
                     <tr>
