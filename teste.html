@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analítico Operacional - Dashboard KPI</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #348ddb;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --rj-color: #2980b9;
+            --es-color: #e67e22;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .filtro-box {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #dcdde1;
+        }
+
+        input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .header-rj {
+            background-color: var(--rj-color);
+        }
+
+        .header-es {
+            background-color: var(--es-color);
+        }
+
+        td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .txt-pr {
+            color: var(--success);
+        }
+
+        .txt-f {
+            color: var(--danger);
+        }
+
+        .txt-fo {
+            color: var(--warning);
+        }
+
+        .txt-fe {
+            color: var(--accent);
+        }
+
+        .txt-inss {
+            color: #576574;
+        }
+
+        .txt-abs {
+            color: #8e44ad;
+            font-size: 20px;
+            background: #f8f0fb;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .btn-voltar {
+            background: var(--secondary);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Analítico de Indicadores KPI por UF</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="index.html" class="btn-voltar">⬅ Voltar</a>
+            </div>
+        </header>
+
+        <div class="filtro-box">
+            <strong>Data de Referência:</strong>
+            <input type="date" id="dataFiltro" onchange="gerarAnalise()">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>UF</th>
+                        <th>Efetivo</th>
+                        <th>Desligado</th>
+                        <th>Média M-1</th>
+                        <th>Média W-1</th>
+                        <th>PR D-1</th>
+                        <th>N/A</th>
+                        <th>PR DIA</th>
+                        <th>F</th>
+                        <th>FO</th>
+                        <th>FE</th>
+                        <th>INSS</th>
+                        <th>INTJ</th>
+                        <th>ABS %</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://sdcelpvagtanvheasvsd.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkY2VscHZhZ3RhbnZoZWFzdnNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzY5MzcsImV4cCI6MjA5MDExMjkzN30.FJ1joIyiyssd9IS6H9gFKRVRHJzSHnjCK7QRCODZWPQ';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const efetivoFixoUF = { 'RJ': 66, 'ES': 29 };
+
+        async function gerarAnalise() {
+            const dataSelecionada = document.getElementById('dataFiltro').value;
+            if (!dataSelecionada) return;
+
+            const mesPrefixo = dataSelecionada.substring(0, 7);
+            const corpo = document.getElementById('corpoTabela');
+            corpo.innerHTML = "<tr><td colspan='14'>Sincronizando dados...</td></tr>";
+
+            const { data: registros, error } = await _supabase.from('presencas').select('*');
+            if (error) {
+                corpo.innerHTML = "<tr><td colspan='14'>Erro ao carregar banco.</td></tr>";
+                return;
+            }
+
+            const ufs = ['RJ', 'ES'];
+            let htmlFinal = "";
+
+            ufs.forEach(uf => {
+                const registrosUF = registros.filter(r => (r.uf || "").trim().toUpperCase() === uf);
+                const efetivoFixo = efetivoFixoUF[uf];
+
+                // Datas históricas
+                const d1_date = new Date(dataSelecionada + "T12:00:00");
+                d1_date.setDate(d1_date.getDate() - 1);
+                const d1_str = d1_date.toISOString().split('T')[0];
+
+                const w_limite = new Date(dataSelecionada + "T12:00:00");
+                w_limite.setDate(w_limite.getDate() - 7);
+
+                // Contadores
+                let k = { pr_dia: 0, f_dia: 0, fo_dia: 0, fe_dia: 0, inss_dia: 0, intj_dia: 0, desl_dia: 0, prD1: 0, sm1: 0, sw1: 0, abs_total: 0 };
+
+                // Dias úteis para as médias
+                const registrosMes = registrosUF.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
+                const diasMes = [...new Set(registrosMes.map(r => r.data))].length || 1;
+                const diasSemana = [...new Set(registrosMes.filter(r => new Date(r.data + "T12:00:00") > w_limite).map(r => r.data))].length || 1;
+
+                // Variável para contar colaboradores únicos no dia selecionado (Correção N/A)
+                const colaboradoresNoDia = new Set();
+
+                registrosUF.forEach(r => {
+                    const status = (r.status || "").trim().toUpperCase();
+                    const rData = r.data;
+                    const rDateObj = new Date(rData + "T12:00:00");
+
+                    // Definição de Presença para Médias e D-1
+                    const ehTrabalho = status.includes("PRESENTE") || status.includes("FORMATAÇÃO") ||
+                        status.includes("PREVENTIVA") || status.includes("INTERMEDIÁRIO") ||
+                        status.includes("NOTURNO") || status.includes("INTJ") || status.includes("INTERJORNADA");
+
+                    // Lógica Histórica
+                    if (ehTrabalho) {
+                        if (rData === d1_str) k.prD1++;
+                        if (rDateObj > w_limite && rDateObj <= new Date(dataSelecionada + "T12:00:00")) k.sw1++;
+                        if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) k.sm1++;
+                    }
+
+                    // Lógica do Dia Selecionado
+                    if (rData === dataSelecionada) {
+                        // Adiciona o nome/colaborador ao Set para contar lançamentos únicos
+                        if (r.nome) colaboradoresNoDia.add(r.nome);
+
+                        // PR DIA (Conforme sua lista específica)
+                        if (status.includes("PRESENTE") || status.includes("FORMATAÇÃO") || status.includes("PREVENTIVA") ||
+                            status.includes("INTERMEDIÁRIO") || status.includes("NOTURNO")) {
+                            k.pr_dia++;
+                        }
+                        // INTJ
+                        else if (status.includes("INTJ") || status.includes("INTERJORNADA")) {
+                            k.intj_dia++;
+                        }
+                        // F (Falta + Duplado + Frota + Logistica + Atestado)
+                        else if (status.includes("FALTA") || status.includes("DUPLADO") || status.includes("FROTA") ||
+                            status.includes("LOGISTICA") || status.includes("ATESTADO")) {
+                            k.f_dia++;
+                        }
+                        else if (status.includes("DESLIGADO")) k.desl_dia++;
+                        else if (status.includes("FOLGA") || status === "FO") k.fo_dia++;
+                        else if (status.includes("FERIAS") || status.includes("FÉRIAS")) k.fe_dia++;
+                        else if (status.includes("INSS")) k.inss_dia++;
+
+                        // Cálculo do ABS: Soma de tudo o que é ausência
+                        const ehAusenciaABS = status.includes("FOLGA") || status === "FO" || status.includes("FÉRIAS") ||
+                            status.includes("FERIAS") || status.includes("FALTA") || status.includes("DESLIGADO") ||
+                            status.includes("FROTA") || status.includes("LOGISTICA") || status.includes("ATESTADO") ||
+                            status.includes("INSS") || status.includes("DUPLADO");
+
+                        if (ehAusenciaABS) k.abs_total++;
+                    }
+                });
+
+                // Cálculo do N/A baseado em quem NÃO está no Set de colaboradores lançados
+                const naoLancados = Math.max(0, efetivoFixo - colaboradoresNoDia.size);
+
+                htmlFinal += `
+                    <tr>
+                        <td class="${uf === 'RJ' ? 'header-rj' : 'header-es'}" style="color:white;">${uf}</td>
+                        <td>${efetivoFixo}</td>
+                        <td style="color: var(--danger);">${k.desl_dia}</td>
+                        <td>${(k.sm1 / diasMes).toFixed(1)}</td>
+                        <td>${(k.sw1 / diasSemana).toFixed(1)}</td>
+                        <td>${k.prD1}</td>
+                        <td style="color: #7f8c8d;">${naoLancados}</td>
+                        <td class="txt-pr">${k.pr_dia}</td>
+                        <td class="txt-f">${k.f_dia}</td>
+                        <td class="txt-fo">${k.fo_dia}</td>
+                        <td class="txt-fe">${k.fe_dia}</td>
+                        <td class="txt-inss">${k.inss_dia}</td>
+                        <td>${k.intj_dia}</td>
+                        <td><span class="txt-abs">${((k.abs_total / efetivoFixo) * 100).toFixed(2)}%</span></td>
+                    </tr>
+                `;
+            });
+            corpo.innerHTML = htmlFinal;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
+            gerarAnalise();
+        });
+    </script>
+</body>
+
+</html>
