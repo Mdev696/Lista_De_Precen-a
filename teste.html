@@ -190,7 +190,9 @@
             const corpo = document.getElementById('corpoTabela');
             corpo.innerHTML = "<tr><td colspan='14'>Sincronizando dados...</td></tr>";
 
+            // Buscamos todos os registros para calcular médias históricas e o dia atual
             const { data: registros, error } = await _supabase.from('presencas').select('*');
+
             if (error) {
                 corpo.innerHTML = "<tr><td colspan='14'>Erro ao carregar banco.</td></tr>";
                 return;
@@ -200,9 +202,11 @@
             let htmlFinal = "";
 
             ufs.forEach(uf => {
+                // Filtra registros apenas da UF atual (Normalizando para maiúsculas)
                 const registrosUF = registros.filter(r => (r.uf || "").trim().toUpperCase() === uf);
                 const efetivoFixo = efetivoFixoUF[uf];
 
+                // --- LÓGICA DE DATAS ---
                 const d1_date = new Date(dataSelecionada + "T12:00:00");
                 d1_date.setDate(d1_date.getDate() - 1);
                 const d1_str = d1_date.toISOString().split('T')[0];
@@ -210,11 +214,11 @@
                 const w_limite = new Date(dataSelecionada + "T12:00:00");
                 w_limite.setDate(w_limite.getDate() - 7);
 
+                // --- CONTADORES ---
                 let k = { pr_dia: 0, f_dia: 0, fo_dia: 0, fe_dia: 0, inss_dia: 0, intj_dia: 0, desl_dia: 0, prD1: 0, sm1: 0, sw1: 0, abs_total: 0 };
+                let tecnicosLancadosHoje = new Set();
 
-                // Variável para capturar nomes únicos e corrigir o N/A
-                let nomesLancadosHoje = new Set();
-
+                // Identificar dias únicos para médias
                 const registrosMes = registrosUF.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
                 const diasMes = [...new Set(registrosMes.map(r => r.data))].length || 1;
                 const diasSemana = [...new Set(registrosMes.filter(r => new Date(r.data + "T12:00:00") > w_limite).map(r => r.data))].length || 1;
@@ -224,48 +228,48 @@
                     const rData = r.data;
                     const rDateObj = new Date(rData + "T12:00:00");
 
+                    // Definição do que é considerado "Trabalhando" para as médias (Baseado na sua listaStatus)
                     const ehTrabalho = status.includes("PRESENTE") || status.includes("FORMATAÇÃO") ||
-                        status.includes("PREVENTIVA") || status.includes("INTERMEDIÁRIO") ||
-                        status.includes("NOTURNO") || status.includes("INTJ") || status.includes("INTERJORNADA");
+                        status.includes("PREVENTIVA") || status.includes("NOTURNO") ||
+                        status.includes("INTERMEDIÁRIO");
 
+                    // Acúmulo para Médias e PR D-1
                     if (ehTrabalho) {
                         if (rData === d1_str) k.prD1++;
                         if (rDateObj > w_limite && rDateObj <= new Date(dataSelecionada + "T12:00:00")) k.sw1++;
                         if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) k.sm1++;
                     }
 
+                    // --- LÓGICA DO DIA SELECIONADO ---
                     if (rData === dataSelecionada) {
-                        // Captura o identificador do colaborador (ajustado para ser flexível caso 'nome' mude)
-                        const idColaborador = r.nome || r.colaborador || r.id;
-                        if (idColaborador) nomesLancadosHoje.add(idColaborador);
+                        // USANDO 'tecnico' em vez de 'nome' (Conforme sua index.html)
+                        if (r.tecnico) tecnicosLancadosHoje.add(r.tecnico);
 
-                        if (status.includes("PRESENTE") || status.includes("FORMATAÇÃO") || status.includes("PREVENTIVA") ||
-                            status.includes("INTERMEDIÁRIO") || status.includes("NOTURNO")) {
+                        if (status.includes("PRESENTE") || status.includes("NOTURNO") || status.includes("INTERMEDIÁRIO")) {
                             k.pr_dia++;
                         }
-                        else if (status.includes("INTJ") || status.includes("INTERJORNADA")) {
+                        else if (status.includes("INTERJORNADA") || status.includes("INTJ")) {
                             k.intj_dia++;
                         }
-                        else if (status.includes("FALTA") || status.includes("DUPLADO") || status.includes("FROTA") ||
-                            status.includes("LOGISTICA") || status.includes("ATESTADO")) {
+                        else if (status.includes("FALTA") || status.includes("ATESTADO") || status.includes("FROTA") || status.includes("DUPLADO")) {
                             k.f_dia++;
                         }
                         else if (status.includes("DESLIGADO")) k.desl_dia++;
-                        else if (status.includes("FOLGA") || status === "FO") k.fo_dia++;
-                        else if (status.includes("FERIAS") || status.includes("FÉRIAS")) k.fe_dia++;
+                        else if (status.includes("FOLGA")) k.fo_dia++;
+                        else if (status.includes("FÉRIAS") || status.includes("FERIAS")) k.fe_dia++;
                         else if (status.includes("INSS")) k.inss_dia++;
 
-                        const ehAusenciaABS = status.includes("FOLGA") || status === "FO" || status.includes("FÉRIAS") ||
-                            status.includes("FERIAS") || status.includes("FALTA") || status.includes("DESLIGADO") ||
-                            status.includes("FROTA") || status.includes("LOGISTICA") || status.includes("ATESTADO") ||
-                            status.includes("INSS") || status.includes("DUPLADO");
-
-                        if (ehAusenciaABS) k.abs_total++;
+                        // ABS % (Soma de ausências que não são Presença Direta)
+                        const ehAusenciaParaAbs = status.includes("FOLGA") || status.includes("FÉRIAS") ||
+                            status.includes("FALTA") || status.includes("ATESTADO") ||
+                            status.includes("INSS") || status.includes("DESLIGADO");
+                        if (ehAusenciaParaAbs) k.abs_total++;
                     }
                 });
 
-                // CORREÇÃO DO N/A: Efetivo Fixo menos a quantidade de nomes únicos encontrados hoje
-                const naoLancados = Math.max(0, efetivoFixo - nomesLancadosHoje.size);
+                // --- CÁLCULO N/A (Não Lançados) ---
+                // Efetivo - Quantos técnicos únicos apareceram na tabela hoje
+                const naoLancados = Math.max(0, efetivoFixo - tecnicosLancadosHoje.size);
 
                 htmlFinal += `
                     <tr>
@@ -290,6 +294,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Define data padrão como hoje e executa
             document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
             gerarAnalise();
         });
