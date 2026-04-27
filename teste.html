@@ -180,8 +180,6 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkY2VscHZhZ3RhbnZoZWFzdnNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1MzY5MzcsImV4cCI6MjA5MDExMjkzN30.FJ1joIyiyssd9IS6H9gFKRVRHJzSHnjCK7QRCODZWPQ';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const efetivoFixoUF = { 'RJ': 66, 'ES': 29 };
-
         async function gerarAnalise() {
             const dataSelecionada = document.getElementById('dataFiltro').value;
             if (!dataSelecionada) return;
@@ -190,112 +188,110 @@
             const corpo = document.getElementById('corpoTabela');
             corpo.innerHTML = "<tr><td colspan='14'>Sincronizando dados...</td></tr>";
 
-            // Buscamos todos os registros para calcular médias históricas e o dia atual
-            const { data: registros, error } = await _supabase.from('presencas').select('*');
+            try {
+                // Busca o efetivo real baseado no seu SQL de 'tecnicos'
+                const { data: baseTecnicos } = await _supabase.from('tecnicos').select('uf, nome');
 
-            if (error) {
-                corpo.innerHTML = "<tr><td colspan='14'>Erro ao carregar banco.</td></tr>";
-                return;
-            }
+                // Busca as presenças do mês
+                const { data: registros, error } = await _supabase
+                    .from('presencas')
+                    .select('*')
+                    .like('data', `${mesPrefixo}%`);
 
-            const ufs = ['RJ', 'ES'];
-            let htmlFinal = "";
+                if (error) throw error;
 
-            ufs.forEach(uf => {
-                // Filtra registros apenas da UF atual (Normalizando para maiúsculas)
-                const registrosUF = registros.filter(r => (r.uf || "").trim().toUpperCase() === uf);
-                const efetivoFixo = efetivoFixoUF[uf];
+                const ufs = ['RJ', 'ES'];
+                let htmlFinal = "";
 
-                // --- LÓGICA DE DATAS ---
-                const d1_date = new Date(dataSelecionada + "T12:00:00");
-                d1_date.setDate(d1_date.getDate() - 1);
-                const d1_str = d1_date.toISOString().split('T')[0];
+                ufs.forEach(uf => {
+                    const listaBaseUF = baseTecnicos.filter(t => (t.uf || "").trim().toUpperCase() === uf);
+                    const efetivoReal = listaBaseUF.length || (uf === 'RJ' ? 104 : 34); // Fallback caso tabela esteja vazia
 
-                const w_limite = new Date(dataSelecionada + "T12:00:00");
-                w_limite.setDate(w_limite.getDate() - 7);
+                    const registrosUF = registros.filter(r => (r.uf || "").trim().toUpperCase() === uf);
 
-                // --- CONTADORES ---
-                let k = { pr_dia: 0, f_dia: 0, fo_dia: 0, fe_dia: 0, inss_dia: 0, intj_dia: 0, desl_dia: 0, prD1: 0, sm1: 0, sw1: 0, abs_total: 0 };
-                let tecnicosLancadosHoje = new Set();
+                    // Datas históricas
+                    const d1_date = new Date(dataSelecionada + "T12:00:00");
+                    d1_date.setDate(d1_date.getDate() - 1);
+                    const d1_str = d1_date.toISOString().split('T')[0];
 
-                // Identificar dias únicos para médias
-                const registrosMes = registrosUF.filter(r => r.data && r.data.startsWith(mesPrefixo) && r.data <= dataSelecionada);
-                const diasMes = [...new Set(registrosMes.map(r => r.data))].length || 1;
-                const diasSemana = [...new Set(registrosMes.filter(r => new Date(r.data + "T12:00:00") > w_limite).map(r => r.data))].length || 1;
+                    const w_limite = new Date(dataSelecionada + "T12:00:00");
+                    w_limite.setDate(w_limite.getDate() - 7);
 
-                registrosUF.forEach(r => {
-                    const status = (r.status || "").trim().toUpperCase();
-                    const rData = r.data;
-                    const rDateObj = new Date(rData + "T12:00:00");
+                    // Contadores
+                    let k = { pr_dia: 0, f_dia: 0, fo_dia: 0, fe_dia: 0, inss_dia: 0, intj_dia: 0, desl_dia: 0, prD1: 0, sm1: 0, sw1: 0, abs_total: 0 };
+                    let nomesLancadosHoje = new Set();
 
-                    // Definição do que é considerado "Trabalhando" para as médias (Baseado na sua listaStatus)
-                    const ehTrabalho = status.includes("PRESENTE") || status.includes("FORMATAÇÃO") ||
-                        status.includes("PREVENTIVA") || status.includes("NOTURNO") ||
-                        status.includes("INTERMEDIÁRIO");
+                    // Dias úteis para as médias
+                    const registrosAteHoje = registrosUF.filter(r => r.data <= dataSelecionada);
+                    const diasMes = [...new Set(registrosAteHoje.map(r => r.data))].length || 1;
+                    const diasSemana = [...new Set(registrosAteHoje.filter(r => new Date(r.data + "T12:00:00") > w_limite).map(r => r.data))].length || 1;
 
-                    // Acúmulo para Médias e PR D-1
-                    if (ehTrabalho) {
-                        if (rData === d1_str) k.prD1++;
-                        if (rDateObj > w_limite && rDateObj <= new Date(dataSelecionada + "T12:00:00")) k.sw1++;
-                        if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) k.sm1++;
-                    }
+                    registrosUF.forEach(r => {
+                        const status = (r.status || "").trim().toUpperCase();
+                        const rData = r.data;
+                        const rDateObj = new Date(rData + "T12:00:00");
 
-                    // --- LÓGICA DO DIA SELECIONADO ---
-                    if (rData === dataSelecionada) {
-                        // USANDO 'tecnico' em vez de 'nome' (Conforme sua index.html)
-                        if (r.tecnico) tecnicosLancadosHoje.add(r.tecnico);
+                        const ehTrabalho = status.includes("PRESENTE") || status.includes("FORMATAÇÃO") ||
+                            status.includes("PREVENTIVA") || status.includes("INTERMEDIÁRIO") ||
+                            status.includes("NOTURNO");
 
-                        if (status.includes("PRESENTE") || status.includes("NOTURNO") || status.includes("INTERMEDIÁRIO")) {
-                            k.pr_dia++;
+                        // Lógica Histórica (Médias)
+                        if (ehTrabalho || status.includes("INTJ") || status.includes("INTERJORNADA")) {
+                            if (rData === d1_str) k.prD1++;
+                            if (rDateObj > w_limite && rDateObj <= new Date(dataSelecionada + "T12:00:00")) k.sw1++;
+                            if (rData.startsWith(mesPrefixo) && rData <= dataSelecionada) k.sm1++;
                         }
-                        else if (status.includes("INTERJORNADA") || status.includes("INTJ")) {
-                            k.intj_dia++;
-                        }
-                        else if (status.includes("FALTA") || status.includes("ATESTADO") || status.includes("FROTA") || status.includes("DUPLADO")) {
-                            k.f_dia++;
-                        }
-                        else if (status.includes("DESLIGADO")) k.desl_dia++;
-                        else if (status.includes("FOLGA")) k.fo_dia++;
-                        else if (status.includes("FÉRIAS") || status.includes("FERIAS")) k.fe_dia++;
-                        else if (status.includes("INSS")) k.inss_dia++;
 
-                        // ABS % (Soma de ausências que não são Presença Direta)
-                        const ehAusenciaParaAbs = status.includes("FOLGA") || status.includes("FÉRIAS") ||
-                            status.includes("FALTA") || status.includes("ATESTADO") ||
-                            status.includes("INSS") || status.includes("DESLIGADO");
-                        if (ehAusenciaParaAbs) k.abs_total++;
-                    }
+                        // Lógica do Dia Selecionado
+                        if (rData === dataSelecionada) {
+                            nomesLancadosHoje.add(r.tecnico);
+
+                            if (ehTrabalho) k.pr_dia++;
+                            else if (status.includes("INTJ") || status.includes("INTERJORNADA")) k.intj_dia++;
+                            else if (status.includes("FALTA") || status.includes("DUPLADO") || status.includes("FROTA") ||
+                                status.includes("LOGISTICA") || status.includes("ATESTADO")) k.f_dia++;
+                            else if (status.includes("DESLIGADO")) k.desl_dia++;
+                            else if (status.includes("FOLGA") || status === "FO") k.fo_dia++;
+                            else if (status.includes("FERIAS") || status.includes("FÉRIAS")) k.fe_dia++;
+                            else if (status.includes("INSS")) k.inss_dia++;
+
+                            // ABS % (Soma de ausências sobre o efetivo)
+                            const ehAusencia = ["FALTA", "ATESTADO", "INSS", "DESLIGADO", "FROTA", "DUPLADO"].some(s => status.includes(s));
+                            if (ehAusencia) k.abs_total++;
+                        }
+                    });
+
+                    const naoLancados = Math.max(0, efetivoReal - nomesLancadosHoje.size);
+
+                    htmlFinal += `
+                        <tr>
+                            <td class="${uf === 'RJ' ? 'header-rj' : 'header-es'}" style="color:white;">${uf}</td>
+                            <td>${efetivoReal}</td>
+                            <td style="color: var(--danger);">${k.desl_dia}</td>
+                            <td>${(k.sm1 / diasMes).toFixed(1)}</td>
+                            <td>${(k.sw1 / diasSemana).toFixed(1)}</td>
+                            <td>${k.prD1}</td>
+                            <td style="color: #7f8c8d;">${naoLancados}</td>
+                            <td class="txt-pr">${k.pr_dia}</td>
+                            <td class="txt-f">${k.f_dia}</td>
+                            <td class="txt-fo">${k.fo_dia}</td>
+                            <td class="txt-fe">${k.fe_dia}</td>
+                            <td class="txt-inss">${k.inss_dia}</td>
+                            <td>${k.intj_dia}</td>
+                            <td><span class="txt-abs">${((k.abs_total / efetivoReal) * 100).toFixed(2)}%</span></td>
+                        </tr>
+                    `;
                 });
-
-                // --- CÁLCULO N/A (Não Lançados) ---
-                // Efetivo - Quantos técnicos únicos apareceram na tabela hoje
-                const naoLancados = Math.max(0, efetivoFixo - tecnicosLancadosHoje.size);
-
-                htmlFinal += `
-                    <tr>
-                        <td class="${uf === 'RJ' ? 'header-rj' : 'header-es'}" style="color:white;">${uf}</td>
-                        <td>${efetivoFixo}</td>
-                        <td style="color: var(--danger);">${k.desl_dia}</td>
-                        <td>${(k.sm1 / diasMes).toFixed(1)}</td>
-                        <td>${(k.sw1 / diasSemana).toFixed(1)}</td>
-                        <td>${k.prD1}</td>
-                        <td style="color: #7f8c8d;">${naoLancados}</td>
-                        <td class="txt-pr">${k.pr_dia}</td>
-                        <td class="txt-f">${k.f_dia}</td>
-                        <td class="txt-fo">${k.fo_dia}</td>
-                        <td class="txt-fe">${k.fe_dia}</td>
-                        <td class="txt-inss">${k.inss_dia}</td>
-                        <td>${k.intj_dia}</td>
-                        <td><span class="txt-abs">${((k.abs_total / efetivoFixo) * 100).toFixed(2)}%</span></td>
-                    </tr>
-                `;
-            });
-            corpo.innerHTML = htmlFinal;
+                corpo.innerHTML = htmlFinal;
+            } catch (err) {
+                corpo.innerHTML = "<tr><td colspan='14'>Erro ao processar dados. Verifique o console.</td></tr>";
+                console.error(err);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Define data padrão como hoje e executa
-            document.getElementById('dataFiltro').value = new Date().toISOString().split('T')[0];
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataFiltro').value = hoje;
             gerarAnalise();
         });
     </script>
