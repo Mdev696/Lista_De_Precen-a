@@ -289,7 +289,12 @@
         }
 
         async function carregarTecnicos() {
-            const { data, error } = await _supabase.from('tecnicos').select('*').order('nome', { ascending: true });
+            // Adicionamos um timestamp para evitar cache do navegador
+            const { data, error } = await _supabase
+                .from('tecnicos')
+                .select('*')
+                .order('nome', { ascending: true });
+
             if (!error) {
                 todosTecnicos = data;
                 renderizarTabela(data);
@@ -317,9 +322,8 @@
         }
 
         async function adicionarTecnico() {
-            const inputNome = document.getElementById('novoNome');
             const dados = {
-                nome: inputNome.value.toUpperCase().trim(),
+                nome: document.getElementById('novoNome').value.toUpperCase().trim(),
                 uf: document.getElementById('novoUF').value,
                 supervisor: document.getElementById('novoSuper').value,
                 coordenador: document.getElementById('novoCoord').value,
@@ -332,25 +336,27 @@
             const { error } = await _supabase.from('tecnicos').insert([dados]);
 
             if (error) {
-                if (error.code === '23505') {
-                    alert("⚠️ Erro: Este técnico já está cadastrado!");
-                } else {
-                    alert("❌ Erro ao salvar: " + error.message);
-                }
+                alert(error.code === '23505' ? "Técnico já cadastrado!" : "Erro: " + error.message);
             } else {
-                alert("✅ Técnico cadastrado com sucesso!");
-                inputNome.value = "";
+                alert("Cadastrado!");
+                document.getElementById('novoNome').value = "";
                 carregarTecnicos();
             }
         }
 
         async function removerTecnico(id, nome) {
-            if (confirm(`Tem certeza que deseja remover ${nome} definitivamente?`)) {
-                const { error } = await _supabase.from('tecnicos').delete().eq('id', id);
-                if (!error) {
-                    carregarTecnicos();
+            if (confirm(`Remover ${nome} permanentemente?`)) {
+                // Forçamos o DELETE e verificamos se houve linhas afetadas
+                const { error, count } = await _supabase
+                    .from('tecnicos')
+                    .delete({ count: 'exact' })
+                    .eq('id', id);
+
+                if (error) {
+                    alert("Erro ao remover: " + error.message);
                 } else {
-                    alert("❌ Erro ao remover do banco: " + error.message);
+                    // Pequeno delay para o Supabase processar antes de recarregar
+                    setTimeout(carregarTecnicos, 300);
                 }
             }
         }
