@@ -41,7 +41,6 @@
             margin-bottom: 20px;
         }
 
-        /* Dashboard Cards */
         .dashboard-cards {
             display: flex;
             gap: 20px;
@@ -70,7 +69,6 @@
             display: block;
         }
 
-        /* Formulário de Adição */
         .add-box {
             background: var(--light);
             padding: 20px;
@@ -291,10 +289,14 @@
         }
 
         async function carregarTecnicos() {
-            const { data, error } = await _supabase.from('tecnicos').select('*').order('nome', { ascending: true });
-            if (!error) {
-                todosTecnicos = data;
-                renderizarTabela(data);
+            try {
+                const { data, error } = await _supabase.from('tecnicos').select('*').order('nome', { ascending: true });
+                if (!error) {
+                    todosTecnicos = data;
+                    renderizarTabela(data);
+                }
+            } catch (err) {
+                console.error("Erro ao carregar:", err);
             }
         }
 
@@ -330,22 +332,37 @@
 
             if (!dados.nome || !dados.uf) return alert("Nome e UF são obrigatórios!");
 
-            const { error } = await _supabase.from('tecnicos').insert([dados]);
-
-            if (error) {
-                alert("Erro ao salvar: " + error.message);
-            } else {
-                alert("Cadastrado com sucesso!");
-                document.getElementById('novoNome').value = "";
-                carregarTecnicos();
+            try {
+                const { error } = await _supabase.from('tecnicos').insert([dados]);
+                if (error) {
+                    alert("Erro ao salvar: " + error.message);
+                } else {
+                    alert("Cadastrado com sucesso!");
+                    document.getElementById('novoNome').value = "";
+                    carregarTecnicos();
+                }
+            } catch (err) {
+                alert("Falha na conexão ao salvar técnico.");
             }
         }
 
         async function removerTecnico(id, nome) {
             if (confirm(`Remover ${nome}?`)) {
-                const { error } = await _supabase.from('tecnicos').delete().eq('id', id);
-                if (!error) carregarTecnicos();
-                else alert("Erro ao remover: " + error.message);
+                try {
+                    // Tenta deletar no banco
+                    const { error } = await _supabase.from('tecnicos').delete().eq('id', id);
+
+                    if (error) {
+                        alert("Erro do banco ao remover: " + error.message);
+                    } else {
+                        // Se funcionou, recarrega a lista
+                        await carregarTecnicos();
+                    }
+                } catch (err) {
+                    // Captura o erro 'Failed to fetch' se a internet cair ou o Supabase bloquear
+                    alert("Erro de conexão ao tentar remover. Verifique sua internet ou as permissões do Supabase.");
+                    console.error(err);
+                }
             }
         }
 
